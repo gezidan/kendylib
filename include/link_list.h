@@ -19,7 +19,7 @@ list_node* link_list_pop(struct link_list*);
 
 list_node* link_list_head(struct link_list*);
 
-int32_t link_list_is_empty(struct link_list*);
+inline int32_t link_list_is_empty(struct link_list*);
 
 struct link_list *create_link_list();
 
@@ -27,7 +27,7 @@ void destroy_link_list(struct link_list**);
 
 void link_list_clear(struct link_list*);
 
-int32_t link_list_size(struct link_list*);
+inline int32_t link_list_size(struct link_list*);
 
 void    link_list_swap(struct link_list*to,struct link_list*from);
 

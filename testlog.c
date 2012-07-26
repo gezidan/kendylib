@@ -66,11 +66,11 @@ void test2(char **tmp)
 			int i = 0;
 			for( ; i < 10000000; ++i)
 			{
-				tmp[i] = ALLOC(a,16);
+				tmp[i] = /*block_obj_al_alloc(a,16);*/ALLOC(a,16);
 			}
 			i = 0;
 			for(; i < 10000000;++i)
-				FREE(a,tmp[i]);	
+				/*block_obj_al_dealloc(a,tmp[i]);*/FREE(a,tmp[i]);	
 			printf("block_obj_allocator finish:%d\n",GetSystemMs()-tick);		
 	    }
 	    DESTROY(&a);

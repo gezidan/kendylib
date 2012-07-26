@@ -31,7 +31,7 @@ void spin_destroy(spinlock_t*);
 */
 inline int32_t spin_lock(spinlock_t,int32_t count);
 inline int32_t spin_unlock(spinlock_t);
-
+/*
 static inline int32_t
 atomic_cmp_set(int32_t *lock, int32_t old,
     int32_t set)
@@ -48,5 +48,5 @@ atomic_cmp_set(int32_t *lock, int32_t old,
 
     return res;
 }
-
+*/
 #endif

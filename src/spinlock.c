@@ -29,7 +29,7 @@ void spin_destroy(spinlock_t *sp)
 	*sp = 0;
 }
 
-inline int32_t spin_lock(spinlock_t l,int32_t count)
+int32_t spin_lock(spinlock_t l,int32_t count)
 {
 	pthread_t tid = pthread_self();
 	if(tid == l->owner)
@@ -71,7 +71,7 @@ inline int32_t spin_lock(spinlock_t l,int32_t count)
 	}
 }
 
-inline int32_t spin_unlock(spinlock_t l)
+int32_t spin_unlock(spinlock_t l)
 {
 	pthread_t tid = pthread_self();
 	if(tid == l->owner)

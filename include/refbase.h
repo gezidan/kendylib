@@ -9,8 +9,8 @@ struct refbase
 	void (*destroyer)(void*);
 };
 
-void ref_increase(struct refbase*);
-void ref_decrease(struct refbase*);
+inline void ref_increase(struct refbase*);
+inline void ref_decrease(struct refbase*);
 
 
 #endif
