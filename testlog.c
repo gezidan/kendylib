@@ -7,8 +7,8 @@
 #include "SysTime.h"
 #include <string.h>
 #include "block_obj_allocator.h"
-#include "mem_allocator.h"
-#include "fix_obj_pool.h"
+//#include "mem_allocator.h"
+//#include "fix_obj_pool.h"
 uint32_t GetSize_of_pow2(uint32_t size);
 uint8_t GetK(uint32_t size);
 
@@ -18,45 +18,6 @@ uint8_t GetK(uint32_t size);
 
 void test1(char **tmp)
 {
-	{
-		allocator_t a =  create_pool(16,65536*10,1);
-		int j = 0;
-		uint16_t *p; 
-		for(;j<10;++j)
-		{
-			uint32_t tick = GetSystemMs();
-			int i = 0;
-			for( ; i < 10000000; ++i)
-			{
-				tmp[i] = ALLOC(a,16);			
-			}
-			printf("fix_obj_pool finish:%d\n",GetSystemMs()-tick);
-			i = 0;
-			for(; i < 10000000;++i)
-				FREE(a,tmp[i]);					
-					
-	    }
-	    DESTROY(&a);
-	}
-	{
-		allocator_t a =  gen_allocator_create(65536);
-		int j = 0;
-		uint16_t *p; 
-		for(;j<10;++j)
-		{
-			uint32_t tick = GetSystemMs();
-			int i = 0;
-			for( ; i < 10000000; ++i)
-			{
-				tmp[i] = ALLOC(a,16);			
-			}
-			printf("gen_allocator finish:%d\n",GetSystemMs()-tick);
-			i = 0;
-			for(; i < 10000000;++i)
-				FREE(a,tmp[i]);		
-	    }
-	    DESTROY(&a);
-	}
 	{
 		allocator_t a = (allocator_t)create_block_obj_allocator(16);
 		int j = 0;
@@ -97,47 +58,6 @@ void test1(char **tmp)
 void test2(char **tmp)
 {
 	{
-		allocator_t a =  create_pool(16,65536*10,1);
-		int j = 0;
-		uint16_t *p; 
-		for(;j<10;++j)
-		{
-			uint32_t tick = GetSystemMs();
-			int i = 0;
-			for( ; i < 10000000; ++i)
-			{
-				tmp[i] = ALLOC(a,16);		
-			}
-			
-			i = 0;
-			for(; i < 10000000;++i)
-				FREE(a,tmp[i]);		
-			printf("fix_obj_pool finish:%d\n",GetSystemMs()-tick);			
-					
-	    }
-	    DESTROY(&a);
-	}
-	{
-		allocator_t a =  gen_allocator_create(65536);
-		int j = 0;
-		uint16_t *p; 
-		for(;j<10;++j)
-		{
-			uint32_t tick = GetSystemMs();
-			int i = 0;
-			for( ; i < 10000000; ++i)
-			{
-				tmp[i] = ALLOC(a,16);		
-			}
-			
-			i = 0;
-			for(; i < 10000000;++i)
-				FREE(a,tmp[i]);		
-			printf("gen_allocator finish:%d\n",GetSystemMs()-tick);
-	    }
-	    DESTROY(&a);
-	}
-	{
 		allocator_t a = (allocator_t)create_block_obj_allocator(16);
 		int j = 0;
 		for(;j<10;++j)
@@ -176,55 +96,6 @@ void test2(char **tmp)
 
 void test3(char **tmp)
 {
-	{
-		allocator_t a =  create_pool(16,65536*10,1);
-		int j = 0;
-		uint16_t *p; 
-		for(;j<10;++j)
-		{
-			uint32_t tick = GetSystemMs();
-			int i = 0;
-			for( ; i < 10000000; ++i)
-			{
-				tmp[i] = ALLOC(a,16);
-				if((i+1)%100000 == 0)
-				{
-					int k = (i+1)-100000;
-					for(; k < i+1;++k)
-					{
-						FREE(a,tmp[k]);
-					}
-				}			
-			}
-			printf("fix_obj_pool finish:%d\n",GetSystemMs()-tick);			
-					
-	    }
-	    DESTROY(&a);
-	}
-	{
-		allocator_t a =  gen_allocator_create(65536);
-		int j = 0;
-		uint16_t *p; 
-		for(;j<10;++j)
-		{
-			uint32_t tick = GetSystemMs();
-			int i = 0;
-			for( ; i < 10000000; ++i)
-			{
-				tmp[i] = ALLOC(a,16);
-				if((i+1)%100000 == 0)
-				{
-					int k = (i+1)-100000;
-					for(; k < i+1;++k)
-					{
-						FREE(a,tmp[k]);
-					}
-				}			
-			}
-			printf("gen_allocator finish:%d\n",GetSystemMs()-tick);
-	    }
-	    DESTROY(&a);
-	}
 	{
 		allocator_t a = (allocator_t)create_block_obj_allocator(16);
 		int j = 0;

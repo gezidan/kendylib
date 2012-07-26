@@ -3,8 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include "list.h"
-#include "fix_obj_pool.h"
-#include "allocator.h"
+
 struct node
 {
 	struct node *next;
@@ -25,7 +24,7 @@ struct list
 
 struct list* list_create(uint32_t val_size)
 {
-	struct list *_list = ALLOC(0,sizeof(*_list));
+	struct list *_list = calloc(1,sizeof(*_list));
 	if(_list)
 	{
 		_list->size = 0;
@@ -51,7 +50,7 @@ void   list_destroy(struct list **_list)
 			cur = next;
 		}
 	}
-	FREE(0,*_list);
+	free(*_list);
 	*_list = 0;
 }
 
@@ -100,8 +99,7 @@ inline uint32_t list_size(struct list *_list)
 void   list_insert_after(struct list *l,struct list_iter it,void *val)
 {
 	assert(l);
-	struct node *new_node;
-	new_node = ALLOC(0,sizeof(*new_node) + l->head.val_size - sizeof(new_node->pad));
+	struct node *new_node = (struct node*)calloc(1,sizeof(*new_node) + l->head.val_size - sizeof(new_node->pad));
 	if(new_node)
 	{
 		new_node->val_size = l->head.val_size;
@@ -118,8 +116,7 @@ void   list_insert_after(struct list *l,struct list_iter it,void *val)
 void   list_insert_before(struct list *l, struct list_iter it,void *val)
 {
 	assert(l);
-	struct node *new_node;
-	new_node = ALLOC(0,sizeof(*new_node) + l->head.val_size - sizeof(new_node->pad));
+	struct node *new_node = (struct node*)calloc(1,sizeof(*new_node) + l->head.val_size - sizeof(new_node->pad));
 	if(new_node)
 	{
 		new_node->val_size = l->head.val_size;
@@ -159,7 +156,7 @@ void  list_pop_back(struct list *_list,void *out)
 		struct node *next = _node->next;
 		pre->next = next;
 		next->pre = pre;
-		FREE(0,_node);
+		free(_node);
 		//free(_node);
 		--_list->size;
 	}
@@ -188,7 +185,7 @@ void  list_pop_front(struct list *_list,void *out)
 		struct node *next = _node->next;
 		pre->next = next;
 		next->pre = pre;
-		FREE(0,_node);
+		free(_node);
 		--_list->size;
 	}
 }
@@ -256,7 +253,7 @@ struct list_iter list_erase(struct list *l,struct list_iter it)
 	struct node *N = n->next;
 	P->next = N;
 	N->pre = P;
-	FREE(0,n);	
+	free(n);	
 	--l->size;
 	return it_next;	
 }
