@@ -35,13 +35,12 @@ typedef struct rpacket
 	buffer_t readbuf;      //当前rpos所在的buffer_t
 	uint8_t  raw;          //原始字节流数据包
 	allocator_t allocator;
-	allocator_t buffer_allo;
 }*rpacket_t;
 
 struct wpacket;
 
-rpacket_t rpacket_create(allocator_t buf_allo,allocator_t _allo,buffer_t,uint32_t pos,uint32_t pk_len,uint8_t is_raw);
-rpacket_t rpacket_create_by_wpacket(allocator_t buf_allo,allocator_t _allo,struct wpacket*);//通过wpacket构造
+rpacket_t rpacket_create(allocator_t _allo,buffer_t,uint32_t pos,uint32_t pk_len,uint8_t is_raw);
+rpacket_t rpacket_create_by_wpacket(allocator_t _allo,struct wpacket*);//通过wpacket构造
 void      rpacket_destroy(rpacket_t*);
 
 //数据读取接口

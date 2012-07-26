@@ -18,7 +18,7 @@ static void update_next_recv_pos(struct connection *c,int32_t bytestransfer)
 		if(c->next_recv_pos >= c->next_recv_buf->capacity)
 		{
 			if(!c->next_recv_buf->next)
-				c->next_recv_buf->next = buffer_create_and_acquire(0,0,BUFFER_SIZE);
+				c->next_recv_buf->next = buffer_create_and_acquire(NULL,BUFFER_SIZE);
 			c->next_recv_buf = buffer_acquire(c->next_recv_buf,c->next_recv_buf->next);
 			c->next_recv_pos = 0;
 		}
@@ -41,7 +41,7 @@ static /*rpacket_t*/void unpack(struct connection *c)
 			pk_total_size = pk_len+sizeof(pk_len);
 			if(pk_total_size > c->unpack_size)
 				break;//return 0;
-			r = rpacket_create(0,0,c->unpack_buf,c->unpack_pos,pk_len,c->raw);
+			r = rpacket_create(NULL,c->unpack_buf,c->unpack_pos,pk_len,c->raw);
 			//µ÷Õûunpack_bufºÍunpack_pos
 			while(pk_total_size)
 			{
@@ -67,7 +67,7 @@ static /*rpacket_t*/void unpack(struct connection *c)
 			pk_len = c->unpack_buf->size - c->unpack_pos;
 			if(!pk_len)
 				return; 
-			r = rpacket_create(0,0,c->unpack_buf,c->unpack_pos,pk_len,c->raw);
+			r = rpacket_create(NULL,c->unpack_buf,c->unpack_pos,pk_len,c->raw);
 			c->unpack_pos  += pk_len;
 			c->unpack_size -= pk_len;
 			if(c->unpack_pos >= c->unpack_buf->capacity)
@@ -140,7 +140,7 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 					{
 						pos = 0;
 						if(!buf->next)
-							buf->next = buffer_create_and_acquire(0,0,BUFFER_SIZE);
+							buf->next = buffer_create_and_acquire(NULL,BUFFER_SIZE);
 						buf = buf->next;
 					}
 					++i;
@@ -349,8 +349,8 @@ void connection_destroy(struct connection** c)
 
 int32_t connection_recv(struct connection *c)
 {
-	c->unpack_buf = buffer_create_and_acquire(0,0,BUFFER_SIZE);
-	c->next_recv_buf = buffer_acquire(0,c->unpack_buf);
+	c->unpack_buf = buffer_create_and_acquire(NULL,BUFFER_SIZE);
+	c->next_recv_buf = buffer_acquire(NULL,c->unpack_buf);
 	c->next_recv_pos = c->unpack_pos = c->unpack_size = 0;
 	c->wrecvbuf[0].iov_len = BUFFER_SIZE;
 	c->wrecvbuf[0].iov_base = c->next_recv_buf->buf;

@@ -19,9 +19,6 @@
 #include <stdint.h>
 typedef struct list *list_t;
 struct node;
-//struct fix_obj_pool;
-
-struct allocator;
 
 typedef struct list_iter
 {
@@ -29,9 +26,7 @@ typedef struct list_iter
 	struct node *n;
 }list_iter;
 
-extern struct allocator *list_create_obj_pool(uint32_t val_size,int32_t default_size,int32_t align4);
-
-extern list_t list_create(uint32_t val_size,struct allocator*);
+extern list_t list_create(uint32_t val_size);
 extern void   list_destroy(list_t*);
 
 extern list_iter list_begin(list_t);

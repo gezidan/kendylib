@@ -8,29 +8,28 @@ static void     buffer_destroy(void *b)
 	buffer_t _b = (buffer_t)b;
 	if(_b->next)
 		buffer_release(&(_b)->next);
-	FREE(_b->_allo,_b);
+	FREE(NULL,_b);
 	b = 0;
 }
 
-static buffer_t buffer_create(allocator_t _allo,uint32_t capacity)
+static buffer_t buffer_create(uint32_t capacity)
 {
 	uint32_t size = sizeof(struct buffer) + capacity;
-	buffer_t b = ALLOC(_allo,size);		
+	buffer_t b = (buffer_t)ALLOC(NULL,size);		
 	if(b)
 	{
 		b->size = 0;
 		b->capacity = capacity;
 		b->_refbase.refcount = 0;
-		b->_refbase.destroyer = buffer_destroy;
-		b->_allo = _allo;	
+		b->_refbase.destroyer = buffer_destroy;	
 	}
 	return b;
 }
 
 
-buffer_t buffer_create_and_acquire(allocator_t _allo,buffer_t b,uint32_t capacity)
+buffer_t buffer_create_and_acquire(buffer_t b,uint32_t capacity)
 {
-	buffer_t nb = buffer_create(_allo,capacity);
+	buffer_t nb = buffer_create(capacity);
 	return buffer_acquire(b,nb);
 }
 

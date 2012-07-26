@@ -115,7 +115,7 @@ void RBtree_destroy(struct interface_map_container **_rb)
 	struct RBtree *rb = (struct RBtree*)*_rb;
 	if(rb->size)
 	{
-		list_t stack = list_create(sizeof(RBnode*),0);
+		list_t stack = list_create(sizeof(RBnode*));
 		LIST_PUSH_FRONT(RBnode*,stack,rb->root);
 		for( ; !list_is_empty(stack); )
 		{

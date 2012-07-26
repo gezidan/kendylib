@@ -19,7 +19,7 @@ void init_tls()
 		 {
 			pthread_key_create(&thread_key,0);
 			tls_mtx = mutex_create();
-			tls_list = list_create(sizeof(hash_map_t),0);
+			tls_list = list_create(sizeof(hash_map_t));
 		 }
 	}
 }

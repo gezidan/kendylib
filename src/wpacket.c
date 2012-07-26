@@ -41,16 +41,15 @@ inline uint32_t GetSize_of_pow2(uint32_t size)
 	//return 	1 << GetK(size);
 }
 
-wpacket_t wpacket_create(allocator_t buf_allo,allocator_t _allo,uint32_t size,uint8_t is_raw)
+wpacket_t wpacket_create(allocator_t _allo,uint32_t size,uint8_t is_raw)
 {
 	size = GetSize_of_pow2(size);
 	wpacket_t w = (wpacket_t)ALLOC(_allo,sizeof(*w));	
-	w->buffer_allo = buf_allo;
-	w->allocator = _allo;
+	w->allocator = _allo;	
 	w->factor = size;
 	w->raw = is_raw;
-	w->buf = buffer_create_and_acquire(buf_allo,0,size);
-	w->writebuf = buffer_acquire(0,w->buf);
+	w->buf = buffer_create_and_acquire(NULL,size);
+	w->writebuf = buffer_acquire(NULL,w->buf);
 	w->begin_pos = 0;
 	if(is_raw)
 	{
@@ -71,11 +70,10 @@ wpacket_t wpacket_create(allocator_t buf_allo,allocator_t _allo,uint32_t size,ui
 	return w;
 }
 
-wpacket_t wpacket_create_by_rpacket(allocator_t buf_allo,allocator_t _allo,struct rpacket *r)
+wpacket_t wpacket_create_by_rpacket(allocator_t _allo,struct rpacket *r)
 {
 
 	wpacket_t w = (wpacket_t)ALLOC(_allo,sizeof(*w));	
-	w->buffer_allo = buf_allo;
 	w->allocator = _allo;	
 	w->raw = r->raw;
 	w->factor = 0;
@@ -111,7 +109,7 @@ static void wpacket_expand(wpacket_t w)
 	uint32_t size;
 	w->factor <<= 1;
 	size = w->factor;
-	w->writebuf->next = buffer_create_and_acquire(w->buffer_allo,0,size);
+	w->writebuf->next = buffer_create_and_acquire(NULL,size);
 	w->writebuf = buffer_acquire(w->writebuf,w->writebuf->next); 
 	w->wpos = 0;
 }
@@ -144,7 +142,7 @@ static void wpacket_write(wpacket_t w,int8_t *addr,uint32_t size)
 		* 执行完后wpacket和构造时传入的rpacket不再共享buffer
 		*/
 		w->factor = GetSize_of_pow2(*w->len);
-		tmp = buffer_create_and_acquire(w->buffer_allo,0,w->factor);
+		tmp = buffer_create_and_acquire(NULL,w->factor);
 		wpacket_copy(w,tmp);
 		w->begin_pos = 0;
 		if(!w->raw)

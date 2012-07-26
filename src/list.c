@@ -21,18 +21,9 @@ struct list
 	uint32_t size;
 	struct node head;
 	struct node end;
-	struct allocator *obj_pool;//产生node使用的内存池
 };
 
-struct allocator *list_create_obj_pool(uint32_t val_size,int32_t default_size,int32_t align4)
-{
-	struct node dummmy;
-	uint32_t node_size = sizeof(dummmy) + val_size - sizeof(dummmy.pad); 
-	struct allocator *pool = create_pool(node_size,default_size,align4);
-	return pool;
-}
-
-struct list* list_create(uint32_t val_size,struct allocator *obj_pool)
+struct list* list_create(uint32_t val_size)
 {
 	struct list *_list = ALLOC(0,sizeof(*_list));
 	if(_list)
@@ -42,7 +33,6 @@ struct list* list_create(uint32_t val_size,struct allocator *obj_pool)
 		_list->head.next = &_list->end;
 		_list->end.pre = &_list->head;
 		_list->head.pre = _list->end.next = 0;
-		_list->obj_pool = obj_pool;
 	}
 	return _list;
 }
@@ -57,10 +47,7 @@ void   list_destroy(struct list **_list)
 		while(cur != &(*_list)->end)
 		{
 			struct node *next = cur->next;
-			if((*_list)->obj_pool)
-				FREE((*_list)->obj_pool,cur);//pool_dealloc((*_list)->obj_pool,cur);
-			else
-				FREE(0,cur);
+			FREE(0,cur);
 			cur = next;
 		}
 	}
@@ -114,10 +101,7 @@ void   list_insert_after(struct list *l,struct list_iter it,void *val)
 {
 	assert(l);
 	struct node *new_node;
-	if(l->obj_pool)
-		new_node = ALLOC(l->obj_pool,0);//pool_alloc(l->obj_pool,0);
-	else
-		new_node = ALLOC(0,sizeof(*new_node) + l->head.val_size - sizeof(new_node->pad));
+	new_node = ALLOC(0,sizeof(*new_node) + l->head.val_size - sizeof(new_node->pad));
 	if(new_node)
 	{
 		new_node->val_size = l->head.val_size;
@@ -135,10 +119,7 @@ void   list_insert_before(struct list *l, struct list_iter it,void *val)
 {
 	assert(l);
 	struct node *new_node;
-	if(l->obj_pool)
-		new_node = ALLOC(l->obj_pool,0);//pool_alloc(l->obj_pool,0);
-	else
-		new_node = ALLOC(0,sizeof(*new_node) + l->head.val_size - sizeof(new_node->pad));
+	new_node = ALLOC(0,sizeof(*new_node) + l->head.val_size - sizeof(new_node->pad));
 	if(new_node)
 	{
 		new_node->val_size = l->head.val_size;
@@ -178,10 +159,7 @@ void  list_pop_back(struct list *_list,void *out)
 		struct node *next = _node->next;
 		pre->next = next;
 		next->pre = pre;
-		if(_list->obj_pool)
-			FREE(_list->obj_pool,_node);//pool_dealloc(_list->obj_pool,_node);
-		else
-			FREE(0,_node);
+		FREE(0,_node);
 		//free(_node);
 		--_list->size;
 	}
@@ -210,10 +188,7 @@ void  list_pop_front(struct list *_list,void *out)
 		struct node *next = _node->next;
 		pre->next = next;
 		next->pre = pre;
-		if(_list->obj_pool)
-			FREE(_list->obj_pool,_node);//pool_dealloc(_list->obj_pool,_node);
-		else
-			FREE(0,_node);
+		FREE(0,_node);
 		--_list->size;
 	}
 }
@@ -281,10 +256,7 @@ struct list_iter list_erase(struct list *l,struct list_iter it)
 	struct node *N = n->next;
 	P->next = N;
 	N->pre = P;
-	if(l->obj_pool)
-		FREE(l->obj_pool,n);//pool_dealloc(l->obj_pool,n);
-	else
-		FREE(0,n);	
+	FREE(0,n);	
 	--l->size;
 	return it_next;	
 }

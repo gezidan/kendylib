@@ -38,7 +38,7 @@ struct block_obj_allocator
 	uint32_t obj_size;
 };
 
-static void *free_list_get(struct free_list *f)
+static inline void *free_list_get(struct free_list *f)
 {
 	void *ptr = (void*)f->head;
 	f->head = f->head->next;
@@ -48,7 +48,7 @@ static void *free_list_get(struct free_list *f)
 	return ptr;
 }
 
-static void free_list_put(struct free_list *f,void *ptr)
+static inline void free_list_put(struct free_list *f,void *ptr)
 {
 	list_node *l = (list_node*)ptr;
 	l->next = NULL;

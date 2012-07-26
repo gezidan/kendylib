@@ -33,7 +33,6 @@ typedef struct wpacket
 	uint32_t data_size;//实际数据大小,包含包长度
 	uint8_t  raw;
 	allocator_t allocator;
-	allocator_t buffer_allo;
 }*wpacket_t;
 struct rpacket;
 
@@ -44,8 +43,8 @@ typedef struct
 	uint32_t wpos;
 }write_pos;
 
-wpacket_t wpacket_create(allocator_t buf_allo,allocator_t _allo,uint32_t size,uint8_t is_raw);
-wpacket_t wpacket_create_by_rpacket(allocator_t buf_allo,allocator_t _allo,struct rpacket*);//通过rpacket构造
+wpacket_t wpacket_create(allocator_t _allo,uint32_t size,uint8_t is_raw);
+wpacket_t wpacket_create_by_rpacket(allocator_t _allo,struct rpacket*);//通过rpacket构造
 void wpacket_destroy(wpacket_t*);
 
 write_pos wpacket_get_writepos(wpacket_t);
