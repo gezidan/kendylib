@@ -15,7 +15,7 @@ client:
 	gcc -g -o client testclient.c network.a ../clib/clib.a -I./include -I../ -lpthread -lrt
 atomic:
 	gcc -g -o atomic testatomic.c network.a ../clib/clib.a -I./include -I../ -lpthread -lrt
-log:kendy.a
-	gcc -g -o log testlog.c kendy.a -I./include -lpthread -lrt -ltcmalloc
+objpool:kendy.a
+	gcc -g -o objpool testobjpool.c kendy.a -I./include -lpthread -lrt -ltcmalloc
 spin:kendy.a
 	gcc -g -o spin testspinlock.c kendy.a -I./include -lpthread -lrt	
