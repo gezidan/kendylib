@@ -88,7 +88,8 @@ int32_t spin_unlock(spinlock_t l)
 				mutex_unlock(l->mtx);
 			}
 			else
-				COMPARE_AND_SWAP(&(l->owner),tid,0);
+				l->owner = 0;
+				//COMPARE_AND_SWAP(&(l->owner),tid,0);
 		}
 		return 0;
 	}
