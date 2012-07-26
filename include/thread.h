@@ -27,8 +27,8 @@ typedef void *(*thread_routine)(void*);
 
 thread_t create_thread(int32_t);
 void destroy_thread(thread_t*);
-void* join(thread_t);
-void start_run(thread_t,thread_routine,void*);
+void*thread_join(thread_t);
+void thread_start_run(thread_t,thread_routine,void*);
 
 #ifndef CREATE_THREAD_RUN
 #define CREATE_THREAD_RUN(JOINABLE,ROUTINE,ARG)\

@@ -30,7 +30,7 @@ void destroy_thread(thread_t *t)
 	*t = 0;
 }
 
-void* join(thread_t t)
+void* thread_join(thread_t t)
 {
 	void *result = 0;
 	if(t->joinable)
@@ -38,7 +38,7 @@ void* join(thread_t t)
 	return result;
 }
 
-void start_run(thread_t t,thread_routine r,void *arg)
+void thread_start_run(thread_t t,thread_routine r,void *arg)
 {
 	if(!t)
 		return;
@@ -116,5 +116,5 @@ void  thread_run(thread_routine r,void *arg)
 	_thread_arg->custom_routine = r;
 	_thread_arg->custom_arg = arg;
 	_thread_arg->_thread = create_thread(0);//not joinable
-	start_run(_thread_arg->_thread,routine,_thread_arg);
+	thread_start_run(_thread_arg->_thread,routine,_thread_arg);
 }
