@@ -20,9 +20,9 @@
 #include <stdint.h>
 typedef struct block_obj_allocator *block_obj_allocator_t;
 
-/*
 
-block_obj_allocator_t create_block_obj_allocator();
+/*
+block_obj_allocator_t create_block_obj_allocator(uint32_t s);
 
 void print_info(block_obj_allocator_t,int);
 */

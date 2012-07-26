@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "buffer.h"
+#include "allocator.h"
 
 static void     buffer_destroy(void *b)
 {

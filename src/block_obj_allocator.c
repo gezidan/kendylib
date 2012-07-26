@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include "allocator.h"
 
-
-
 struct free_list{
 	list_node next;
 	uint32_t  size;
@@ -266,7 +264,6 @@ block_obj_allocator_t create_block_obj_allocator(uint32_t obj_size)
 
 
 /*
-
 struct free_list{
 	list_node next;
 	uint32_t  size;
@@ -586,7 +583,7 @@ static void destroy_block_obj_al(struct allocator **a)
 	*a = NULL;	
 }
 
-block_obj_allocator_t create_block_obj_allocator()
+block_obj_allocator_t create_block_obj_allocator(uint32_t s)
 {
 	block_obj_allocator_t ba = (block_obj_allocator_t)calloc(1,sizeof(*ba));
 	ba->mtx = spin_create();
@@ -609,4 +606,5 @@ void print_info(block_obj_allocator_t ba,int size)
 	struct thread_cache *tc = (struct thread_cache*)pthread_getspecific(ba->t_key);
 	thread_cache_info(tc,size);
 }
+
 */
