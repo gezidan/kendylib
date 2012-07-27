@@ -46,8 +46,8 @@ int32_t spin_lock(spinlock_t l,int32_t count)
 				if(COMPARE_AND_SWAP(&(l->owner),0,tid) == 0)
 					break;
 			}
-			//__sync_synchronize();	
 		};
+		__sync_synchronize();	
 		++l->lock_count;
 		l->lock_by_mtx = 0;
 		return 0;
@@ -65,7 +65,6 @@ int32_t spin_lock(spinlock_t l,int32_t count)
 					return 0;
 				}
 			}
-			//__sync_synchronize();
 		}
 		int32_t ret = mutex_lock(l->mtx);
 		if(ret == 0)
