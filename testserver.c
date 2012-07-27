@@ -8,6 +8,8 @@
 #include "SysTime.h"
 #include "Acceptor.h"
 #include <stdint.h>
+#include "block_obj_allocator.h"
+#include <assert.h>
 uint32_t packet_recv = 0;
 uint32_t packet_send = 0;
 uint32_t send_request = 0;
@@ -18,6 +20,7 @@ uint32_t bf_count = 0;
 uint32_t clientcount = 0;
 uint32_t last_send_tick = 0;
 uint32_t recv_count = 0;
+allocator_t wpacket_allocator;
 
 #define MAX_CLIENT 1000
 static struct connection *clients[MAX_CLIENT];
@@ -50,9 +53,11 @@ void send2_all_client(rpacket_t r)
 	{
 		if(clients[i])
 		{
-			w = wpacket_create_by_rpacket(0,0,r);
+			w = wpacket_create_by_rpacket(wpacket_allocator,r);
+			assert(w);
 			++send_request;
-			connection_push_packet(clients[i],w);
+			connection_send(clients[i],w,0);
+			//connection_push_packet(clients[i],w);
 		}
 	}
 }
@@ -116,7 +121,8 @@ int main(int argc,char **argv)
 	{
 		printf("Init error\n");
 		return 0;
-	}	
+	}
+	wpacket_allocator = (allocator_t)create_block_obj_allocator(sizeof(struct wpacket));	
 
 	uint32_t i = 0;
 	//getchar();
@@ -135,7 +141,7 @@ int main(int argc,char **argv)
 		now = GetSystemMs();
 		if(now - tick > 1000)
 		{
-			//printf("recv:%u,send:%u,s_req:%u,pool_size:%u,bf:%u,sp:%u,rpk_size:%u\n",packet_recv,packet_send,send_request,wpacket_pool_size(),bf_count,s_p,rpacket_pool_size());
+			printf("recv:%u,send:%u,s_req:%u\n",packet_recv,packet_send,send_request);
 			tick = now;
 			packet_recv = 0;
 			packet_send = 0;
@@ -144,7 +150,7 @@ int main(int argc,char **argv)
 			iocp_count = 0;
 			recv_count = 0;
 		}
-		if(now - last_send_tick > 50)
+		/*if(now - last_send_tick > 50)
 		{
 			//心跳,每50ms集中发一次包
 			last_send_tick = now;
@@ -156,7 +162,7 @@ int main(int argc,char **argv)
 					connection_send(clients[i],0,0);
 				}
 			}
-		}
+		}*/
 		
 	}
 	return 0;

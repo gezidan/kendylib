@@ -51,6 +51,7 @@ wpacket_t wpacket_create(allocator_t _allo,uint32_t size,uint8_t is_raw)
 	w->buf = buffer_create_and_acquire(NULL,size);
 	w->writebuf = buffer_acquire(NULL,w->buf);
 	w->begin_pos = 0;
+	w->next.next = NULL;
 	if(is_raw)
 	{
 		w->wpos = 0;
@@ -82,6 +83,7 @@ wpacket_t wpacket_create_by_rpacket(allocator_t _allo,struct rpacket *r)
 	w->buf = buffer_acquire(0,r->buf);
 	w->len = 0;//触发拷贝之前len没有作用
 	w->wpos = 0;
+	w->next.next = NULL;
 	if(w->raw)
 		w->data_size = r->len;
 	else

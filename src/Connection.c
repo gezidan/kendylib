@@ -2,10 +2,10 @@
 #include "link_list.h"
 #include <assert.h>
 
-#define BUFFER_SIZE 16384
+#define BUFFER_SIZE 65536
 
 //接收相关函数
-static void update_next_recv_pos(struct connection *c,int32_t bytestransfer)
+static inline void update_next_recv_pos(struct connection *c,int32_t bytestransfer)
 {
 	uint32_t size;		
 	while(bytestransfer)
@@ -25,7 +25,7 @@ static void update_next_recv_pos(struct connection *c,int32_t bytestransfer)
 	}
 }
 
-static /*rpacket_t*/void unpack(struct connection *c)
+static inline void unpack(struct connection *c)
 {
 	uint32_t pk_len = 0;
 	uint32_t pk_total_size;
@@ -156,10 +156,10 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 }
 
 //发送相关函数
-static  st_io *prepare_send(struct connection *c)
+static inline st_io *prepare_send(struct connection *c)
 {
 	int32_t i = 0;
-	wpacket_t w = (wpacket_t)list_head(c->send_list);
+	wpacket_t w = (wpacket_t)link_list_head(c->send_list);
 	buffer_t b;
 	uint32_t pos;
 	st_io *O = 0;
@@ -193,7 +193,7 @@ static  st_io *prepare_send(struct connection *c)
 
 }
 extern uint32_t packet_send;
-static void update_send_list(struct connection *c,int32_t bytestransfer)
+static inline void update_send_list(struct connection *c,int32_t bytestransfer)
 {
 	wpacket_t w;
 	uint32_t size;

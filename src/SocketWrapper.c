@@ -7,8 +7,8 @@ static void InitSocket(HANDLE sock,int32_t fd)
 {
 	socket_t s = GetSocketByHandle(sock);
 	s->fd = fd;
-	LIST_CLEAR(s->pending_send);
-	LIST_CLEAR(s->pending_recv);
+	LINK_LIST_CLEAR(s->pending_send);
+	LINK_LIST_CLEAR(s->pending_recv);
 	s->readable = s->writeable = 0;
 	s->engine = 0;
 	s->isactived = 0;

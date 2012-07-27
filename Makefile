@@ -9,10 +9,10 @@ wheel:
 accept_connect:
 	gcc -g -o test_connect test_connector.c network.a -I./include -lpthread -lrt
 	gcc -g -o test_accept test_acceptor.c network.a -I./include -lpthread -lrt
-server:
-	gcc -g -o server testserver.c network.a ../clib/clib.a  -I./include -I../ -lpthread -lrt
-client:
-	gcc -g -o client testclient.c network.a ../clib/clib.a -I./include -I../ -lpthread -lrt
+server:kendy.a
+	gcc -O3 -g -o server testserver.c kendy.a -I./include -lpthread -lrt
+client:kendy.a
+	gcc -O3 -g -o client testclient.c kendy.a -I./include -lpthread -lrt
 atomic:
 	gcc -g -o atomic testatomic.c network.a ../clib/clib.a -I./include -I../ -lpthread -lrt
 objpool:kendy.a

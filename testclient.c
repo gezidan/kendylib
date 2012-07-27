@@ -88,7 +88,7 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 		printf("%d,连接到:%s,%d,成功\n",s,ip,port);
 		add_client(c);
 		Bind2Engine(*engine,s,RecvFinish,SendFinish);
-		wpk = wpacket_create(0,0,64,0);
+		wpk = wpacket_create(NULL,64,0);
 		wpacket_write_uint32(wpk,(uint32_t)s);
 		uint32_t sys_t = GetSystemMs();
 		wpacket_write_uint32(wpk,sys_t);
@@ -137,7 +137,7 @@ int32_t main(int32_t argc,char **argv)
 		now = GetSystemMs();
 		if(now - tick > 1000)
 		{
-			//printf("recv:%u,send:%u,s_req:%u,ava_interval:%u,bf:%u\n",packet_recv,packet_send,send_request,ava_interval,bf_count);
+			printf("recv:%u,send:%u,s_req:%u,ava_interval:%u\n",packet_recv,packet_send,send_request,ava_interval);
 			tick = now;
 			packet_recv = 0;
 			packet_send = 0;
@@ -155,7 +155,7 @@ int32_t main(int32_t argc,char **argv)
 			{
 				if(clients[i])
 				{
-					wpk = wpacket_create(0,0,64,0);
+					wpk = wpacket_create(NULL,64,0);
 					wpacket_write_uint32(wpk,clients[i]->socket);
 					uint32_t sys_t = GetSystemMs();
 					wpacket_write_uint32(wpk,sys_t);

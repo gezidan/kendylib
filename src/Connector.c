@@ -125,7 +125,7 @@ void connector_run(connector_t c,uint32_t ms)
 						--c->fd_seisize;
 					}
 					else
-						LIST_PUSH_BACK(c->_pending_connect,pc);
+						LINK_LIST_PUSH_BACK(c->_pending_connect,pc);
 				}
 			}
 		}

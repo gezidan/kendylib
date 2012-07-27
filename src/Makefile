@@ -1,5 +1,5 @@
 all:
-	gcc -g -O3 -c *.c -I../include
+	gcc -O3 -g -c *.c -I../include
 	ar -rc kendy.a *.o
 	mv kendy.a ../
 	rm -f *.o

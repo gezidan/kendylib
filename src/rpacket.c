@@ -16,6 +16,7 @@ rpacket_t rpacket_create(allocator_t _alloc,buffer_t b,uint32_t pos,uint32_t pk_
 	r->len = pk_len;
 	r->data_remain = r->len;
 	r->begin_pos = pos;
+	r->next.next = NULL;
 	if(is_raw)
 		r->rpos = pos;
 	else
@@ -33,7 +34,8 @@ rpacket_t rpacket_create_by_wpacket(allocator_t _alloc,struct wpacket *w)
 	r->buf = buffer_acquire(0,w->buf);
 	r->readbuf = buffer_acquire(0,w->buf);
 	r->raw = w->raw;
-	r->begin_pos = w->begin_pos;	
+	r->begin_pos = w->begin_pos;
+	r->next.next = NULL;	
 	if(r->raw)
 	{
 		r->len = w->data_size;

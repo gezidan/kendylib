@@ -46,7 +46,7 @@ void   list_destroy(struct list **_list)
 		while(cur != &(*_list)->end)
 		{
 			struct node *next = cur->next;
-			FREE(0,cur);
+			free(cur);
 			cur = next;
 		}
 	}
