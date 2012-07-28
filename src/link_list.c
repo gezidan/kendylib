@@ -103,7 +103,7 @@ list_node* link_list_pop(link_list *l)
 	return ret;
 }
 
-inline int32_t link_list_is_empty(link_list *l)
+int32_t link_list_is_empty(link_list *l)
 {
 	return l->size == 0;
 }

@@ -17,7 +17,7 @@ void link_list_push_front(struct link_list*,list_node*);
 
 list_node* link_list_pop(struct link_list*);
 
-list_node* link_list_head(struct link_list*);
+inline list_node* link_list_head(struct link_list*);
 
 inline int32_t link_list_is_empty(struct link_list*);
 
