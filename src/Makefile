@@ -1,5 +1,6 @@
 all:
 	gcc -O3 -g -c *.c -I../include
+	gcc -O3 -g -c switch.s
 	ar -rc kendy.a *.o
 	mv kendy.a ../
 	rm -f *.o
