@@ -84,11 +84,11 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 	{
 		
 		setNonblock(s);
-		c = connection_create(s,0,on_process_packet,remove_client);
+		c = connection_create(s,0,0,on_process_packet,remove_client);
 		printf("%d,连接到:%s,%d,成功\n",s,ip,port);
 		add_client(c);
 		Bind2Engine(*engine,s,RecvFinish,SendFinish);
-		wpk = wpacket_create(NULL,64,0);
+		wpk = wpacket_create(0,NULL,64,0);
 		wpacket_write_uint32(wpk,(uint32_t)s);
 		uint32_t sys_t = GetSystemMs();
 		wpacket_write_uint32(wpk,sys_t);
@@ -155,7 +155,7 @@ int32_t main(int32_t argc,char **argv)
 			{
 				if(clients[i])
 				{
-					wpk = wpacket_create(NULL,64,0);
+					wpk = wpacket_create(0,NULL,64,0);
 					wpacket_write_uint32(wpk,clients[i]->socket);
 					uint32_t sys_t = GetSystemMs();
 					wpacket_write_uint32(wpk,sys_t);

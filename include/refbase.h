@@ -6,6 +6,7 @@
 struct refbase
 {
 	atomic_32_t refcount;
+	uint8_t     mt;
 	void (*destroyer)(void*);
 };
 

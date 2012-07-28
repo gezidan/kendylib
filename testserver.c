@@ -86,7 +86,7 @@ void on_process_packet(struct connection *c,rpacket_t r)
 void accept_callback(HANDLE s,void *ud)
 {
 	HANDLE *engine = (HANDLE*)ud;
-	struct connection *c = connection_create(s,0,on_process_packet,remove_client);
+	struct connection *c = connection_create(s,0,0,on_process_packet,remove_client);
 	add_client(c);
 	printf("cli fd:%d\n",s);
 	setNonblock(s);

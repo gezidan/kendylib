@@ -36,7 +36,7 @@ typedef struct buffer
 }*buffer_t;
 
 
-buffer_t buffer_create_and_acquire(buffer_t,uint32_t);
+buffer_t buffer_create_and_acquire(uint8_t mt,buffer_t,uint32_t);
 buffer_t buffer_acquire(buffer_t,buffer_t);
 void     buffer_release(buffer_t*);
 int32_t  buffer_read(buffer_t,uint32_t,int8_t*,uint32_t);
