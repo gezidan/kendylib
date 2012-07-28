@@ -84,9 +84,14 @@ static inline struct free_list *central_get_freelist(block_obj_allocator_t centr
 {
 	//printf("central_get_freelist\n");
 	struct free_list *f;
-	spin_lock(central->mtx,4000);
-	f = (struct free_list*)link_list_pop(central->_free_list);
-	spin_unlock(central->mtx);
+	if(central->mtx)
+	{
+		spin_lock(central->mtx,4000);
+		f = (struct free_list*)link_list_pop(central->_free_list);
+		spin_unlock(central->mtx);
+	}
+	else
+		f = (struct free_list*)link_list_pop(central->_free_list);
 	if(!f)
 	{
 		//printf("creat_new_freelist\n");
@@ -98,9 +103,14 @@ static inline struct free_list *central_get_freelist(block_obj_allocator_t centr
 static inline void give_back_to_central(block_obj_allocator_t central,struct free_list *f)
 {
 	//printf("give_back_to_central\n");
-	spin_lock(central->mtx,4000);
-	LINK_LIST_PUSH_BACK(central->_free_list,f);
-	spin_unlock(central->mtx);
+	if(central->mtx)
+	{
+		spin_lock(central->mtx,4000);
+		LINK_LIST_PUSH_BACK(central->_free_list,f);
+		spin_unlock(central->mtx);
+	}
+	else
+		LINK_LIST_PUSH_BACK(central->_free_list,f);
 }
 
 static inline void *thread_allocator_alloc(struct thread_allocator *a)
@@ -197,6 +207,7 @@ struct thread_allocator *create_thread_allocator(block_obj_allocator_t ba)
 		a->_free_list = LINK_LIST_CREATE();
 		a->_recover = LINK_LIST_CREATE();
 		a->collect_factor = ((DEFAULT_BLOCK_SIZE)*2)/ba->obj_size;
+		LINK_LIST_PUSH_BACK(ba->_thread_allocators,a);
 	}
 	return a;
 }
@@ -204,11 +215,21 @@ struct thread_allocator *create_thread_allocator(block_obj_allocator_t ba)
 static void* block_obj_al_alloc(struct allocator *a,int32_t size)
 {
 	block_obj_allocator_t ba = (block_obj_allocator_t)a;
-	struct thread_allocator *ta = (struct thread_allocator*)pthread_getspecific(ba->t_key);
-	if(!ta)
+	struct thread_allocator *ta;
+	if(ba->mtx)
 	{
-		ta = create_thread_allocator(ba);
-		pthread_setspecific(ba->t_key,(void*)ta);
+		ta = (struct thread_allocator*)pthread_getspecific(ba->t_key);
+		if(!ta)
+		{
+			ta = create_thread_allocator(ba);
+			pthread_setspecific(ba->t_key,(void*)ta);
+		}
+	}
+	else
+	{
+		ta = (struct thread_allocator*)link_list_head(ba->_thread_allocators);
+		if(!ta)
+			ta = create_thread_allocator(ba);
 	}
 	return thread_allocator_alloc(ta);
 }
@@ -216,7 +237,11 @@ static void* block_obj_al_alloc(struct allocator *a,int32_t size)
 static void  block_obj_al_dealloc(struct allocator*a, void *ptr)
 {
 	block_obj_allocator_t ba = (block_obj_allocator_t)a;
-	struct thread_allocator *ta = (struct thread_allocator*)pthread_getspecific(ba->t_key);
+	struct thread_allocator *ta;
+	if(ba->mtx)
+		ta = (struct thread_allocator*)pthread_getspecific(ba->t_key);
+	else
+		ta = (struct thread_allocator*)link_list_head(ba->_thread_allocators);
 	assert(ta);
 	thread_allocator_dealloc(ta,ptr);
 }
@@ -237,25 +262,31 @@ static void destroy_block_obj_al(struct allocator **a)
 	}
 	release_freelist(ba->_free_list);
 	LINK_LIST_DESTROY(&ba->_free_list);
-	spin_destroy(&(ba->mtx));
-	pthread_key_delete(ba->t_key);
+	if(ba->mtx)
+	{
+		spin_destroy(&(ba->mtx));
+		pthread_key_delete(ba->t_key);
+	}
 	free(ba);
 	*a = NULL;	
 }
 
 extern uint8_t GetK(uint32_t size);
-block_obj_allocator_t create_block_obj_allocator(uint32_t obj_size)
+block_obj_allocator_t create_block_obj_allocator(uint8_t mt,uint32_t obj_size)
 {
 	if(obj_size < sizeof(void*))
 		obj_size = sizeof(void*);
 	uint8_t k = GetK(obj_size);
 	obj_size = 1 << k;
 	block_obj_allocator_t ba = (block_obj_allocator_t)calloc(1,sizeof(*ba));
-	ba->mtx = spin_create();
+	if(mt)
+	{
+		ba->mtx = spin_create();
+		pthread_key_create(&ba->t_key,0);
+	}
 	ba->_thread_allocators = LINK_LIST_CREATE();
 	ba->_free_list = LINK_LIST_CREATE();
 	ba->obj_size = obj_size;
-	pthread_key_create(&ba->t_key,0);
 	ba->super_class.Alloc = block_obj_al_alloc;
 	ba->super_class.DeAlloc = block_obj_al_dealloc;
 	ba->super_class.Destroy = destroy_block_obj_al;

@@ -41,14 +41,15 @@ inline uint32_t GetSize_of_pow2(uint32_t size)
 	//return 	1 << GetK(size);
 }
 
-wpacket_t wpacket_create(allocator_t _allo,uint32_t size,uint8_t is_raw)
+wpacket_t wpacket_create(uint8_t mt,allocator_t _allo,uint32_t size,uint8_t is_raw)
 {
 	size = GetSize_of_pow2(size);
 	wpacket_t w = (wpacket_t)ALLOC(_allo,sizeof(*w));	
-	w->allocator = _allo;	
+	w->allocator = _allo;
+	w->mt = mt;	
 	w->factor = size;
 	w->raw = is_raw;
-	w->buf = buffer_create_and_acquire(NULL,size);
+	w->buf = buffer_create_and_acquire(mt,NULL,size);
 	w->writebuf = buffer_acquire(NULL,w->buf);
 	w->begin_pos = 0;
 	w->next.next = NULL;
@@ -77,10 +78,11 @@ wpacket_t wpacket_create_by_rpacket(allocator_t _allo,struct rpacket *r)
 	wpacket_t w = (wpacket_t)ALLOC(_allo,sizeof(*w));	
 	w->allocator = _allo;	
 	w->raw = r->raw;
+	w->mt = r->mt;
 	w->factor = 0;
-	w->writebuf = 0;
+	w->writebuf = NULL;
 	w->begin_pos = r->begin_pos;
-	w->buf = buffer_acquire(0,r->buf);
+	w->buf = buffer_acquire(NULL,r->buf);
 	w->len = 0;//触发拷贝之前len没有作用
 	w->wpos = 0;
 	w->next.next = NULL;
@@ -102,7 +104,7 @@ void wpacket_destroy(wpacket_t *w)
 	buffer_release(&(*w)->buf);
 	buffer_release(&(*w)->writebuf);
 	FREE((*w)->allocator,*w);
-	*w = 0;
+	*w = NULL;
 	//ATOMIC_DECREASE(&wpacket_count);
 }
 
@@ -111,7 +113,7 @@ static void wpacket_expand(wpacket_t w)
 	uint32_t size;
 	w->factor <<= 1;
 	size = w->factor;
-	w->writebuf->next = buffer_create_and_acquire(NULL,size);
+	w->writebuf->next = buffer_create_and_acquire(w->mt,NULL,size);
 	w->writebuf = buffer_acquire(w->writebuf,w->writebuf->next); 
 	w->wpos = 0;
 }
@@ -144,7 +146,7 @@ static void wpacket_write(wpacket_t w,int8_t *addr,uint32_t size)
 		* 执行完后wpacket和构造时传入的rpacket不再共享buffer
 		*/
 		w->factor = GetSize_of_pow2(*w->len);
-		tmp = buffer_create_and_acquire(NULL,w->factor);
+		tmp = buffer_create_and_acquire(w->mt,NULL,w->factor);
 		wpacket_copy(w,tmp);
 		w->begin_pos = 0;
 		if(!w->raw)

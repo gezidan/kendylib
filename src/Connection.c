@@ -18,7 +18,7 @@ static inline void update_next_recv_pos(struct connection *c,int32_t bytestransf
 		if(c->next_recv_pos >= c->next_recv_buf->capacity)
 		{
 			if(!c->next_recv_buf->next)
-				c->next_recv_buf->next = buffer_create_and_acquire(NULL,BUFFER_SIZE);
+				c->next_recv_buf->next = buffer_create_and_acquire(c->mt,NULL,BUFFER_SIZE);
 			c->next_recv_buf = buffer_acquire(c->next_recv_buf,c->next_recv_buf->next);
 			c->next_recv_pos = 0;
 		}
@@ -41,7 +41,7 @@ static inline void unpack(struct connection *c)
 			pk_total_size = pk_len+sizeof(pk_len);
 			if(pk_total_size > c->unpack_size)
 				break;//return 0;
-			r = rpacket_create(NULL,c->unpack_buf,c->unpack_pos,pk_len,c->raw);
+			r = rpacket_create(c->mt,NULL,c->unpack_buf,c->unpack_pos,pk_len,c->raw);
 			//µ÷Õûunpack_bufºÍunpack_pos
 			while(pk_total_size)
 			{
@@ -67,7 +67,7 @@ static inline void unpack(struct connection *c)
 			pk_len = c->unpack_buf->size - c->unpack_pos;
 			if(!pk_len)
 				return; 
-			r = rpacket_create(NULL,c->unpack_buf,c->unpack_pos,pk_len,c->raw);
+			r = rpacket_create(c->mt,NULL,c->unpack_buf,c->unpack_pos,pk_len,c->raw);
 			c->unpack_pos  += pk_len;
 			c->unpack_size -= pk_len;
 			if(c->unpack_pos >= c->unpack_buf->capacity)
@@ -140,7 +140,7 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 					{
 						pos = 0;
 						if(!buf->next)
-							buf->next = buffer_create_and_acquire(NULL,BUFFER_SIZE);
+							buf->next = buffer_create_and_acquire(c->mt,NULL,BUFFER_SIZE);
 						buf = buf->next;
 					}
 					++i;
@@ -311,7 +311,7 @@ void SendFinish(int32_t bytestransfer,st_io *io)
 	}
 }
 
-struct connection *connection_create(HANDLE s,uint8_t is_raw,process_packet _process_packet,on_connection_destroy on_destroy)
+struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_packet _process_packet,on_connection_destroy on_destroy)
 {
 	struct connection *c = calloc(1,sizeof(*c));
 	c->socket = s;
@@ -326,6 +326,7 @@ struct connection *connection_create(HANDLE s,uint8_t is_raw,process_packet _pro
 	c->recv_overlap.c = c;
 	c->send_overlap.c = c;
 	c->raw = is_raw;
+	c->mt = mt;
 	return c;
 }
 
@@ -349,7 +350,7 @@ void connection_destroy(struct connection** c)
 
 int32_t connection_recv(struct connection *c)
 {
-	c->unpack_buf = buffer_create_and_acquire(NULL,BUFFER_SIZE);
+	c->unpack_buf = buffer_create_and_acquire(c->mt,NULL,BUFFER_SIZE);
 	c->next_recv_buf = buffer_acquire(NULL,c->unpack_buf);
 	c->next_recv_pos = c->unpack_pos = c->unpack_size = 0;
 	c->wrecvbuf[0].iov_len = BUFFER_SIZE;

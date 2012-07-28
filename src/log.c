@@ -176,7 +176,7 @@ static void write_to_file(log_t l,int32_t is_close)
 		struct tm *_tm = localtime_r(&t,&re);
 		snprintf(buf,4096,"[%d-%d-%d %d:%d:%d]close log sucessful\n",_tm->tm_year+1900,_tm->tm_mon+1,_tm->tm_mday,_tm->tm_hour,_tm->tm_min,_tm->tm_sec);
 		int32_t str_len = strlen(buf);
-		wpacket_t w = wpacket_create(NULL,str_len,1);
+		wpacket_t w = wpacket_create(0,NULL,str_len,1);
 		wpacket_write_binary(w,buf,str_len);	
 		LINK_LIST_PUSH_BACK(l->pending_log,w);
 	}
@@ -274,7 +274,7 @@ int32_t log_write(log_t l,const char *content,int32_t level)
 	struct tm *_tm = localtime_r(&t,&re);
 	snprintf(buf,4096,"[%d-%d-%d %d:%d:%d]%s\n",_tm->tm_year+1900,_tm->tm_mon+1,_tm->tm_mday,_tm->tm_hour,_tm->tm_min,_tm->tm_sec,content);
 	int32_t str_len = strlen(buf);
-	wpacket_t w = wpacket_create(g_log_system->_wpacket_allocator,str_len,1);
+	wpacket_t w = wpacket_create(0,g_log_system->_wpacket_allocator,str_len,1);
 	//wpacket_t w = wpacket_create(NULL,NULL,str_len,1);
 	wpacket_write_binary(w,buf,str_len);
 

@@ -122,7 +122,7 @@ int main(int argc,char **argv)
 		printf("Init error\n");
 		return 0;
 	}
-	wpacket_allocator = (allocator_t)create_block_obj_allocator(sizeof(struct wpacket));	
+	wpacket_allocator = (allocator_t)create_block_obj_allocator(0,sizeof(struct wpacket));	
 
 	uint32_t i = 0;
 	//getchar();

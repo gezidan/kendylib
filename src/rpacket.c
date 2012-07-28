@@ -5,14 +5,15 @@
 #include <stdio.h>
 
 
-rpacket_t rpacket_create(allocator_t _alloc,buffer_t b,uint32_t pos,uint32_t pk_len,uint8_t is_raw)
+rpacket_t rpacket_create(uint8_t mt,allocator_t _alloc,buffer_t b,uint32_t pos,uint32_t pk_len,uint8_t is_raw)
 {
 	rpacket_t r = (rpacket_t)ALLOC(_alloc,sizeof(*r));	
 	r->allocator = _alloc;
+	r->mt = mt;
 	r->binbuf = 0;
 	r->binbufpos = 0;
-	r->buf = buffer_acquire(0,b);
-	r->readbuf = buffer_acquire(0,b);
+	r->buf = buffer_acquire(NULL,b);
+	r->readbuf = buffer_acquire(NULL,b);
 	r->len = pk_len;
 	r->data_remain = r->len;
 	r->begin_pos = pos;
@@ -30,6 +31,7 @@ rpacket_t rpacket_create_by_wpacket(allocator_t _alloc,struct wpacket *w)
 	rpacket_t r = (rpacket_t)ALLOC(_alloc,sizeof(*r));	
 	r->allocator = _alloc;
 	r->binbuf = 0;
+	r->mt = w->mt;
 	r->binbufpos = 0;
 	r->buf = buffer_acquire(0,w->buf);
 	r->readbuf = buffer_acquire(0,w->buf);
@@ -163,7 +165,7 @@ static const void* rpacket_raw_read_binary(rpacket_t r,uint32_t *len)
 		if(!r->binbuf)
 		{
 			r->binbufpos = 0;
-			r->binbuf = buffer_create_and_acquire(NULL,r->len);
+			r->binbuf = buffer_create_and_acquire(r->mt,NULL,r->len);
 		}
 		addr = r->binbuf->buf + r->binbufpos;
 		size = r->data_remain;
@@ -215,7 +217,7 @@ const void* rpacket_read_binary(rpacket_t r,uint32_t *len)
 		if(!r->binbuf)
 		{
 			r->binbufpos = 0;
-			r->binbuf = buffer_create_and_acquire(NULL,r->len);
+			r->binbuf = buffer_create_and_acquire(r->mt,NULL,r->len);
 		}
 		addr = r->binbuf->buf + r->binbufpos;
 		while(size)

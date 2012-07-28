@@ -19,7 +19,7 @@ uint8_t GetK(uint32_t size);
 void test1(char **tmp)
 {
 	{
-		allocator_t a = (allocator_t)create_block_obj_allocator(16);
+		allocator_t a = (allocator_t)create_block_obj_allocator(1,16);
 		int j = 0;
 		for(;j<10;++j)
 		{
@@ -58,7 +58,7 @@ void test1(char **tmp)
 void test2(char **tmp)
 {
 	{
-		allocator_t a = (allocator_t)create_block_obj_allocator(16);
+		allocator_t a = (allocator_t)create_block_obj_allocator(1,16);
 		int j = 0;
 		for(;j<10;++j)
 		{
@@ -97,7 +97,7 @@ void test2(char **tmp)
 void test3(char **tmp)
 {
 	{
-		allocator_t a = (allocator_t)create_block_obj_allocator(16);
+		allocator_t a = (allocator_t)create_block_obj_allocator(1,16);
 		int j = 0;
 		for(;j<10;++j)
 		{
