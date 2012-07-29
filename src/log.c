@@ -70,7 +70,7 @@ void close_log_system()
 	COMPARE_AND_SWAP(&(g_log_system->is_close),0,1);
 	//停止写日志线程,并等待结束
 	//g_log_system->is_close = 1;
-	join(g_log_system->worker_thread);
+	thread_join(g_log_system->worker_thread);
 	mutex_lock(g_log_system->mtx);
 	while(!link_list_is_empty(g_log_system->log_files))
 	{

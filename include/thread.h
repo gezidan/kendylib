@@ -33,7 +33,7 @@ void thread_start_run(thread_t,thread_routine,void*);
 #ifndef CREATE_THREAD_RUN
 #define CREATE_THREAD_RUN(JOINABLE,ROUTINE,ARG)\
 ({thread_t __t;__t =create_thread(JOINABLE);\
-  start_run(__t,ROUTINE,ARG);__t;})
+  thread_start_run(__t,ROUTINE,ARG);__t;})
 #endif
 
 //直接开启一个线程,运行thread_routine

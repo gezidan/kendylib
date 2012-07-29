@@ -1,7 +1,8 @@
 all:
-	gcc -O3 -g -c *.c -I../include
-	gcc -O3 -g -c switch.s
+	gcc -g -c *.c -I../include
+	gcc -g -c switch.s
 	ar -rc kendy.a *.o
+	cp kendy.a ../../luanet
 	mv kendy.a ../
 	rm -f *.o
 all-mt:

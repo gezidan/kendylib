@@ -53,7 +53,12 @@ void local_pool_destroy(struct allocator **_lp)
 	*_lp = 0;
 }
 
-extern uint32_t alignsize(uint32_t obj_size);
+uint32_t alignsize(uint32_t obj_size)
+{
+	if(obj_size % 4 > 0)
+		obj_size = (obj_size / 4) * 4 + 4;
+	return obj_size;
+}
 
 void *local_pool_alloc(struct allocator *_lp,int32_t size)
 {
