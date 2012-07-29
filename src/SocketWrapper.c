@@ -114,7 +114,6 @@ int32_t Listen(HANDLE sock,int32_t backlog)
 }
 
 HANDLE Tcp_Listen(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int32_t backlog)
-
 {
 	HANDLE sock;
 	sock = OpenSocket(INET,STREAM,TCP);

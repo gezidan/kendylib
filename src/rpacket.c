@@ -139,13 +139,7 @@ double   rpacket_read_double(rpacket_t r)
 	return value;
 }
 
-const char* rpacket_read_string(rpacket_t r)
-{
-	uint32_t len = 0;
-	if(r->raw)//raw类型的rpacket不支持读取字符串
-		return 0;
-	return (const char *)rpacket_read_binary(r,&len);
-}
+
 
 static const void* rpacket_raw_read_binary(rpacket_t r,uint32_t *len)
 {
@@ -187,6 +181,14 @@ static const void* rpacket_raw_read_binary(rpacket_t r,uint32_t *len)
 		}
 	}
 	return addr;
+}
+
+const char* rpacket_read_string(rpacket_t r)
+{
+	uint32_t len = 0;
+	if(r->raw)//raw类型的rpacket不支持读取字符串
+		return rpacket_raw_read_binary(r,&len);
+	return (const char *)rpacket_read_binary(r,&len);
 }
 
 const void* rpacket_read_binary(rpacket_t r,uint32_t *len)
