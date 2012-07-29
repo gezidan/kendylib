@@ -105,8 +105,9 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 			c->recv_overlap.isUsed = 0;
 			if(!c->send_overlap.isUsed)
 			{
-				ReleaseSocketWrapper(c->socket);
-				connection_destroy(&c);
+				//ReleaseSocketWrapper(c->socket);
+				//connection_destroy(&c);
+				c->_on_disconnect(c);
 			}
 			break;
 		}
@@ -284,8 +285,9 @@ void SendFinish(int32_t bytestransfer,st_io *io)
 			c->send_overlap.isUsed = 0;
 			if(!c->recv_overlap.isUsed)
 			{
-				ReleaseSocketWrapper(c->socket);
-				connection_destroy(&c);
+				c->_on_disconnect(c);
+				//ReleaseSocketWrapper(c->socket);
+				//connection_destroy(&c);
 			}
 			break;
 		}
@@ -311,13 +313,13 @@ void SendFinish(int32_t bytestransfer,st_io *io)
 	}
 }
 
-struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_packet _process_packet,on_connection_destroy on_destroy)
+struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_packet _process_packet,on_disconnect _on_disconnect)
 {
 	struct connection *c = calloc(1,sizeof(*c));
 	c->socket = s;
 	c->send_list = LINK_LIST_CREATE();
 	c->_process_packet = _process_packet;
-	c->_on_destroy = on_destroy;
+	c->_on_disconnect = _on_disconnect;
 	c->next_recv_buf = 0;
 	c->next_recv_pos = 0;
 	c->unpack_buf = 0;
@@ -333,7 +335,7 @@ struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_
 void connection_destroy(struct connection** c)
 {
 	wpacket_t w;
-	(*c)->_on_destroy(*c);
+	//(*c)->_on_destroy(*c);
 
 	while(w = LINK_LIST_POP(wpacket_t,(*c)->send_list))
 		wpacket_destroy(&w);

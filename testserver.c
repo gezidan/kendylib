@@ -73,6 +73,8 @@ void remove_client(struct connection *c)
 			break;
 		}
 	}
+	ReleaseSocketWrapper(c->socket);
+	connection_destroy(&c);
 }
 
 void on_process_packet(struct connection *c,rpacket_t r)
