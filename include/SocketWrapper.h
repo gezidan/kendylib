@@ -89,7 +89,11 @@ enum sock_protocol
 #include "KendyNet.h"
 HANDLE  OpenSocket(int32_t family,int32_t type,int32_t protocol);
 
-int32_t  CloseSocket(HANDLE);
+//close connection
+int32_t CloseSocket(HANDLE);
+
+//release handle
+int32_t ReleaseSocket(HANDLE);
 
 int32_t Connect(HANDLE sock,const struct sockaddr *servaddr,socklen_t addrlen);
 

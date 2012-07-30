@@ -62,7 +62,7 @@ void send2_all_client(rpacket_t r)
 	}
 }
 
-void remove_client(struct connection *c)
+void remove_client(struct connection *c,int32_t reason)
 {
 	uint32_t i = 0;
 	for(; i < MAX_CLIENT; ++i)
@@ -93,7 +93,7 @@ void accept_callback(HANDLE s,void *ud)
 	printf("cli fd:%d\n",s);
 	setNonblock(s);
 	//发出第一个读请求
-	connection_recv(c);
+	connection_start_recv(c);
 	Bind2Engine(*engine,s,RecvFinish,SendFinish);
 }
 

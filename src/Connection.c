@@ -105,9 +105,8 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 			c->recv_overlap.isUsed = 0;
 			if(!c->send_overlap.isUsed)
 			{
-				//ReleaseSocketWrapper(c->socket);
-				//connection_destroy(&c);
-				c->_on_disconnect(c);
+				//-1,passive close
+				c->_on_disconnect(c,-1);
 			}
 			break;
 		}
@@ -285,9 +284,8 @@ void SendFinish(int32_t bytestransfer,st_io *io)
 			c->send_overlap.isUsed = 0;
 			if(!c->recv_overlap.isUsed)
 			{
-				c->_on_disconnect(c);
-				//ReleaseSocketWrapper(c->socket);
-				//connection_destroy(&c);
+				//-1,passive close
+				c->_on_disconnect(c,-1);
 			}
 			break;
 		}
@@ -350,8 +348,10 @@ void connection_destroy(struct connection** c)
 	*c = 0;
 }
 
-int32_t connection_recv(struct connection *c)
+int32_t connection_start_recv(struct connection *c)
 {
+	if(c->unpack_buf)
+		return -1;
 	c->unpack_buf = buffer_create_and_acquire(c->mt,NULL,BUFFER_SIZE);
 	c->next_recv_buf = buffer_acquire(NULL,c->unpack_buf);
 	c->next_recv_pos = c->unpack_pos = c->unpack_size = 0;
@@ -362,4 +362,11 @@ int32_t connection_recv(struct connection *c)
 	c->recv_overlap.m_super.iovec = c->wrecvbuf;
 	uint32_t err_code;
 	return WSARecv(c->socket,&c->recv_overlap.m_super,0,&err_code);
+}
+
+void connection_active_close(struct connection *c)
+{
+	CloseSocket(c->socket);
+	if(c->_on_disconnect)
+		c->_on_disconnect(c,-2);//-2,active colse
 }

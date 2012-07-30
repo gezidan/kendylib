@@ -40,7 +40,7 @@ void add_client(struct connection *c)
 	connection_destroy(&c);
 }
 
-void remove_client(struct connection *c)
+void remove_client(struct connection *c,int32_t reason)
 {
 	int32_t i = 0;
 	for(; i < MAX_CLIENT; ++i)
@@ -96,7 +96,7 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 		wpacket_write_uint32(wpk,sys_t);
 		wpacket_write_string(wpk,"hello kenny");
 		connection_send(c,wpk,0);
-		connection_recv(c);
+		connection_start_recv(c);
 	}
 }
 

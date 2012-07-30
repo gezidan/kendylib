@@ -34,6 +34,16 @@ HANDLE OpenSocket(int32_t family,int32_t type,int32_t protocol)
 
 int32_t CloseSocket(HANDLE sock)
 {
+	socket_t s = GetSocketByHandle(sock);
+	if(s)
+	{
+		return close(s->fd);
+	}
+	return -1;
+}
+
+int32_t ReleaseSocket(HANDLE sock)
+{
 	return ReleaseSocketWrapper(sock);
 }
 
