@@ -51,6 +51,11 @@ void remove_client(struct connection *c,int32_t reason)
 			break;
 		}
 	}
+	HANDLE sock = c->socket;
+	if(0 == connection_destroy(&c))
+	{
+		ReleaseSocketWrapper(sock);
+	}	
 }
 
 connector_t con = NULL;
@@ -95,7 +100,7 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 		uint32_t sys_t = GetSystemMs();
 		wpacket_write_uint32(wpk,sys_t);
 		wpacket_write_string(wpk,"hello kenny");
-		connection_send(c,wpk,0);
+		connection_send(c,wpk);
 		connection_start_recv(c);
 	}
 }
@@ -162,7 +167,7 @@ int32_t main(int32_t argc,char **argv)
 					uint32_t sys_t = GetSystemMs();
 					wpacket_write_uint32(wpk,sys_t);
 					wpacket_write_string(wpk,"hello kenny");
-					connection_send(clients[i],wpk,0);
+					connection_send(clients[i],wpk);
 				}
 			}
 		}

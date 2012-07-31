@@ -56,7 +56,7 @@ void send2_all_client(rpacket_t r)
 			w = wpacket_create_by_rpacket(wpacket_allocator,r);
 			assert(w);
 			++send_request;
-			connection_send(clients[i],w,0);
+			connection_send(clients[i],w);
 			//connection_push_packet(clients[i],w);
 		}
 	}
@@ -72,9 +72,12 @@ void remove_client(struct connection *c,int32_t reason)
 			clients[i] = 0;
 			break;
 		}
+	}	
+	HANDLE sock = c->socket;
+	if(0 == connection_destroy(&c))
+	{
+		ReleaseSocketWrapper(sock);
 	}
-	ReleaseSocketWrapper(c->socket);
-	connection_destroy(&c);
 }
 
 void on_process_packet(struct connection *c,rpacket_t r)

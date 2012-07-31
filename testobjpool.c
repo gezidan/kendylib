@@ -147,7 +147,7 @@ int main()
 {	
 	
 	
-	char **tmp = calloc(1,sizeof(char*)*10000000);
+	/*char **tmp = calloc(1,sizeof(char*)*10000000);
 	test1(tmp);
 	printf("test1 finish------------\n");
 	test2(tmp);
@@ -156,7 +156,26 @@ int main()
 	printf("test3 finish------------\n");
     free(tmp);
 	getchar();
+	*/
 	
+	atomic_32_t i = 0;
+	int j = 0;
+	uint32_t tick = GetSystemMs();
+	for( ; j < 10000000;++j)
+	{
+		++i;
+		--i;
+	}
+	printf("finish:%d\n",GetSystemMs()-tick);	
+	j = 0;
+	i = 0;
+	tick = GetSystemMs();
+	for( ; j < 10000000;++j)
+	{
+		ATOMIC_INCREASE(&i);
+		ATOMIC_DECREASE(&i);
+	}
+	printf("finish:%d\n",GetSystemMs()-tick);		
 
 			
     

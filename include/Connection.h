@@ -41,17 +41,18 @@ struct connection
 	on_disconnect _on_disconnect;
 	uint8_t mt;
 	uint8_t raw;
+	uint16_t is_close;
 };
 
 struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_packet,on_disconnect);
 void connection_active_close(struct connection*);//active close connection
-void connection_destroy(struct connection**);
+int connection_destroy(struct connection**);
 
 //仅仅把包放入发送队列
 void connection_push_packet(struct connection*,wpacket_t);
 
 //返回值:0,连接断开;否则正常
-int32_t connection_send(struct connection*,wpacket_t,int32_t);
+int32_t connection_send(struct connection*,wpacket_t);
 
 int32_t connection_start_recv(struct connection*);
 

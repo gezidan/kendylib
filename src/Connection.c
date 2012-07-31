@@ -105,6 +105,11 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 			c->recv_overlap.isUsed = 0;
 			if(!c->send_overlap.isUsed)
 			{
+				if(c->is_close == 1)
+				{
+					printf("RecvFinish is_close\n");
+					exit(0);
+				}
 				//-1,passive close
 				c->_on_disconnect(c,-1);
 			}
@@ -162,7 +167,7 @@ static inline st_io *prepare_send(struct connection *c)
 	wpacket_t w = (wpacket_t)link_list_head(c->send_list);
 	buffer_t b;
 	uint32_t pos;
-	st_io *O = 0;
+	st_io *O = NULL;
 	uint32_t buffer_size = 0;
 	uint32_t size = 0;
 	while(w && i < MAX_WBAF)
@@ -229,7 +234,7 @@ static inline void update_send_list(struct connection *c,int32_t bytestransfer)
 }
 
 extern uint32_t s_p;
-int32_t connection_send(struct connection *c,wpacket_t w,int32_t send)
+int32_t connection_send(struct connection *c,wpacket_t w)
 {
 
 	int32_t bytestransfer = 0;
@@ -241,27 +246,9 @@ int32_t connection_send(struct connection *c,wpacket_t w,int32_t send)
 	if(!c->send_overlap.isUsed)
 	{
 		c->send_overlap.isUsed = 1;
-		while(O = prepare_send(c))
-		{
-			bytestransfer = WSASend(c->socket,O,send,&err_code);			
-			if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN))
-			{
-				c->send_overlap.isUsed = 0;
-				return 0;
-			}
-			else if(bytestransfer > 0)
-			{
-				++s_p;
-				update_send_list(c,bytestransfer);
-			}
-			else 
-			{
-				return 1;
-			}
-		}
-		c->send_overlap.isUsed = 0;
+		O = prepare_send(c);	
+		return WSASend(c->socket,O,0,&err_code);
 	}
-	return 1;
 }
 
 void connection_push_packet(struct connection *c,wpacket_t w)
@@ -284,6 +271,11 @@ void SendFinish(int32_t bytestransfer,st_io *io)
 			c->send_overlap.isUsed = 0;
 			if(!c->recv_overlap.isUsed)
 			{
+				if(c->is_close == 1)
+				{
+					printf("SendFinish is_close\n");
+					exit(0);
+				}
 				//-1,passive close
 				c->_on_disconnect(c,-1);
 			}
@@ -327,25 +319,25 @@ struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_
 	c->send_overlap.c = c;
 	c->raw = is_raw;
 	c->mt = mt;
+	c->is_close = 0;
 	return c;
 }
 
-void connection_destroy(struct connection** c)
+int connection_destroy(struct connection** c)
 {
-	wpacket_t w;
-	//(*c)->_on_destroy(*c);
-
-	while(w = LINK_LIST_POP(wpacket_t,(*c)->send_list))
-		wpacket_destroy(&w);
-
-	LINK_LIST_DESTROY(&(*c)->send_list);
-	//printf("%d",(*c)->unpack_buf->ref_count);
-	//printf("%d",(*c)->next_recv_buf->ref_count);	
-	buffer_release(&(*c)->unpack_buf);
-	buffer_release(&(*c)->next_recv_buf);
-
-	free(*c);
-	*c = 0;
+	if(!(*c)->recv_overlap.isUsed && !(*c)->send_overlap.isUsed)
+	{ 
+		wpacket_t w;
+		while(w = LINK_LIST_POP(wpacket_t,(*c)->send_list))
+			wpacket_destroy(&w);
+		LINK_LIST_DESTROY(&(*c)->send_list);
+		buffer_release(&(*c)->unpack_buf);
+		buffer_release(&(*c)->next_recv_buf);
+		free(*c);
+		*c = 0;
+		return 0;
+	}
+	return -1;
 }
 
 int32_t connection_start_recv(struct connection *c)
