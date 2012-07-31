@@ -24,7 +24,7 @@ acceptor_t create_acceptor(const char *ip,uint32_t port,on_accept accept_callbac
 	HANDLE ListenSocket;
 	struct sockaddr_in servaddr;
 	acceptor_t a;
-	ListenSocket = Tcp_Listen(ip,port,&servaddr,5);
+	ListenSocket = Tcp_Listen(ip,port,&servaddr,256);
 	socket_t s = GetSocketByHandle(ListenSocket);
 	
 	setNonblock(ListenSocket);

@@ -36,8 +36,6 @@ void add_client(struct connection *c)
 			break;
 		}
 	}
-	ReleaseSocketWrapper(c->socket);
-	connection_destroy(&c);
 }
 
 void remove_client(struct connection *c,int32_t reason)
