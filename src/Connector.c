@@ -7,6 +7,7 @@
 #include "HandleMgr.h" 
 #include "SysTime.h"
 #include "Connector.h"
+#include "sync.h"
 
 typedef struct pending_connect
 {
@@ -25,6 +26,8 @@ struct connector
 	fd_set Set;
 	struct link_list *_pending_connect;
 	uint32_t fd_seisize;
+	mutex_t  lock;
+	struct link_list *extern_pending_connect; 
 };
 
 connector_t connector_create()
@@ -33,6 +36,8 @@ connector_t connector_create()
 	c->fd_seisize = 0;
 	FD_ZERO(&c->Set);
 	c->_pending_connect = create_link_list();
+	c->extern_pending_connect = create_link_list();
+	c->lock = mutex_create();
 	return c;
 }
 
@@ -41,6 +46,9 @@ void connector_destroy(connector_t *c)
 	struct pending_connect *pc;
 	while(pc = LINK_LIST_POP(struct pending_connect*,(*c)->_pending_connect))
 		free(pc);
+	while(pc = LINK_LIST_POP(struct pending_connect*,(*c)->extern_pending_connect))
+		free(pc);
+	mutex_destroy(&((*c)->lock));	
 	free(*c);
 	*c = 0;
 }
@@ -49,10 +57,7 @@ int32_t connector_connect(connector_t c,const char *ip,uint32_t port,on_connect 
 {
 	struct sockaddr_in remote;
 	HANDLE sock;
-	struct pending_connect *pc;
-	if(c->fd_seisize >= FD_SETSIZE)
-		return -1;
-	
+	struct pending_connect *pc;	
 	sock = OpenSocket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if(sock < 0)
 		return -1;
@@ -88,9 +93,9 @@ int32_t connector_connect(connector_t c,const char *ip,uint32_t port,on_connect 
 	pc->timeout = GetSystemMs() + ms;
 	pc->ud = ud;
 	pc->real_fd = s->fd;
-	FD_SET(pc->real_fd,&c->Set);
-	LINK_LIST_PUSH_BACK(c->_pending_connect,pc);
-	++c->fd_seisize;
+	mutex_lock(c->lock);
+	LINK_LIST_PUSH_BACK(c->extern_pending_connect,pc);
+	mutex_unlock(c->lock);
 	return 0;
 }
 
@@ -104,6 +109,27 @@ void connector_run(connector_t c,uint32_t ms)
 	struct timeval timeout;
 	tick = GetSystemMs();
 	_timeout = tick + ms;
+	
+	struct link_list *_l = LINK_LIST_CREATE();
+	mutex_lock(c->lock);
+	link_list_swap(_l,c->extern_pending_connect);
+	mutex_unlock(c->lock);
+	while(pc = LINK_LIST_POP(struct pending_connect*,_l))
+	{
+		if(c->fd_seisize >= FD_SETSIZE)
+		{
+			pc->call_back(-1,pc->ip,pc->port,pc->ud);
+			free(pc);
+		}
+		else
+		{
+			FD_SET(pc->real_fd,&c->Set);
+			LINK_LIST_PUSH_BACK(c->_pending_connect,pc);
+			++c->fd_seisize;
+		}
+	}
+	LINK_LIST_DESTROY(&_l);
+	
 	do{
 		_ms = _timeout - tick;
 		timeout.tv_sec = 0;
@@ -138,7 +164,6 @@ void connector_run(connector_t c,uint32_t ms)
 			pc = LINK_LIST_POP(struct pending_connect*,c->_pending_connect);
 			if(tick >= pc->timeout)
 			{
-				//³¬Ê±ÁË
 				pc->call_back(-1,pc->ip,pc->port,pc->ud);
 				free(pc);
 				--c->fd_seisize;
