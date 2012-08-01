@@ -210,8 +210,8 @@ static inline void update_send_list(struct connection *c,int32_t bytestransfer)
 		{
 			//一个包发完
 			bytestransfer -= w->data_size;
-			if(c->_packet_send_finish)
-				c->_packet_send_finish(c);
+			if(w->_packet_send_finish)
+				w->_packet_send_finish(c);
 			wpacket_destroy(&w);
 			++packet_send;
 		}
@@ -236,7 +236,7 @@ static inline void update_send_list(struct connection *c,int32_t bytestransfer)
 }
 
 extern uint32_t s_p;
-int32_t connection_send(struct connection *c,wpacket_t w)
+int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish callback)
 {
 
 	int32_t bytestransfer = 0;
@@ -244,7 +244,10 @@ int32_t connection_send(struct connection *c,wpacket_t w)
 	st_io *O;
 	int32_t ret = 1;
 	if(w)
+	{
+		w->_packet_send_finish = callback;
 		LINK_LIST_PUSH_BACK(c->send_list,w);
+	}
 	if(!c->send_overlap.isUsed)
 	{
 		c->send_overlap.isUsed = 1;
@@ -253,10 +256,11 @@ int32_t connection_send(struct connection *c,wpacket_t w)
 	}
 }
 
-void connection_push_packet(struct connection *c,wpacket_t w)
+void connection_push_packet(struct connection *c,wpacket_t w,packet_send_finish callback)
 {
 	if(w)
 	{
+		w->_packet_send_finish = callback;
 		LINK_LIST_PUSH_BACK(c->send_list,w);
 	}
 }
@@ -305,7 +309,7 @@ void SendFinish(int32_t bytestransfer,st_io *io)
 	}
 }
 
-struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_packet _process_packet,on_disconnect _on_disconnect,packet_send_finish _packet_send_finish)
+struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_packet _process_packet,on_disconnect _on_disconnect)
 {
 	struct connection *c = calloc(1,sizeof(*c));
 	c->socket = s;
@@ -322,7 +326,6 @@ struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_
 	c->raw = is_raw;
 	c->mt = mt;
 	c->is_close = 0;
-	c->_packet_send_finish = _packet_send_finish;
 	return c;
 }
 

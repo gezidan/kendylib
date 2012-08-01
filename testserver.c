@@ -56,7 +56,7 @@ void send2_all_client(rpacket_t r)
 			w = wpacket_create_by_rpacket(wpacket_allocator,r);
 			assert(w);
 			++send_request;
-			connection_send(clients[i],w);
+			connection_send(clients[i],w,NULL);
 			//connection_push_packet(clients[i],w);
 		}
 	}
@@ -91,7 +91,7 @@ void on_process_packet(struct connection *c,rpacket_t r)
 void accept_callback(HANDLE s,void *ud)
 {
 	HANDLE *engine = (HANDLE*)ud;	
-	struct connection *c = connection_create(s,0,0,on_process_packet,remove_client,NULL);
+	struct connection *c = connection_create(s,0,0,on_process_packet,remove_client);
 	add_client(c);
 	printf("cli fd:%d\n",s);
 	setNonblock(s);

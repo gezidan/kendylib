@@ -89,7 +89,7 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 	{
 		
 		setNonblock(s);
-		c = connection_create(s,0,0,on_process_packet,remove_client,NULL);
+		c = connection_create(s,0,0,on_process_packet,remove_client);
 		printf("%d,连接到:%s,%d,成功\n",s,ip,port);
 		add_client(c);
 		Bind2Engine(*engine,s,RecvFinish,SendFinish);
@@ -98,7 +98,7 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 		uint32_t sys_t = GetSystemMs();
 		wpacket_write_uint32(wpk,sys_t);
 		wpacket_write_string(wpk,"hello kenny");
-		connection_send(c,wpk);
+		connection_send(c,wpk,NULL);
 		connection_start_recv(c);
 	}
 }
@@ -165,7 +165,7 @@ int32_t main(int32_t argc,char **argv)
 					uint32_t sys_t = GetSystemMs();
 					wpacket_write_uint32(wpk,sys_t);
 					wpacket_write_string(wpk,"hello kenny");
-					connection_send(clients[i],wpk);
+					connection_send(clients[i],wpk,NULL);
 				}
 			}
 		}

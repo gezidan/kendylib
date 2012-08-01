@@ -16,7 +16,7 @@ struct OVERLAPCONTEXT
 
 typedef void (*process_packet)(struct connection*,rpacket_t);
 typedef void (*on_disconnect)(struct connection*,int32_t reason);
-typedef void (*packet_send_finish)(struct connection*);
+
 
 #define MAX_WBAF 1024
 
@@ -40,21 +40,20 @@ struct connection
 	struct link_list *send_list;//待发送的包
 	process_packet _process_packet;
 	on_disconnect _on_disconnect;
-	packet_send_finish _packet_send_finish;//call when a packet send finish
 	uint8_t mt;
 	uint8_t raw;
 	uint16_t is_close;
 };
 
-struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_packet,on_disconnect,packet_send_finish);
+struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_packet,on_disconnect);
 void connection_active_close(struct connection*);//active close connection
 int connection_destroy(struct connection**);
 
 //仅仅把包放入发送队列
-void connection_push_packet(struct connection*,wpacket_t);
+void connection_push_packet(struct connection*,wpacket_t,packet_send_finish);
 
 //返回值:0,连接断开;否则正常
-int32_t connection_send(struct connection*,wpacket_t);
+int32_t connection_send(struct connection*,wpacket_t,packet_send_finish);
 
 int32_t connection_start_recv(struct connection*);
 
