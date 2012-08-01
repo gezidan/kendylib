@@ -90,7 +90,7 @@ void on_process_packet(struct connection *c,rpacket_t r)
 
 void accept_callback(HANDLE s,void *ud)
 {
-	HANDLE *engine = (HANDLE*)ud;
+	HANDLE *engine = (HANDLE*)ud;	
 	struct connection *c = connection_create(s,0,0,on_process_packet,remove_client);
 	add_client(c);
 	printf("cli fd:%d\n",s);
@@ -107,7 +107,15 @@ uint32_t port;
 
 void *_Listen(void *arg)
 {
-	acceptor_t a = create_acceptor(ip,port,&accept_callback,arg);
+	struct listen_arg* args[2];
+	args[0] = (struct listen_arg*)calloc(1,sizeof(*args[0]));
+	args[0]->ip = ip;
+	args[0]->port = port;
+	args[0]->accept_callback = &accept_callback;
+	args[0]->ud = arg;
+	args[1] = NULL;
+	acceptor_t a = create_acceptor((struct listen_arg**)&args);
+	free(args[0]);
 	while(1)
 		acceptor_run(a,100);
 	return 0;

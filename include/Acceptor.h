@@ -17,9 +17,21 @@
 #ifndef _ACCEPTOR_H
 #define _ACCEPTOR_H
 #include <stdint.h>
+
 typedef struct acceptor* acceptor_t;
 typedef void (*on_accept)(HANDLE,void*ud);
-acceptor_t create_acceptor(const char *ip,uint32_t port,on_accept accept_callback,void*ud);
+//acceptor_t create_acceptor(const char *ip,uint32_t port,on_accept accept_callback,void*ud);
+
+struct listen_arg
+{
+	const char *ip;
+	uint32_t    port;
+	on_accept   accept_callback;
+	void       *ud; 
+};
+//use NULL to end the args
+acceptor_t create_acceptor(struct listen_arg **args);
+
 void       destroy_acceptor(acceptor_t*);
 void       acceptor_run(acceptor_t,int32_t ms);
 
