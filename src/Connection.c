@@ -359,6 +359,7 @@ int32_t connection_start_recv(struct connection *c)
 void connection_active_close(struct connection *c)
 {
 	CloseSocket(c->socket);
+	c->recv_overlap.isUsed = c->send_overlap.isUsed = 0;
 	if(c->_on_disconnect)
 		c->_on_disconnect(c,-2);//-2,active colse
 }
