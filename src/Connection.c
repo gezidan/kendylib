@@ -210,6 +210,8 @@ static inline void update_send_list(struct connection *c,int32_t bytestransfer)
 		{
 			//一个包发完
 			bytestransfer -= w->data_size;
+			if(c->_packet_send_finish)
+				c->_packet_send_finish(c);
 			wpacket_destroy(&w);
 			++packet_send;
 		}
@@ -303,7 +305,7 @@ void SendFinish(int32_t bytestransfer,st_io *io)
 	}
 }
 
-struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_packet _process_packet,on_disconnect _on_disconnect)
+struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_packet _process_packet,on_disconnect _on_disconnect,packet_send_finish _packet_send_finish)
 {
 	struct connection *c = calloc(1,sizeof(*c));
 	c->socket = s;
@@ -320,6 +322,7 @@ struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_
 	c->raw = is_raw;
 	c->mt = mt;
 	c->is_close = 0;
+	c->_packet_send_finish = _packet_send_finish;
 	return c;
 }
 

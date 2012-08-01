@@ -89,7 +89,7 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 	{
 		
 		setNonblock(s);
-		c = connection_create(s,0,0,on_process_packet,remove_client);
+		c = connection_create(s,0,0,on_process_packet,remove_client,NULL);
 		printf("%d,连接到:%s,%d,成功\n",s,ip,port);
 		add_client(c);
 		Bind2Engine(*engine,s,RecvFinish,SendFinish);
