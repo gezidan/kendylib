@@ -22,7 +22,8 @@
 #include "allocator.h"
 #include "sync.h"
 
-typedef void (*packet_send_finish)(void*);
+struct wpacket;
+typedef void (*packet_send_finish)(void*,struct wpacket*);
 
 typedef struct wpacket
 {
