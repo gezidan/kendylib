@@ -40,8 +40,8 @@ int main()
 	unsigned long now = GetSystemMs();
 	
 	twi1.lastactive = now;
-	RegisterTimer(tw,twi1.item,10);
-	
+	RegisterTimer(tw,twi1.item,30);
+	/*
 	twi2.lastactive = now;
 	RegisterTimer(tw,twi2.item,10);
 	
@@ -58,6 +58,8 @@ int main()
 	UnRegisterTimer(tw,twi4.item);
 	UnRegisterTimer(tw,twi3.item);
 	UnRegisterTimer(tw,twi2.item);
+	*/
+	
 	UnRegisterTimer(tw,twi1.item);	
 	
 /*	
