@@ -66,6 +66,8 @@ inline static void Add(TimingWheel_t t,uint32_t slot,WheelItem_t item)
 		t->slot[slot]->pre = item;
 		item->next = t->slot[slot];
 	}
+	else
+		item->next = item->pre = NULL;
 	t->slot[slot] = item;
 	item->slot = &(t->slot[slot]);
 }
@@ -120,24 +122,31 @@ int UpdateWheel(TimingWheel_t t,uint32_t now)
 
 void UnRegisterTimer(TimingWheel_t t,WheelItem_t wit)
 {
-	/*
-	if(!wit->wt || wit->wt != t)
+	if(!wit->slot)
+		return;
+		
+	if(wit->slot < &t->slot[0] || wit->slot > &t->slot[t->slot_size-1])
 		return;
 	
-	if(wit->pre == 0 && wit->next == 0)
-		t->slot[wit->slot] = 0;
+	WheelItem_t next = wit->next;
+	WheelItem_t pre = wit->pre;		
+	if(pre)
+	{
+		pre->next = next;
+		if(next)
+			next->pre = pre;
+	}
 	else
 	{
-		WheelItem_t next = wit->next;
-		WheelItem_t pre = wit->pre;
-		
-		
-		
-		//wit->pre->next = wit->next;
-		//wit->next->pre = wit->pre;
-		//if(wit->next->pre = 0)
-		//	t->slot[wit->slot] = wit->next;
+		uint32_t slot_idx = (wit->slot - &t->slot[0])/sizeof(*(wit->slot));
+		t->slot[slot_idx] = next;
+		if(next)
+			next->pre = NULL;
+		else
+			printf("empty\n");
 	}
-	wit->wt = 0;
-	*/
+	
+	wit->pre = wit->next = NULL;
+	wit->slot = NULL;
+	printf("UnRegisterTimer\n");
 }
