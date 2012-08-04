@@ -18,4 +18,6 @@ atomic:
 objpool:kendy.a
 	gcc -O3 -g -o objpool testobjpool.c kendy.a -I./include -lpthread -lrt -ltcmalloc
 spin:kendy.a
-	gcc -g -o spin testspinlock.c kendy.a -I./include -lpthread -lrt	
+	gcc -g -o spin testspinlock.c kendy.a -I./include -lpthread -lrt
+ut:kendy.a testuthread.c
+	gcc -g -o ut testuthread.c kendy.a -I./include -lpthread -lrt		

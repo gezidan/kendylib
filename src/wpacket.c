@@ -255,7 +255,10 @@ void wpacket_rewrite_double(write_pos *wp,double value)
 
 void wpacket_write_string(wpacket_t w ,const char *value)
 {
-	wpacket_write_binary(w,value,strlen(value)+1);
+	if(w->raw)
+		wpacket_write_binary(w,value,strlen(value));
+	else
+		wpacket_write_binary(w,value,strlen(value)+1);
 }
 
 void wpacket_write_binary(wpacket_t w,const void *value,uint32_t size)
