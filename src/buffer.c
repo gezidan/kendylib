@@ -4,7 +4,7 @@
 #include "buffer.h"
 #include "allocator.h"
 
-static void     buffer_destroy(void *b)
+static inline void buffer_destroy(void *b)
 {
 	buffer_t _b = (buffer_t)b;
 	if(_b->next)
@@ -13,7 +13,7 @@ static void     buffer_destroy(void *b)
 	b = 0;
 }
 
-static buffer_t buffer_create(uint8_t mt,uint32_t capacity)
+static inline buffer_t buffer_create(uint8_t mt,uint32_t capacity)
 {
 	uint32_t size = sizeof(struct buffer) + capacity;
 	buffer_t b = (buffer_t)ALLOC(NULL,size);		

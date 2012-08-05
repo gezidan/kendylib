@@ -6,7 +6,7 @@ typedef struct uthread *uthread_t;
 uthread_t uthread_create(uthread_t parent,void*stack,uint32_t stack_size,void*(*fun)(void*));
 void uthread_destroy(uthread_t);
 
-void*uthread_switch(uthread_t from,uthread_t to,void *para);
+extern void*uthread_switch(uthread_t from,uthread_t to,void *para);
 
 
 

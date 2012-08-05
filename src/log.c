@@ -16,6 +16,8 @@
 #include "wpacket.h"
 #define max_write_buf 1024
 static const uint32_t max_log_filse_size = 1024*1024*100;//超过100MB,更换文件
+extern uint32_t log_count;
+
 struct log
 {
 	struct list_node lnode;
@@ -27,7 +29,6 @@ struct log
 	struct iovec wbuf[max_write_buf];
 };
 
-
 typedef struct log_system
 {
 	mutex_t mtx;
@@ -37,7 +38,6 @@ typedef struct log_system
 	int32_t    last_tick;
 	int32_t    bytes;
 	allocator_t _wpacket_allocator;
-	//allocator_t _buf_allocator;
 }*log_system_t;
 
 static log_system_t g_log_system;
@@ -57,8 +57,6 @@ int32_t	init_log_system()
 		g_log_system->worker_thread = CREATE_THREAD_RUN(1,worker_routine,0);
 		g_log_system->last_tick = GetSystemMs();
 		g_log_system->bytes = 0;
-		//g_log_system->_wpacket_allocator = (allocator_t)create_wpacket_allocator(8192,1);
-		//g_log_system->_buf_allocator = (allocator_t)create_buffer_allocator(1);
 		g_log_system->_wpacket_allocator = NULL;
 		return 0;
 	}
@@ -81,12 +79,12 @@ void close_log_system()
 	mutex_destroy(&g_log_system->mtx);
 	destroy_link_list(&g_log_system->log_files);
 	destroy_thread(&g_log_system->worker_thread);
-	DESTROY(&(g_log_system->_wpacket_allocator));
+	//DESTROY(&(g_log_system->_wpacket_allocator));
 	free(g_log_system);
 	g_log_system = 0;
 }
 
-static int32_t prepare_write(log_t l)
+static inline int32_t prepare_write(log_t l)
 {
 	int32_t i = 0;
 	wpacket_t w = (wpacket_t)link_list_head(l->pending_log);
@@ -115,7 +113,7 @@ static int32_t prepare_write(log_t l)
 	return i;
 }
 
-static void on_write_finish(log_t l,int32_t bytestransfer)
+static inline void on_write_finish(log_t l,int32_t bytestransfer)
 {
 	wpacket_t w;
 	uint32_t size;
@@ -127,6 +125,7 @@ static void on_write_finish(log_t l,int32_t bytestransfer)
 		{
 			//一个wpacket写完了
 			bytestransfer -= w->data_size;
+			++log_count;
 			wpacket_destroy(&w);
 		}
 		else
@@ -149,20 +148,10 @@ static void on_write_finish(log_t l,int32_t bytestransfer)
 	}
 }
 
+static uint32_t last_tick = 0;
+
 static void write_to_file(log_t l,int32_t is_close)
 {
-	//printf("write_to_file\n");
-	//将log_queue中的内容同步到pending_log中,然后将内容写入到文件
-	{
-		int32_t interval = GetSystemMs() - g_log_system->last_tick;	
-		if(interval >= 1000)
-		{
-			if(g_log_system->bytes > 0)	
-				printf("write:%d,intervals:%d\n",g_log_system->bytes/1024/1024,interval);	
-			g_log_system->bytes = 0;
-			g_log_system->last_tick = GetSystemMs();		
-		}
-	}	
 	mutex_lock(l->mtx);
 	if(!list_is_empty(l->log_queue))
 		link_list_swap(l->pending_log,l->log_queue);
@@ -180,13 +169,8 @@ static void write_to_file(log_t l,int32_t is_close)
 		wpacket_write_binary(w,buf,str_len);	
 		LINK_LIST_PUSH_BACK(l->pending_log,w);
 	}
-	//int32_t bytetransfer = 0;
 	while(!list_is_empty(l->pending_log))
 	{
-		//wpacket_t cur = LINK_LIST_POP(wpacket_t,l->pending_log);
-		//g_log_system->bytes += cur->data_size;
-		//wpacket_destroy(&cur);
-					
 		int32_t wbuf_count = prepare_write(l);
 		int32_t bytetransfer = TEMP_FAILURE_RETRY(writev(l->file_descriptor,l->wbuf,wbuf_count));
 		if(bytetransfer > 0)
@@ -199,15 +183,11 @@ static void write_to_file(log_t l,int32_t is_close)
 		{
 			printf("errno: %d wbuf_count: %d\n",errno,wbuf_count);
 		}
+		if(last_tick +1000 <= GetSystemMs())
 		{
-			int32_t interval = GetSystemMs() - g_log_system->last_tick;	
-			if(interval >= 1000)
-			{
-				if(g_log_system->bytes > 0)	
-					printf("write:%d,intervals:%d\n",g_log_system->bytes/1024/1024,interval);	
-				g_log_system->bytes = 0;
-				g_log_system->last_tick = GetSystemMs();		
-			}
+			printf("log/ms:%u\n",log_count);
+			last_tick = GetSystemMs();
+			log_count = 0;
 		}
 	}
 	
@@ -273,27 +253,18 @@ int32_t log_write(log_t l,const char *content,int32_t level)
 	struct tm re;
 	struct tm *_tm = localtime_r(&t,&re);
 	snprintf(buf,4096,"[%d-%d-%d %d:%d:%d]%s\n",_tm->tm_year+1900,_tm->tm_mon+1,_tm->tm_mday,_tm->tm_hour,_tm->tm_min,_tm->tm_sec,content);
+	//snprintf(buf,4096,"%s\n",content);
 	int32_t str_len = strlen(buf);
-	wpacket_t w = wpacket_create(0,g_log_system->_wpacket_allocator,str_len,1);
-	//wpacket_t w = wpacket_create(NULL,NULL,str_len,1);
+	wpacket_t w = wpacket_create(0,NULL,str_len,1);
 	wpacket_write_binary(w,buf,str_len);
-
-	//int32_t str_len = strlen(content);
-	//wpacket_t w = wpacket_create(NULL,NULL,str_len,1);
-	//wpacket_t w = wpacket_create(g_log_system->_buf_allocator,g_log_system->_wpacket_allocator,str_len,1);
-	//wpacket_write_binary(w,content,str_len);	
-	
-	//wpacket_destroy(&w);
-	//return 0;
 	mutex_lock(l->mtx);
 	LINK_LIST_PUSH_BACK(l->log_queue,w);
 	mutex_unlock(l->mtx);
 	return 0;
 }
 
-static void write_all_log_file(int32_t is_close)
+static inline void write_all_log_file(int32_t is_close)
 {
-	//printf("write_all_log_file \n");
 	log_t l = (log_t)link_list_head(g_log_system->log_files);
 	while(l)
 	{
@@ -311,6 +282,13 @@ static void *worker_routine(void *arg)
 		tick = GetSystemMs() - tick;
 		if(tick < 50)
 			usleep(50-tick);
+		if(last_tick +1000 <= GetSystemMs())
+		{
+			printf("log/ms:%u\n",log_count);
+			last_tick = GetSystemMs();
+			log_count = 0;
+		}				
+			
 	}
 	write_all_log_file(1);
 	return 0;
