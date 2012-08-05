@@ -1,5 +1,5 @@
 all:
-	gcc -g -c *.c -I../include
+	gcc -g -O3 -c *.c -I../include
 	ar -rc kendy.a *.o
 	cp kendy.a ../../luanet
 	mv kendy.a ../

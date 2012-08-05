@@ -36,8 +36,8 @@ uthread_t uthread_create(uthread_t parent,void*stack,uint32_t stack_size,void*(*
 	{
 		u->reg[0] = (int32_t)stack+stack_size;
 		u->reg[1] = (int32_t)stack+stack_size;
+		u->first_run = 1;
 	}
-	u->first_run = 1;
 	//bulid_stack(u);
 	return u;
 }
@@ -48,8 +48,6 @@ void* uthread_switch(uthread_t from,uthread_t to,void *para)
 {
 	if(!from)
 		return NULL;
-	if(from->first_run)
-		from->first_run = 0;
 	to->para = para;
 	int32_t esp,ebp,eax,ebx,ecx,edx,edi,esi;
 	//save current registers

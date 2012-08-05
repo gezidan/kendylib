@@ -41,6 +41,11 @@ int main()
 {
 	stack1 = (char*)malloc(4096);
 	stack2 = (char*)malloc(4096);
+	/*
+	 * if use ucontext version
+	char dummy_stack[4096];
+	uthread_t p = uthread_create(NULL,dummy_stack,0,NULL);
+	*/
 	uthread_t p = uthread_create(NULL,NULL,0,NULL);
 	uthread_t u = uthread_create(p,stack1,4096,ufun1);
 	uthread_switch(p,u,u);
