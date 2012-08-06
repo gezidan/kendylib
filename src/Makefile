@@ -4,6 +4,12 @@ all:
 	cp kendy.a ../../luanet
 	mv kendy.a ../
 	rm -f *.o
+debug:
+	gcc -g -c *.c -I../include -D _DEBUG
+	ar -rc kendy.a *.o
+	cp kendy.a ../../luanet
+	mv kendy.a ../
+	rm -f *.o	
 all-mt:
 	gcc -g -c *.c -I../include -I../../ -D MT
 	ar -rc network_mt.a *.o

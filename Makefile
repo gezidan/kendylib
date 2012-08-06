@@ -20,6 +20,8 @@ objpool:kendy.a
 spin:kendy.a
 	gcc -g -o spin testspinlock.c kendy.a -I./include -lpthread -lrt
 ut:kendy.a testuthread.c
-	gcc -g -O3 -o ut testuthread.c kendy.a -I./include -lpthread -lrt -ltcmalloc 
+	gcc -g -O3 -o ut testuthread.c kendy.a -I./include -lpthread -lrt -ltcmalloc
+ut-debug:kendy.a testuthread.c
+	gcc -g -o ut testuthread.c kendy.a -I./include -lpthread -lrt -ltcmalloc	 
 log:kendy.a testlog.c
 	gcc -g -O3 -o log testlog.c kendy.a -I./include -lpthread -lrt -ltcmalloc			
