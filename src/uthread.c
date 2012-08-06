@@ -15,7 +15,27 @@ struct uthread
 	int8_t first_run;
 };
 
-void uthread_main_function(void *arg)
+#ifdef _DEBUG
+//for debug version
+void uthread_main_function()
+{
+	int32_t arg;
+	 __asm__ volatile(
+		"movl %%eax,%0\t\n"
+		:
+		:"m"(arg)
+	);	
+	
+	uthread_t u = (uthread_t)arg;
+	void *ret = u->main_fun(u->para);
+	if(u->parent)
+		uthread_switch(u,u->parent,ret);
+	else
+		exit(0); 
+}
+#else
+//for release version
+void __attribute__((regparm(3))) uthread_main_function(void *arg)
 {
 	uthread_t u = (uthread_t)arg;
 	void *ret = u->main_fun(u->para);
@@ -24,7 +44,7 @@ void uthread_main_function(void *arg)
 	else
 		exit(0);
 }
-
+#endif
 uthread_t uthread_create(uthread_t parent,void*stack,uint32_t stack_size,void*(*fun)(void*))
 {
 	uthread_t u = (uthread_t)calloc(1,sizeof(*u));
@@ -38,13 +58,10 @@ uthread_t uthread_create(uthread_t parent,void*stack,uint32_t stack_size,void*(*
 		u->reg[1] = (int32_t)stack+stack_size;
 		u->first_run = 1;
 	}
-	//bulid_stack(u);
 	return u;
 }
 
-
-
-void* uthread_switch(uthread_t from,uthread_t to,void *para)
+void* __attribute__((regparm(3))) uthread_switch(uthread_t from,uthread_t to,void *para)
 {
 	if(!from)
 		return NULL;
@@ -75,17 +92,30 @@ void* uthread_switch(uthread_t from,uthread_t to,void *para)
 	if(to->first_run)
 	{
 	   to->first_run = 0;
+#ifdef _DEBUG
+	   esp = to->reg[0];
+	   //use eax to pass arg
+	   eax = (int32_t)to;
+		__asm__ volatile (
+			"movl %1,%%eax\t\n"
+			"movl %0,%%ebp\t\n"
+			"movl %%ebp,%%esp\t\n"
+			:
+			:"m"(esp),"m"(eax)
+		);	   
+	   uthread_main_function();
+#else	   
 	   //change stack
 	   //the order is important
 	   esp = to->reg[0];
-	   ebp = to->reg[1];
 		__asm__ volatile (
-			"movl %1,%%ebp\t\n"
-			"movl %0,%%esp\t\n"
+			"movl %0,%%ebp\t\n"
+			"movl %%ebp,%%esp\t\n"
 			:
-			:"m"(esp),"m"(ebp)
+			:"m"(esp)
 		);	   
 	   uthread_main_function((void*)to);
+#endif
 	}
 	else
 	{
@@ -113,6 +143,7 @@ void* uthread_switch(uthread_t from,uthread_t to,void *para)
 	}	
 	return from->para;
 }
+
 
 /*
 struct uthread
