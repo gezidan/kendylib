@@ -1,5 +1,5 @@
 all:
-	gcc -g -O3 -c minheap.c cosche.c -I../include
+	gcc -g -O3 -c minheap.c co_sche.c -I../include
 	ar -rc coro.a *.o
 testheap:
 	gcc -g -o testheap testheap.c minheap.o ../kendy.a -I../include -lpthread -lrt -ltcmalloc

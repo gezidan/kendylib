@@ -1,4 +1,4 @@
-#include "cosche.h"
+#include "co_sche.h"
 #include "SysTime.h"
 #include <stdlib.h>
 #include <assert.h>
@@ -10,7 +10,7 @@ static inline int8_t _less(struct heapele*l,struct heapele*r)
 	return ((coro_t)l)->timeout < ((coro_t)r)->timeout;
 }
 
-static inline void set_current_coro(coro_t co)
+static inline  __attribute__((always_inline))void set_current_coro(coro_t co)
 {
 	current_coro = co;
 }
@@ -29,7 +29,7 @@ void* coro_fun(void *arg)
 }
 
 
-static inline void check_time_out(sche_t s,uint32_t now)
+static inline  __attribute__((always_inline)) void check_time_out(sche_t s,uint32_t now)
 {
 	coro_t co;
 	for( ; ;)
@@ -51,7 +51,7 @@ static inline void check_time_out(sche_t s,uint32_t now)
 }
 
 
-static inline coro_t _sche_next(sche_t s,coro_t co)
+static inline  __attribute__((always_inline))  coro_t _sche_next(sche_t s,coro_t co)
 {
 	coro_t next = LINK_LIST_POP(coro_t,s->active_list);
 	if(!next)
@@ -63,19 +63,24 @@ static inline coro_t _sche_next(sche_t s,coro_t co)
 	}
 	assert(co != next);	
 	set_current_coro(next);
+	s->ti++;
 	return (coro_t)uthread_switch(co->ut,next->ut,co);
 }
 
-static inline void sche_next(sche_t s,coro_t co,uint8_t status)
+static inline  __attribute__((always_inline)) void sche_next(sche_t s,coro_t co,uint8_t status)
 {
 	co->status = status;
-	uint32_t tick = GetSystemMs();
-	if(tick >= s->next_check_timeout)
-		check_time_out(s,tick);
+	if(s->ti >= 100)
+	{
+		s->ti = 0;
+		uint32_t tick = GetSystemMs();
+		if(tick >= s->next_check_timeout)
+			check_time_out(s,tick);
+	}
 	_sche_next(s,co);
 }
 
-static inline void sche_add_timeout(sche_t s,coro_t co)
+static inline  __attribute__((always_inline)) void sche_add_timeout(sche_t s,coro_t co)
 {
 	co->status = CORO_SLEEP;
 	struct heapele *hele = &(co->_heapele);
@@ -87,13 +92,19 @@ void sche_schedule(sche_t s)
 {
 	while(!s->stop)
 	{
-		uint32_t now = GetSystemMs();
-		if(now >= s->next_check_timeout)
-			check_time_out(s,now);	
+		
+		if(s->ti >= 100)
+		{
+			s->ti = 0;
+			uint32_t now = GetSystemMs();
+			if(now >= s->next_check_timeout)
+				check_time_out(s,now);
+		}	
 		if(link_list_is_empty(s->active_list))
 		{
 			printf("sleep\n");
 			usleep(50);
+			s->ti += 50;
 		}
 		else
 		{

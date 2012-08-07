@@ -26,7 +26,7 @@ typedef struct coro
 	uint8_t status;
 	uint32_t timeout;
 	void *arg;
-	void* (*fun)(void *);	
+	void* (*fun)(void *);
 }*coro_t;
 
 typedef struct sche
@@ -38,7 +38,8 @@ typedef struct sche
   	struct link_list *active_list;
   	int32_t next_check_timeout;
   	volatile int8_t  stop;
-  	int32_t coro_size;	
+  	int32_t coro_size;
+ 	uint32_t ti;	 		
 }*sche_t;
 
 
