@@ -37,8 +37,11 @@ int32_t spin_lock(spinlock_t l,int32_t count)
 		++l->lock_count;
 		return 0;
 	}
+	int32_t c = 0;
+	int32_t max = 0;
     if(count == 0)
 	{
+		
 		while(1)
 		{
 			if(l->owner == 0)
@@ -46,6 +49,8 @@ int32_t spin_lock(spinlock_t l,int32_t count)
 				if(COMPARE_AND_SWAP(&(l->owner),0,tid) == 0)
 					break;
 			}
+			for(c = 0; c < (max = rand()%128); ++c)
+				__asm__("pause");		
 		};
 		__sync_synchronize();	
 		++l->lock_count;
@@ -54,22 +59,28 @@ int32_t spin_lock(spinlock_t l,int32_t count)
 	}
 	else
 	{
+		int32_t l = 0;
 		while((count--) > 0)
 		{
 			if(l->owner == 0)
 			{
 				if(COMPARE_AND_SWAP(&(l->owner),0,tid) == 0)
 				{
-					++l->lock_count;
-					l->lock_by_mtx = 0;
-					return 0;
+					l = 1;
+					break;
 				}
 			}
+			for(c = 0; c < (max = rand()%128); ++c)
+				__asm__("pause");
 		}
-		int32_t ret = mutex_lock(l->mtx);
-		if(ret == 0)
+		__sync_synchronize();
+		if(l == 0)
+		{
+			mutex_lock(l->mtx);
 			l->lock_by_mtx = 1;
-		return ret;
+		}
+		++l->lock_count;
+		return 0;
 	}
 }
 
@@ -79,6 +90,7 @@ int32_t spin_unlock(spinlock_t l)
 	if(tid == l->owner)
 	{
 		--l->lock_count;
+		__sync_synchronize();
 		if(l->lock_count == 0)
 		{
 			if(l->lock_by_mtx)
@@ -88,7 +100,6 @@ int32_t spin_unlock(spinlock_t l)
 			}
 			else
 				l->owner = 0;
-				//COMPARE_AND_SWAP(&(l->owner),tid,0);
 		}
 		return 0;
 	}
