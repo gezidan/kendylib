@@ -56,9 +56,16 @@ uthread_t uthread_create(uthread_t parent,void*stack,uint32_t stack_size,void*(*
 	{
 		u->reg[0] = (int32_t)stack+stack_size;
 		u->reg[1] = (int32_t)stack+stack_size;
-		u->first_run = 1;
 	}
+	if(u->main_fun)
+		u->first_run = 1;
 	return u;
+}
+
+void uthread_destroy(uthread_t *u)
+{
+	free(*u);
+	*u = NULL;
 }
 
 #ifdef _DEBUG

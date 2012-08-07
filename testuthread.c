@@ -28,7 +28,7 @@ void* ufun1(void *arg)
 	_arg[1] = (char*)self;
 	int i = 0;
 	uint32_t tick = GetSystemMs();
-	for( ; i < 20000000; ++i)
+	for( ; i < 30000000; ++i)
 	{
 		uthread_switch(self,u,&_arg[0]);
 	}
@@ -42,7 +42,7 @@ int main()
 	stack1 = (char*)malloc(4096);
 	stack2 = (char*)malloc(4096);
 	/*
-	 * if use ucontext version
+	if use ucontext version
 	char dummy_stack[4096];
 	uthread_t p = uthread_create(NULL,dummy_stack,0,NULL);
 	*/

@@ -59,14 +59,14 @@ int32_t spin_lock(spinlock_t l,int32_t count)
 	}
 	else
 	{
-		int32_t l = 0;
+		int32_t _l = 0;
 		while((count--) > 0)
 		{
 			if(l->owner == 0)
 			{
 				if(COMPARE_AND_SWAP(&(l->owner),0,tid) == 0)
 				{
-					l = 1;
+					_l = 1;
 					break;
 				}
 			}
@@ -74,7 +74,7 @@ int32_t spin_lock(spinlock_t l,int32_t count)
 				__asm__("pause");
 		}
 		__sync_synchronize();
-		if(l == 0)
+		if(_l == 0)
 		{
 			mutex_lock(l->mtx);
 			l->lock_by_mtx = 1;
