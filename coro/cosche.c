@@ -1,17 +1,19 @@
 #include "cosche.h"
-#include "coro.h"
 #include "SysTime.h"
 #include <stdlib.h>
 #include <assert.h>
 
-extern inline void set_current_coro(coro_t co);
-
+static coro_t current_coro = NULL;
 
 static inline int8_t _less(struct heapele*l,struct heapele*r)
 {
 	return ((coro_t)l)->timeout < ((coro_t)r)->timeout;
 }
 
+static inline void set_current_coro(coro_t co)
+{
+	current_coro = co;
+}
 
 void* coro_fun(void *arg)
 {
@@ -54,12 +56,17 @@ static inline coro_t _sche_next(sche_t s,coro_t co)
 	coro_t next = LINK_LIST_POP(coro_t,s->active_list);
 	if(!next)
 		next = s->co;
+	if(co->status == CORO_YIELD)
+	{
+		co->status = CORO_ACTIVE;
+		LINK_LIST_PUSH_BACK(s->active_list,co);
+	}
 	assert(co != next);	
 	set_current_coro(next);
 	return (coro_t)uthread_switch(co->ut,next->ut,co);
 }
 
-void sche_next(sche_t s,coro_t co,uint8_t status)
+static inline void sche_next(sche_t s,coro_t co,uint8_t status)
 {
 	co->status = status;
 	uint32_t tick = GetSystemMs();
@@ -68,7 +75,7 @@ void sche_next(sche_t s,coro_t co,uint8_t status)
 	_sche_next(s,co);
 }
 
-void sche_add_timeout(sche_t s,coro_t co)
+static inline void sche_add_timeout(sche_t s,coro_t co)
 {
 	co->status = CORO_SLEEP;
 	struct heapele *hele = &(co->_heapele);
@@ -84,7 +91,10 @@ void sche_schedule(sche_t s)
 		if(now >= s->next_check_timeout)
 			check_time_out(s,now);	
 		if(link_list_is_empty(s->active_list))
+		{
+			printf("sleep\n");
 			usleep(50);
+		}
 		else
 		{
 			coro_t co = _sche_next(s,s->co);
@@ -125,8 +135,44 @@ struct coro *sche_spawn(sche_t s,void*(*fun)(void*),void*arg)
 	co->fun = fun;
 	++s->coro_size;
 	uthread_switch(s->co->ut,co->ut,co);
-	//co->status = CORO_START;
 	return co;
 }
+
+coro_t coro_create(struct sche *_sche,uint32_t stack_size,void*(*fun)(void*))
+{
+	coro_t co = calloc(1,sizeof(*co));
+	co->_sche = _sche;
+	if(stack_size)
+		co->stack = calloc(1,stack_size);
+	co->ut = uthread_create(NULL,co->stack,stack_size,fun);
+	return co;
+}
+
+void coro_destroy(coro_t *co)
+{
+	free((*co)->stack);
+	uthread_destroy(&((*co)->ut));
+	free(*co);
+	*co = NULL;
+}
+
+coro_t get_current_coro()
+{
+	return current_coro;
+}
+
+
+
+void coro_yield(coro_t co)
+{
+	sche_next(co->_sche,co,CORO_YIELD);
+}
+
+void coro_sleep(coro_t co,int32_t ms)
+{
+	co->timeout = GetSystemMs() + ms;
+	sche_add_timeout(co->_sche,co);
+}
+
 
 
