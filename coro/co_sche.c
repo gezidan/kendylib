@@ -136,7 +136,23 @@ sche_t sche_create(int32_t max_coro,int32_t stack_size)
 
 void sche_destroy(sche_t *s)
 {
-	
+	coro_t co;
+	while(co = LINK_LIST_POP(coro_t,(*s)->active_list))
+		coro_destroy(&co);
+	int32_t i = 1;
+	for( ; i < (*s)->_minheap->size; ++i)
+	{
+		if((*s)->_minheap->data[i])
+		{
+			(coro_t)((int8_t*)(*s)->_minheap->data[i] - sizeof(co->next));
+			coro_destroy(&co);
+		}
+	}
+	LINK_LIST_DESTROY(&((*s)->active_list));
+	minheap_destroy(&((*s)->_minheap));
+	coro_destroy(&(*s)->co);
+	free(*s);
+	*s = NULL;
 }
 
 struct coro *sche_spawn(sche_t s,void*(*fun)(void*),void*arg)
@@ -161,7 +177,8 @@ coro_t coro_create(struct sche *_sche,uint32_t stack_size,void*(*fun)(void*))
 
 void coro_destroy(coro_t *co)
 {
-	free((*co)->stack);
+	if((*co)->stack);
+		free((*co)->stack);
 	uthread_destroy(&((*co)->ut));
 	free(*co);
 	*co = NULL;
@@ -171,8 +188,6 @@ coro_t get_current_coro()
 {
 	return current_coro;
 }
-
-
 
 void coro_yield(coro_t co)
 {
