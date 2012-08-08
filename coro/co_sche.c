@@ -45,6 +45,12 @@ static inline  __attribute__((always_inline)) void check_time_out(sche_t s,uint3
 		{
 			co->status = CORO_ACTIVE;
 			LINK_LIST_PUSH_BACK(s->active_list,co);
+		}else if(co->status == CORO_DIE)
+		{
+			coro_destroy(&co);
+			if(--s->coro_size == 0)
+				s->stop = 1;
+			printf("a coro destroy\n");
 		}	
 	}
 	s->next_check_timeout = now + 200;//check every 200 ms
@@ -109,7 +115,7 @@ void sche_schedule(sche_t s)
 		else
 		{
 			coro_t co = _sche_next(s,s->co);
-			if(co->status == CORO_DIE)
+			if(co->status == CORO_DIE && co->_heapele.index == 0)
 			{
 				coro_destroy(&co);
 				if(--s->coro_size == 0)
