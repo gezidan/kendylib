@@ -54,8 +54,7 @@ typedef struct sche
   	struct link_list *active_list;
   	int32_t next_check_timeout;
   	volatile int8_t  stop;
-  	int32_t coro_size;
- 	uint32_t ti;	 		
+  	int32_t coro_size;		
 }*sche_t;
 
 

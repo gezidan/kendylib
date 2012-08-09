@@ -67,7 +67,7 @@ int main()
 	for( ; i < 1000;++i)
 	{
 		UpdateWheel(tw,GetSystemMs());
-		usleep(2*1000);
+		sleepms(2*1000);
 	}
 */	
 	return 0;

@@ -160,10 +160,7 @@ static void write_to_file(log_t l,int32_t is_close)
 	{
 		//日志系统关闭,写入关闭消息
 		char buf[4096];
-		time_t t = time(NULL);
-		struct tm re;
-		struct tm *_tm = localtime_r(&t,&re);
-		snprintf(buf,4096,"[%d-%d-%d %d:%d:%d]close log sucessful\n",_tm->tm_year+1900,_tm->tm_mon+1,_tm->tm_mday,_tm->tm_hour,_tm->tm_min,_tm->tm_sec);
+		snprintf(buf,4096,"%s close log sucessful\n",GetCurrentTimeStr());
 		int32_t str_len = strlen(buf);
 		wpacket_t w = wpacket_create(0,NULL,str_len,1);
 		wpacket_write_binary(w,buf,str_len);	
@@ -183,10 +180,10 @@ static void write_to_file(log_t l,int32_t is_close)
 		{
 			printf("errno: %d wbuf_count: %d\n",errno,wbuf_count);
 		}
-		if(last_tick +1000 <= GetSystemMs())
+		if(last_tick +1000 <= GetCurrentMs())
 		{
 			printf("log/ms:%u\n",log_count);
-			last_tick = GetSystemMs();
+			last_tick = GetCurrentMs();
 			log_count = 0;
 		}
 	}
@@ -249,11 +246,7 @@ int32_t log_write(log_t l,const char *content,int32_t level)
 		return -1;
 		
 	char buf[4096];	
-	time_t t = time(NULL);
-	struct tm re;
-	struct tm *_tm = localtime_r(&t,&re);
-	snprintf(buf,4096,"[%d-%d-%d %d:%d:%d]%s\n",_tm->tm_year+1900,_tm->tm_mon+1,_tm->tm_mday,_tm->tm_hour,_tm->tm_min,_tm->tm_sec,content);
-	//snprintf(buf,4096,"%s\n",content);
+	snprintf(buf,4096,"%s%s\n",GetCurrentTimeStr(),content);
 	int32_t str_len = strlen(buf);
 	wpacket_t w = wpacket_create(0,NULL,str_len,1);
 	wpacket_write_binary(w,buf,str_len);
@@ -277,15 +270,15 @@ static void *worker_routine(void *arg)
 {
 	while(!g_log_system->is_close)
 	{
-		int32_t tick = GetSystemMs(); 
+		int32_t tick = GetCurrentMs(); 
 		write_all_log_file(0);
-		tick = GetSystemMs() - tick;
+		tick = GetCurrentMs() - tick;
 		if(tick < 50)
-			usleep(50-tick);
-		if(last_tick +1000 <= GetSystemMs())
+			sleepms(50-tick);
+		if(last_tick +1000 <= GetCurrentMs())
 		{
 			printf("log/ms:%u\n",log_count);
-			last_tick = GetSystemMs();
+			last_tick = GetCurrentMs();
 			log_count = 0;
 		}				
 			

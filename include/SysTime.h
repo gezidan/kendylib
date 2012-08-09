@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <sys/time.h> 
-static inline int32_t GetSystemMs()
+static inline uint32_t GetSystemMs()
 {
 	//struct timespec now;
     //clock_gettime(CLOCK_MONOTONIC, &now);
@@ -14,4 +14,15 @@ static inline int32_t GetSystemMs()
 	return now.tv_sec*1000+now.tv_usec/1000;
 	
 }
+
+static inline sleepms(uint32_t ms)
+{
+	usleep(ms*1000);
+}
+
+extern void init_system_time(uint32_t);
+extern inline time_t   GetCurrentSec();
+extern inline uint32_t GetCurrentMs();
+extern inline const char *GetCurrentTimeStr();
+
 #endif

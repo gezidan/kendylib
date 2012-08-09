@@ -42,6 +42,7 @@ void DestroyWheelItem(WheelItem_t *wit)
 
 TimingWheel_t CreateTimingWheel(uint32_t precision,uint32_t max)
 {
+	init_system_time(10);
 	uint32_t slot_size = max/precision;
 	TimingWheel_t t = malloc(sizeof(*t) + (slot_size*sizeof(WheelItem_t)));
 	if(!t)
@@ -49,7 +50,7 @@ TimingWheel_t CreateTimingWheel(uint32_t precision,uint32_t max)
 	t->slot_size = slot_size;
 	t->precision = precision;
 	t->current = 0;
-	t->last_update = GetSystemMs();
+	t->last_update = GetCurrentMs();
 	return t;
 }
 
@@ -77,7 +78,7 @@ int  RegisterTimer(TimingWheel_t t,WheelItem_t item,uint32_t timeout)
 {
 	if(timeout < t->precision)
 		timeout = t->precision;
-	uint32_t now = GetSystemMs();
+	uint32_t now = GetCurrentMs();
 	int n = (now + timeout - t->last_update - t->precision)/t->precision;
 	if(n >= t->slot_size)
 		return -1;

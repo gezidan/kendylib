@@ -36,7 +36,7 @@ int main()
 			t->timeout = tick + 100;
 			minheap_insert(m,(struct heapele*)t);
 		}
-		usleep(50);
+		sleepms(50);
 	}
 	return 0;
 }

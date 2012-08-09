@@ -69,20 +69,16 @@ static inline  __attribute__((always_inline))  coro_t _sche_next(sche_t s,coro_t
 	}
 	assert(co != next);	
 	set_current_coro(next);
-	s->ti++;
 	return (coro_t)uthread_switch(co->ut,next->ut,co);
 }
 
 static inline  __attribute__((always_inline)) void sche_next(sche_t s,coro_t co,uint8_t status)
 {
 	co->status = status;
-	if(s->ti >= 100)
-	{
-		s->ti = 0;
-		uint32_t tick = GetSystemMs();
-		if(tick >= s->next_check_timeout)
-			check_time_out(s,tick);
-	}
+	uint32_t tick = GetCurrentMs();
+	if(tick >= s->next_check_timeout)
+		check_time_out(s,tick);
+
 	_sche_next(s,co);
 }
 
@@ -98,19 +94,14 @@ void sche_schedule(sche_t s)
 {
 	while(!s->stop)
 	{
-		
-		if(s->ti >= 100)
-		{
-			s->ti = 0;
-			uint32_t now = GetSystemMs();
-			if(now >= s->next_check_timeout)
-				check_time_out(s,now);
-		}	
+		uint32_t now = GetCurrentMs();
+		if(now >= s->next_check_timeout)
+			check_time_out(s,now);
+
 		if(link_list_is_empty(s->active_list))
 		{
 			printf("sleep\n");
-			usleep(50);
-			s->ti += 50;
+			sleepms(50);
 		}
 		else
 		{
@@ -129,6 +120,7 @@ void sche_schedule(sche_t s)
 
 sche_t sche_create(int32_t max_coro,int32_t stack_size)
 {
+	init_system_time(10);
 	sche_t s = calloc(1,sizeof(*s));
 	s->stack_size = stack_size;
 	s->max_coro = max_coro;
@@ -202,7 +194,7 @@ void coro_yield(coro_t co)
 
 void coro_sleep(coro_t co,int32_t ms)
 {
-	co->timeout = GetSystemMs() + ms;
+	co->timeout = GetCurrentMs() + ms;
 	sche_add_timeout(co->_sche,co);
 }
 

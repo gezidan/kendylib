@@ -133,7 +133,7 @@ int32_t main(int32_t argc,char **argv)
 	for( ; i < client_count;++i)
 	{
 		ret = connector_connect(con,ip,port,on_connect_callback,&engine,1000*20);
-		usleep(1);
+		sleepms(1);
 	}
 	while(1)
 	{

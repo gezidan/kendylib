@@ -23,7 +23,7 @@ void test1(char **tmp)
 		int j = 0;
 		for(;j<10;++j)
 		{
-			uint32_t tick = GetSystemMs();
+			uint32_t tick = GetCurrentMs();
 			int i = 0;
 			for( ; i < 10000000; ++i)
 			{
