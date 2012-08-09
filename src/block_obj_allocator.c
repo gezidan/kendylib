@@ -86,7 +86,7 @@ static inline struct free_list *central_get_freelist(block_obj_allocator_t centr
 	struct free_list *f;
 	if(central->mtx)
 	{
-		spin_lock(central->mtx,4000);
+		spin_lock(central->mtx);
 		f = (struct free_list*)link_list_pop(central->_free_list);
 		spin_unlock(central->mtx);
 	}
@@ -105,7 +105,7 @@ static inline void give_back_to_central(block_obj_allocator_t central,struct fre
 	//printf("give_back_to_central\n");
 	if(central->mtx)
 	{
-		spin_lock(central->mtx,4000);
+		spin_lock(central->mtx);
 		LINK_LIST_PUSH_BACK(central->_free_list,f);
 		spin_unlock(central->mtx);
 	}

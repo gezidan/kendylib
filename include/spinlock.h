@@ -17,20 +17,14 @@
 #ifndef _SPINLOCK_H
 #define _SPINLOCK_H
 #include "atomic.h"
-
+#include <pthread.h>
 typedef struct spinlock *spinlock_t;
-
-
 
 spinlock_t spin_create();
 void spin_destroy(spinlock_t*);
-
-/*
-* 锁定返回0
-* count:自旋的次数,0:一直尝试,直到成功锁定
-*/
-inline int32_t spin_lock(spinlock_t,int32_t count);
+inline int32_t spin_lock(spinlock_t);
 inline int32_t spin_unlock(spinlock_t);
+
 /*
 static inline int32_t
 atomic_cmp_set(int32_t *lock, int32_t old,
