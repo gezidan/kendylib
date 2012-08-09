@@ -49,10 +49,11 @@ int32_t spin_lock(spinlock_t l,int32_t count)
 				if(COMPARE_AND_SWAP(&(l->owner),0,tid) == 0)
 					break;
 			}
+			__asm__ volatile("" : : : "memory");
 			for(c = 0; c < (max = rand()%128); ++c)
 				__asm__("pause");		
 		};
-		__sync_synchronize();	
+		//__sync_synchronize();	
 		++l->lock_count;
 		l->lock_by_mtx = 0;
 		return 0;
@@ -70,10 +71,10 @@ int32_t spin_lock(spinlock_t l,int32_t count)
 					break;
 				}
 			}
+			__asm__ volatile("" : : : "memory");
 			for(c = 0; c < (max = rand()%128); ++c)
 				__asm__("pause");
 		}
-		__sync_synchronize();
 		if(_l == 0)
 		{
 			mutex_lock(l->mtx);
@@ -90,7 +91,6 @@ int32_t spin_unlock(spinlock_t l)
 	if(tid == l->owner)
 	{
 		--l->lock_count;
-		__sync_synchronize();
 		if(l->lock_count == 0)
 		{
 			if(l->lock_by_mtx)
@@ -99,7 +99,10 @@ int32_t spin_unlock(spinlock_t l)
 				mutex_unlock(l->mtx);
 			}
 			else
+			{
+				__asm__ volatile("" : : : "memory");
 				l->owner = 0;
+			}
 		}
 		return 0;
 	}
