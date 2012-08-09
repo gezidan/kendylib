@@ -4,26 +4,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
-struct system_time_mgr
-{	
-	volatile int32_t   current_index __attribute__((aligned(8)));	
-	time_t   sec[2];
-	uint32_t ms[2];
-	char     str[2][64];
-	
-	uint32_t sleep_time;	
-};
 
-
-static struct system_time_mgr *stm = NULL;
+struct system_time_mgr *stm = NULL;
 
 static void _update()
 {
 	int32_t index = (stm->current_index + 1)%2;
 	
 	stm->ms[index] = GetSystemMs();
-	//printf("_update:%u\n",stm->ms[index]);
-	
 	time_t _now = time(NULL);
 	stm->sec[index] = _now;
 	
@@ -54,23 +42,6 @@ void init_system_time(uint32_t sleep_time)
 	}
 }
 
-time_t   GetCurrentSec()
-{
-	int32_t index = stm->current_index;
-	return stm->sec[index];
-}
-
-uint32_t GetCurrentMs()
-{
-	int32_t index = stm->current_index;
-	return stm->ms[index];
-}
-
-const char *GetCurrentTimeStr()
-{
-	int32_t index = stm->current_index;
-	return stm->str[index];
-}
 
 
 
