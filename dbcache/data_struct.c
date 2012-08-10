@@ -35,6 +35,19 @@ void db_array_release(db_array_t *a)
 	*a = NULL;
 }
 
+db_array_t db_array_acquire(db_array_t a1,db_array_t a2)
+{
+	if(a1 == a2)
+		return a1;	
+	if(a2)
+		ref_increase((struct refbase*)a2);
+	if(a1)
+		db_array_release(&a1);
+
+	return a2;
+}
+
+
 basetype_t db_array_get(db_array_t a,int32_t index)
 {
 	if(a->data && index < a->size)
@@ -72,7 +85,16 @@ db_list_t db_list_create()
 
 void      db_list_destroy(db_list_t *l)
 {
-	
+	struct db_node *cur = (*l)->head;
+	while(cur)
+	{
+		struct db_node *del = cur;
+		cur = cur->next;
+		db_array_release(&(del->array));
+		free(del);
+	}
+	free(*l);
+	*l = NULL;
 }
 
 int32_t   db_list_append(db_list_t l,db_array_t a)
@@ -86,6 +108,8 @@ int32_t   db_list_append(db_list_t l,db_array_t a)
 	}
 	else
 		l->head = l->tail = n;
+	//increase the reference
+	ref_increase((struct refbase*)a);	
 	return ++l->size;
 }
 
@@ -109,7 +133,10 @@ int32_t   db_list_shrink(db_list_t l)
 			if(l->tail == del)
 			{
 				if(pre)
+				{
+					pre->next = NULL;
 					l->tail = pre;
+				}
 				else
 					l->tail = NULL;
 			}

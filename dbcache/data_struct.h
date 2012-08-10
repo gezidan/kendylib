@@ -32,6 +32,8 @@ typedef struct db_element
 	int8_t type;
 }*db_element_t;
 
+
+//represent a db row
 typedef struct db_array
 {
 	struct db_element base;
@@ -41,16 +43,22 @@ typedef struct db_array
 
 
 db_array_t db_array_create(int32_t size);
+db_array_t db_array_acquire(db_array_t,db_array_t);
 void       db_array_clear(db_array_t);//clear the data
 void       db_array_release(db_array_t*);
+
+
+//get/set one element of the db row
 basetype_t db_array_get(db_array_t,int32_t index);
 void       db_array_set(db_array_t,int32_t index,basetype_t);
+
 struct db_node
 {
 	struct db_node *next;
 	db_array_t array;
 };
 
+//represent db row set
 typedef struct db_list
 {
 	struct db_element base;

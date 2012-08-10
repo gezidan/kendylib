@@ -35,12 +35,27 @@ int main()
 	db_array_clear(a1);
 	db_array_clear(a4);
 	
+	int32_t i = 0;
+	for( ; i < 3; ++i)
+	{
+		basetype_t b = db_array_get(a2,i);
+		printf("%d\n",basetype_get_int32(b));
+	}
+	
+	i = 0;
+	for( ; i < 3; ++i)
+	{
+		basetype_t b = db_array_get(a3,i);
+		printf("%d\n",basetype_get_int32(b));
+	}
+	
+	db_array_release(&a1);
+	db_array_release(&a2);
+	db_array_release(&a3);
+	db_array_release(&a4);
 	
 	db_list_shrink(l);
 	
-	
-	
-	
-	
+	db_list_destroy(&l);	
 	return 0;
 }
