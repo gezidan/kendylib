@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include "refbase.h"
 #include "dbtype.h"
+#include "link_list.h"
 enum
 {
 	DB_LIST = 1,
@@ -54,7 +55,7 @@ void       db_array_set(db_array_t,int32_t index,basetype_t);
 
 struct db_node
 {
-	struct db_node *next;
+	list_node  next;
 	db_array_t array;
 };
 
@@ -62,9 +63,7 @@ struct db_node
 typedef struct db_list
 {
 	struct db_element base;
-	int32_t size;
-	struct db_node *head;
-	struct db_node *tail;
+	struct link_list *l;
 	
 }*db_list_t;
 

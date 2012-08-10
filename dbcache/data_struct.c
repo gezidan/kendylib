@@ -80,19 +80,20 @@ void db_array_clear(db_array_t a)
 db_list_t db_list_create()
 {
 	db_list_t l = calloc(1,sizeof(*l));
+	l->l = LINK_LIST_CREATE();
 	return l;	
 }
 
 void      db_list_destroy(db_list_t *l)
 {
-	struct db_node *cur = (*l)->head;
-	while(cur)
+	struct db_node *cur;
+	while(cur = (struct db_node *)link_list_pop((*l)->l))
 	{
-		struct db_node *del = cur;
-		cur = cur->next;
-		db_array_release(&(del->array));
-		free(del);
+		db_array_release(&(cur->array));
+		free(cur);
 	}
+	
+	LINK_LIST_DESTROY(&(*l)->l); 
 	free(*l);
 	*l = NULL;
 }
@@ -101,54 +102,32 @@ int32_t   db_list_append(db_list_t l,db_array_t a)
 {
 	struct db_node *n = calloc(1,sizeof(*n));
 	n->array = a;
-	if(l->tail)
-	{
-		l->tail->next = n;
-		l->tail = n;
-	}
-	else
-		l->head = l->tail = n;
+	LINK_LIST_PUSH_BACK(l->l,n);
 	//increase the reference
 	ref_increase((struct refbase*)a);	
-	return ++l->size;
+	return link_list_size(l->l);
 }
 
 int32_t   db_list_size(db_list_t l)
 {
-	return l->size;
+	return link_list_size(l->l);
 }
 
 int32_t   db_list_shrink(db_list_t l)
 {
-	struct db_node *cur = l->head;
-	struct db_node *pre = NULL;
-	while(cur)
+	int32_t s = link_list_size(l->l);
+	int32_t i = 0;
+	for(; i < s; ++i)
 	{
-	    if(cur->array->data == NULL)
-	    {			
-			struct db_node *del = cur;
-			cur = cur->next;
-			if(l->head == del && pre == NULL)
-				l->head = cur;
-			if(l->tail == del)
-			{
-				if(pre)
-				{
-					pre->next = NULL;
-					l->tail = pre;
-				}
-				else
-					l->tail = NULL;
-			}
-			db_array_release(&(del->array));
-			free(del);
-			--l->size;
-		}
-		else
+		struct db_node *cur = (struct db_node *)link_list_pop(l->l);
+		if(cur->array->data == NULL)
 		{
-			pre = cur;
-			cur = cur->next;
-		}					
+			db_array_release(&(cur->array));
+			free(cur);
+		}else
+		{
+			LINK_LIST_PUSH_BACK(l->l,cur);
+		}
 	}
-	return l->size;
+	return link_list_size(l->l);
 }
