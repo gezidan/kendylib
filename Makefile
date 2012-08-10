@@ -26,4 +26,6 @@ ut-debug:kendy.a testuthread.c
 log:kendy.a testlog.c
 	gcc -g -O3 -o log testlog.c kendy.a -I./include -lpthread -lrt -ltcmalloc
 systime:kendy.a testsystime.c
-	gcc -g -O3 -o systime testsystime.c kendy.a -I./include -lpthread -lrt -ltcmalloc				
+	gcc -g -O3 -o systime testsystime.c kendy.a -I./include -lpthread -lrt -ltcmalloc
+hash:kendy.a testhash.c
+	gcc -g -O3 -o hash testhash.c kendy.a -I./include -lpthread -lrt -ltcmalloc					

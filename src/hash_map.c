@@ -22,7 +22,6 @@ struct hash_map
 {
 	hash_func   _hash_function;
 	hash_key_eq _key_cmp_function;
-	hash_on_remove _on_remove;
 	uint32_t slot_size;
 	uint32_t size;
 	uint32_t key_size;
@@ -40,9 +39,13 @@ struct hash_map
 
 #define HASH_MAP_INDEX(HASH_CODE,SLOT_SIZE) (HASH_CODE % SLOT_SIZE)
 
+int32_t hash_map_size(hash_map_t h)
+{
+	return h->size;
+}
+
 hash_map_t hash_map_create(uint32_t slot_size,uint32_t key_size,
-	uint32_t val_size,hash_func hash_function,hash_key_eq key_cmp_function,
-	hash_on_remove _hash_on_remove)
+	uint32_t val_size,hash_func hash_function,hash_key_eq key_cmp_function)
 {
 	hash_map_t h = (hash_map_t)malloc(sizeof(*h));
 	if(!h)
@@ -51,7 +54,6 @@ hash_map_t hash_map_create(uint32_t slot_size,uint32_t key_size,
 	h->size = 0;
 	h->_hash_function = hash_function;
 	h->_key_cmp_function = key_cmp_function;
-	h->_on_remove = _hash_on_remove;
 	h->key_size = key_size;
 	h->val_size = val_size;
 	h->item_size = sizeof(struct hash_item) + key_size + val_size;
@@ -69,21 +71,12 @@ void hash_map_destroy(hash_map_t *h)
 {
 	uint32_t i = 0;
 	struct hash_item *item;
-	if((*h)->_on_remove)
-	{
-		for( ; i < (*h)->slot_size; ++i)
-		{
-			item = GET_ITEM((*h)->_items,(*h)->item_size,i);
-			if(item->flag == ITEM_USED)
-				(*h)->_on_remove(GET_KEY(*h,item),GET_VAL(*h,item));
-		}
-	}
 	free((*h)->_items);
 	free(*h);
 	*h = 0;
 }
 
-static int32_t _hash_map_insert(hash_map_t h,void* key,void* val,uint64_t hash_code)
+static struct hash_item *_hash_map_insert(hash_map_t h,void* key,void* val,uint64_t hash_code)
 {
 	uint32_t slot = HASH_MAP_INDEX(hash_code,h->slot_size);
 	uint32_t check_count = 0;
@@ -99,7 +92,7 @@ static int32_t _hash_map_insert(hash_map_t h,void* key,void* val,uint64_t hash_c
 			memcpy(&(item->key_and_val[h->key_size]),val,h->val_size);
 			item->hash_code = hash_code;
 			//printf("check_count:%d\n",check_count);
-			return 0;
+			return item;
 		}
 		else
 			if(hash_code == item->hash_code && h->_key_cmp_function(key,GET_KEY(h,item)) == 0)
@@ -108,7 +101,7 @@ static int32_t _hash_map_insert(hash_map_t h,void* key,void* val,uint64_t hash_c
 		check_count++;
 	}
 	//插入失败
-	return -1;
+	return NULL;
 }
 
 static int32_t _hash_map_expand(hash_map_t h)
@@ -136,20 +129,23 @@ static int32_t _hash_map_expand(hash_map_t h)
 	
 }
 
-int32_t hash_map_insert(hash_map_t h,void *key,void *val)
+hash_map_iter hash_map_insert(hash_map_t h,void *key,void *val)
 {
 	uint64_t hash_code = h->_hash_function(key);
 	if(h->slot_size < 0x80000000 && h->size >= h->expand_size)
 		//空间使用超过3/4扩展
 		_hash_map_expand(h);
+	hash_map_iter iter = {0,0};	
 	if(h->size >= h->slot_size)
-		return -1;
-	if(_hash_map_insert(h,key,val,hash_code) == 0)
+		return iter;
+	struct hash_item *item = _hash_map_insert(h,key,val,hash_code);	
+	if( item != NULL)
 	{
 		++h->size;
-		return 0;
+		iter.data1 = h;
+		iter.data2 = item;
 	}
-	return -1;
+	return iter;
 	
 }
 
@@ -189,33 +185,29 @@ hash_map_iter hash_map_find(hash_map_t h,void* key)
 	return iter;
 }
 
-int32_t hash_map_remove(hash_map_t h,void* key)
+void* hash_map_remove(hash_map_t h,void* key)
 {
 	struct hash_item *item = _hash_map_find(h,key);
 	if(item)
 	{
 		item->flag = ITEM_DELETE;
 		--h->size;
-		if(h->_on_remove)
-			h->_on_remove(GET_KEY(h,item),GET_VAL(h,item));
-		return 0;
+		return GET_VAL(h,item);;
 	}
-	return -1;
+	return NULL;
 }
 
-int32_t hash_map_erase(hash_map_t h,hash_map_iter iter)
+void* hash_map_erase(hash_map_t h,hash_map_iter iter)
 {
 	if(iter.data1 && iter.data2)
 	{
 		hash_map_t h = (hash_map_t)iter.data1;
 		struct hash_item *item = (struct hash_item *)iter.data2;
-		if(h->_on_remove)
-			h->_on_remove(GET_KEY(h,item),GET_VAL(h,item));
 		item->flag = ITEM_DELETE;
 		--h->size;
-		return 0;	
+		return GET_VAL(h,item);	
 	}	
-	return -1;
+	return NULL;
 }
 
 int32_t hash_map_is_vaild_iter(hash_map_iter iter)
