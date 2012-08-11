@@ -5,17 +5,6 @@
 #include "kstring.h"
 #include "common_hash_function.h"
 
-static inline int32_t _hash_key_eq_(string_t l,string_t r)
-{
-	return string_compare(l,r);
-}
-
-static inline uint64_t _hash_func_(string_t _key)
-{
-	const char * key = string_c_str(_key); 
-	return burtle_hash((uint8_t*)key,strlen(key),1);
-}
-
 enum
 {
 	_EMPTY = 0,
@@ -43,6 +32,17 @@ struct global_table
 	struct tb_item tail;
 };
 
+static inline int32_t _hash_key_eq_(string_t l,string_t r)
+{
+	return string_compare(l,r);
+}
+
+static inline uint64_t _hash_func_(string_t _key)
+{
+	const char * key = string_c_str(_key); 
+	return burtle_hash((uint8_t*)key,strlen(key),1);
+}
+
 global_table_t global_table_create(int32_t initsize)
 {
 	if(initsize > 0)
@@ -59,7 +59,7 @@ global_table_t global_table_create(int32_t initsize)
 
 }
 
-static struct tb_item* _hash_map_insert(global_table_t h,string_t key,db_element_t val,uint64_t hash_code)
+static inline struct tb_item* _hash_map_insert(global_table_t h,string_t key,db_element_t val,uint64_t hash_code)
 {
 	int64_t slot = hash_code % h->slot_size;
 	int64_t check_count = 0;
@@ -90,7 +90,7 @@ static struct tb_item* _hash_map_insert(global_table_t h,string_t key,db_element
 	return NULL;
 }
 
-static int32_t _hash_map_expand(global_table_t h)
+static inline int32_t _hash_map_expand(global_table_t h)
 {
 	uint32_t old_slot_size = h->slot_size;
 	struct tb_item *old_items = h->data;
@@ -116,7 +116,7 @@ static int32_t _hash_map_expand(global_table_t h)
 	return 0;
 }
 
-static db_element_t _hash_map_find(global_table_t h,string_t key)
+static inline db_element_t _hash_map_find(global_table_t h,string_t key)
 {
 	uint64_t hash_code = _hash_func_(key);
 	int64_t  slot = hash_code % h->slot_size;
@@ -150,6 +150,9 @@ static inline void global_table_raw_set(global_table_t gt,int64_t index,db_eleme
 		item->pre->next = item->next;
 		item->next->pre = item->pre;
 		item->next = item->pre = NULL;
+		
+		if(item->val->type == DB_ARRAY)
+			db_array_clear((db_array_t)item->val);
 		db_element_release(&(item->val));
 		item->val = NULL;
 		item->flag = _DELETE;
@@ -266,5 +269,3 @@ void global_table_destroy(global_table_t *gt)
 	free(*gt);
 	*gt = NULL;
 }
-
-

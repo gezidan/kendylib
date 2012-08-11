@@ -34,7 +34,7 @@ static void db_array_destroy(void *arg)
 		free(a->data);
 	}
 	free(a);
-	printf("a db_array destroy\n");
+	printf("a db_array destroyed\n");
 }
 
 db_array_t db_array_create(int32_t size)
@@ -103,6 +103,7 @@ void      db_list_destroy(void *_l)
 	
 	LINK_LIST_DESTROY(&(l)->l); 
 	free(l);
+	printf("a db_list destroyed\n");
 }
 
 db_list_t db_list_create()
