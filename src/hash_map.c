@@ -11,13 +11,6 @@ enum
 	ITEM_USED,
 };
 
-struct hash_item
-{
-	uint64_t hash_code;
-	int8_t flag;
-	int8_t key_and_val[0];
-};
-
 struct hash_map
 {
 	hash_func   _hash_function;
@@ -92,6 +85,7 @@ static struct hash_item *_hash_map_insert(hash_map_t h,void* key,void* val,uint6
 			memcpy(&(item->key_and_val[h->key_size]),val,h->val_size);
 			item->hash_code = hash_code;
 			//printf("check_count:%d\n",check_count);
+			++h->size;
 			return item;
 		}
 		else
@@ -126,7 +120,6 @@ static int32_t _hash_map_expand(hash_map_t h)
 	h->expand_size = h->slot_size - h->slot_size/4;
 	free(old_items);
 	return 0;
-	
 }
 
 hash_map_iter hash_map_insert(hash_map_t h,void *key,void *val)
@@ -141,7 +134,6 @@ hash_map_iter hash_map_insert(hash_map_t h,void *key,void *val)
 	struct hash_item *item = _hash_map_insert(h,key,val,hash_code);	
 	if( item != NULL)
 	{
-		++h->size;
 		iter.data1 = h;
 		iter.data2 = item;
 	}
@@ -159,18 +151,18 @@ static struct hash_item *_hash_map_find(hash_map_t h,void *key)
 	{
 		item = GET_ITEM(h->_items,h->item_size,slot);
 		if(item->flag == ITEM_EMPTY)
-			return 0;
+			return NULL;
 		if(item->hash_code == hash_code && h->_key_cmp_function(key,GET_KEY(h,item)) == 0)
 		{
 			if(item->flag == ITEM_DELETE)
-				return 0;
+				return NULL;
 			else
 				return item;
 		}
 		slot = (slot + 1)%h->slot_size;
 		check_count++;
 	}
-	return 0;
+	return NULL;
 }
 
 hash_map_iter hash_map_find(hash_map_t h,void* key)
@@ -192,7 +184,7 @@ void* hash_map_remove(hash_map_t h,void* key)
 	{
 		item->flag = ITEM_DELETE;
 		--h->size;
-		return GET_VAL(h,item);;
+		return GET_VAL(h,item);
 	}
 	return NULL;
 }

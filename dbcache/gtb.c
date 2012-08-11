@@ -1,10 +1,10 @@
 #include <stdio.h>
-#include "data_struct.h"
+#include "global_table.h"
+
 
 int main()
 {
-	
-	db_list_t l = db_list_create();
+	global_table_t gtb = global_table_create(1024);
 	
 	db_array_t a1 = db_array_create(3);
 	db_array_t a2 = db_array_create(3);
@@ -27,35 +27,25 @@ int main()
 	db_array_set(a4,1,basetype_create_int32(41));
 	db_array_set(a4,2,basetype_create_int32(42));
 	
-	db_list_append(l,a1);
-	db_list_append(l,a2);
-	db_list_append(l,a3);
-	db_list_append(l,a4);
-	
-	db_array_clear(a1);
-	db_array_clear(a4);
-	
-	int32_t i = 0;
-	for( ; i < 3; ++i)
-	{
-		basetype_t b = db_array_get(a2,i);
-		printf("%d\n",basetype_get_int32(b));
-	}
-	
-	i = 0;
-	for( ; i < 3; ++i)
-	{
-		basetype_t b = db_array_get(a3,i);
-		printf("%d\n",basetype_get_int32(b));
-	}
+	global_table_add(gtb,"kenny",(db_element_t)a1);
+	global_table_add(gtb,"kenny",(db_element_t)a2);
+	global_table_add(gtb,"kenny",(db_element_t)a3);
+	global_table_add(gtb,"kenny",(db_element_t)a4);
+	global_table_add(gtb,"kenny1",(db_element_t)a1);
 	
 	db_array_release(&a1);
 	db_array_release(&a2);
 	db_array_release(&a3);
 	db_array_release(&a4);
 	
-	db_list_shrink(l);
 	
-	db_list_release(&l);	
+	db_list_t l = (db_list_t)global_table_find(gtb,"kenny");
+	
+	printf("%d\n",db_list_size(l));
+	
+	//global_table_remove(gtb,"kenny");
+	
+	global_table_destroy(&gtb);
+	
 	return 0;
 }

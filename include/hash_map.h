@@ -29,6 +29,12 @@ typedef struct
 	void    *data2;
 }hash_map_iter;
 
+struct hash_item
+{
+	uint64_t hash_code;
+	int8_t flag;
+	int8_t key_and_val[0];
+};
 
 hash_map_t     hash_map_create(uint32_t slot_size,uint32_t key_size,uint32_t val_size,hash_func,hash_key_eq);
 void           hash_map_destroy(hash_map_t*);

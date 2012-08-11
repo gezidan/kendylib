@@ -2,6 +2,26 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
+
+void db_element_release(db_element_t *e)
+{
+	ref_decrease((struct refbase*)*e);
+	*e = NULL;
+}
+
+db_element_t db_element_acquire(db_element_t e1,db_element_t e2)
+{
+	if(e1 == e2)
+		return e1;	
+	if(e2)
+		ref_increase((struct refbase*)e2);
+	if(e1)
+		db_element_release(&e1);
+
+	return e2;
+}
+
 static void db_array_destroy(void *arg)
 {
 	db_array_t a = (db_array_t)arg;
@@ -22,29 +42,23 @@ db_array_t db_array_create(int32_t size)
 	db_array_t a = calloc(1,sizeof(*a));
 	a->base.type = DB_ARRAY;
 	a->base.ref.mt = 0;
-	a->base.ref.refcount = 1;
+	a->base.hash_index = -1;
 	a->base.ref.destroyer = db_array_destroy;
 	a->size = size;
 	a->data = calloc(size,sizeof(*(a->data))); 
+	a = (db_array_t)db_element_acquire(NULL,(db_element_t)a);
 	return a;	
 }
 
 void db_array_release(db_array_t *a)
 {
-	ref_decrease((struct refbase*)*a);
+	db_element_release((db_element_t*)a);
 	*a = NULL;
 }
 
 db_array_t db_array_acquire(db_array_t a1,db_array_t a2)
 {
-	if(a1 == a2)
-		return a1;	
-	if(a2)
-		ref_increase((struct refbase*)a2);
-	if(a1)
-		db_array_release(&a1);
-
-	return a2;
+	return (db_array_t)db_element_acquire((db_element_t)a1,(db_element_t)a2); 
 }
 
 
@@ -77,26 +91,43 @@ void db_array_clear(db_array_t a)
 	a->data = NULL;
 }
 
+void      db_list_destroy(void *_l)
+{
+	db_list_t l = (db_list_t)_l;
+	struct db_node *cur;
+	while(cur = (struct db_node *)link_list_pop((l)->l))
+	{
+		db_element_release((db_element_t*)&(cur->array));
+		free(cur);
+	}
+	
+	LINK_LIST_DESTROY(&(l)->l); 
+	free(l);
+}
+
 db_list_t db_list_create()
 {
 	db_list_t l = calloc(1,sizeof(*l));
 	l->l = LINK_LIST_CREATE();
+	l->base.type = DB_LIST;
+	l->base.ref.destroyer = db_list_destroy;
+	l->base.hash_index = -1;
+	l = (db_list_t)db_element_acquire(NULL,(db_element_t)l);
 	return l;	
 }
 
-void      db_list_destroy(db_list_t *l)
+db_list_t db_list_acquire(db_list_t l1,db_list_t l2)
 {
-	struct db_node *cur;
-	while(cur = (struct db_node *)link_list_pop((*l)->l))
-	{
-		db_array_release(&(cur->array));
-		free(cur);
-	}
-	
-	LINK_LIST_DESTROY(&(*l)->l); 
-	free(*l);
+	return (db_list_t)db_element_acquire(NULL,(db_element_t)l2);
+}
+
+void db_list_release(db_list_t *l)
+{
+	db_element_release((db_element_t*)l);
 	*l = NULL;
 }
+
+
 
 int32_t   db_list_append(db_list_t l,db_array_t a)
 {
