@@ -57,13 +57,10 @@ int32_t  Process(socket_t s)
 	return re > 0 && se > 0;
 }
 
-extern unsigned long recv_count;
-
 int32_t raw_recv(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_code)
 {
 	int32_t ret = 0;
 	*err_code = 0;
-	recv_count++;
 	*bytes_transfer = TEMP_FAILURE_RETRY(readv(s->fd,io_req->iovec,io_req->iovec_count));
 	if(*bytes_transfer < 0)
 	{

@@ -7,17 +7,13 @@
 
 static int32_t connect_count = 0;
 uint32_t packet_recv = 0;
-uint32_t packet_send = 0;
 uint32_t send_request = 0;
 uint32_t tick = 0;
 uint32_t now = 0;
-uint32_t bf_count = 0;
 #define MAX_CLIENT 1000
 static struct connection *clients[MAX_CLIENT];
 uint32_t last_recv = 0;
 uint32_t ava_interval = 0;
-uint32_t s_p = 0;
-uint32_t recv_count = 0;
 void init_clients()
 {
 	int32_t i = 0;
@@ -142,10 +138,9 @@ int32_t main(int32_t argc,char **argv)
 		now = GetSystemMs();
 		if(now - tick > 1000)
 		{
-			printf("recv:%u,send:%u,s_req:%u,ava_interval:%u\n",packet_recv,packet_send,send_request,ava_interval);
+			printf("recv:%u,s_req:%u,ava_interval:%u\n",packet_recv,send_request,ava_interval);
 			tick = now;
 			packet_recv = 0;
-			packet_send = 0;
 			send_request = 0;
 			ava_interval = 0;
 		}

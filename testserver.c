@@ -15,11 +15,8 @@ uint32_t packet_send = 0;
 uint32_t send_request = 0;
 uint32_t tick = 0;
 uint32_t now = 0;
-uint32_t s_p = 0;
-uint32_t bf_count = 0;
 uint32_t clientcount = 0;
 uint32_t last_send_tick = 0;
-uint32_t recv_count = 0;
 allocator_t wpacket_allocator;
 
 #define MAX_CLIENT 1000
@@ -159,9 +156,7 @@ int main(int argc,char **argv)
 			packet_recv = 0;
 			packet_send = 0;
 			send_request = 0;
-			s_p = 0;
 			iocp_count = 0;
-			recv_count = 0;
 		}
 		/*if(now - last_send_tick > 50)
 		{

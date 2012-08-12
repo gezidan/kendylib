@@ -197,7 +197,6 @@ static inline st_io *prepare_send(struct connection *c)
 	return O;
 
 }
-extern uint32_t packet_send;
 static inline void update_send_list(struct connection *c,int32_t bytestransfer)
 {
 	wpacket_t w;
@@ -214,7 +213,6 @@ static inline void update_send_list(struct connection *c,int32_t bytestransfer)
 				w->_packet_send_finish(c,w);
 			else	
 				wpacket_destroy(&w);
-			++packet_send;
 		}
 		else
 		{
@@ -236,7 +234,6 @@ static inline void update_send_list(struct connection *c,int32_t bytestransfer)
 	}
 }
 
-extern uint32_t s_p;
 int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish callback)
 {
 
