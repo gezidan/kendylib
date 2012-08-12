@@ -76,7 +76,7 @@ db_list_t db_list_acquire(db_list_t,db_list_t);
 void      db_list_release(db_list_t*);
 int32_t   db_list_append(db_list_t,db_array_t);
 int32_t   db_list_size(db_list_t);
-int32_t   db_list_shrink(db_list_t);
+int8_t    db_list_shrink(db_list_t);
 
 
 #endif	

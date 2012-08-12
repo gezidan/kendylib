@@ -30,6 +30,7 @@ struct global_table
 	struct tb_item *data;
 	struct tb_item head;
 	struct tb_item tail;
+	struct tb_item *last_shrink_node;
 };
 
 static inline int32_t _hash_key_eq_(string_t l,string_t r)
@@ -53,6 +54,7 @@ global_table_t global_table_create(int32_t initsize)
 		gt->data = calloc(initsize,sizeof(struct tb_item));
 		gt->head.pre = gt->head.next = &gt->tail;
 		gt->tail.pre = gt->tail.next = &gt->head;
+		gt->last_shrink_node = gt->head.next;
 		return gt;
 	}
 	return NULL;
@@ -79,6 +81,8 @@ static inline struct tb_item* _hash_map_insert(global_table_t h,string_t key,db_
 			item->next = &(h->tail);
 			h->tail.pre = item;
 			++h->size;
+			if(h->last_shrink_node == &(h->tail))
+				h->last_shrink_node = item;
 			return item;
 		}
 		else
@@ -113,6 +117,7 @@ static inline int32_t _hash_map_expand(global_table_t h)
 	}
 	h->expand_size = h->slot_size - h->slot_size/4;
 	free(old_items);
+	//h->last_shrink_node = h->head.next;
 	return 0;
 }
 
@@ -147,6 +152,8 @@ static inline void global_table_raw_set(global_table_t gt,int64_t index,db_eleme
 		//remove
 		string_destroy(&(gt->data[index].key));		
 		struct tb_item * item = &gt->data[index];
+		if(gt->last_shrink_node == item)
+			gt->last_shrink_node = item->next;		
 		item->pre->next = item->next;
 		item->next->pre = item->pre;
 		item->next = item->pre = NULL;
@@ -172,16 +179,16 @@ static inline void global_table_raw_set(global_table_t gt,int64_t index,db_eleme
 	}
 }
 
-int32_t global_table_add(global_table_t gt,const char *key,db_element_t e)
+db_element_t global_table_add(global_table_t gt,const char *key,db_element_t e)
 {
 	if(!key || !e)
-		return -1;
+		return NULL;
 	
 	//if not enough space,expand first
 	if(gt->slot_size < 0x80000000 && gt->size >= gt->expand_size)
 		_hash_map_expand(gt);
 	if(gt->size >= gt->slot_size)
-		return -1;	
+		return NULL;	
 		
 	string_t _key = string_create(key);	
 	struct tb_item *item = _hash_map_insert(gt,_key,e,_hash_func_(_key));
@@ -189,14 +196,14 @@ int32_t global_table_add(global_table_t gt,const char *key,db_element_t e)
 	{
 		//not enough space
 		string_destroy(&_key);
-		return -1;
+		return NULL;
 	}
 	
 	if(item->val != e)
 	{
 		string_destroy(&_key);
 		if(e->type == DB_LIST)
-			return -1;
+			return NULL;
 		db_element_t _e = item->val;
 		db_list_t dbl;
 		if(_e->type == DB_ARRAY)
@@ -213,11 +220,13 @@ int32_t global_table_add(global_table_t gt,const char *key,db_element_t e)
 			dbl = (db_list_t)_e;
 			db_list_append(dbl,(db_array_t)e);
 		}
+		return (db_element_t)dbl;
 	}
 	else
+	{
 		e = db_element_acquire(NULL,e);
-		
-	return 0;
+		return e;
+	}
 }
 
 db_element_t global_table_find(global_table_t gt,const char *key)
@@ -268,4 +277,21 @@ void global_table_destroy(global_table_t *gt)
 	free((*gt)->data);
 	free(*gt);
 	*gt = NULL;
+}
+#include "SysTime.h"
+void global_table_shrink(global_table_t gt,uint32_t maxtime)
+{
+	uint32_t end_tick = GetCurrentMs() + maxtime;
+	int8_t finish = 1;
+	while(gt->last_shrink_node != &(gt->tail))
+	{
+		if(gt->last_shrink_node->val->type == DB_LIST)
+			//do shrink
+			finish = db_list_shrink((db_list_t)gt->last_shrink_node->val);
+		uint32_t tick = GetCurrentMs();
+		if(tick >= end_tick)
+			break;
+	} 
+	if(finish == 1 && gt->last_shrink_node == &gt->tail)
+		gt->last_shrink_node == gt->head.next;
 }

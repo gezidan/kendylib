@@ -28,9 +28,9 @@ void           global_table_destroy(global_table_t*);
 
 db_element_t   global_table_find(global_table_t,const char *key);
 int32_t        global_table_remove(global_table_t,const char *key);
-int32_t        global_table_add(global_table_t,const char *key,db_element_t e);
+db_element_t   global_table_add(global_table_t,const char *key,db_element_t e);
 
-//collect unused db_element_t
-void           global_table_shrink(global_table_t);
+//collect unused db_element_t and destroy it
+void           global_table_shrink(global_table_t,uint32_t maxtime);
 
 #endif

@@ -145,7 +145,7 @@ int32_t   db_list_size(db_list_t l)
 	return link_list_size(l->l);
 }
 
-int32_t   db_list_shrink(db_list_t l)
+int8_t   db_list_shrink(db_list_t l)
 {
 	int32_t s = link_list_size(l->l);
 	int32_t i = 0;
@@ -161,5 +161,5 @@ int32_t   db_list_shrink(db_list_t l)
 			LINK_LIST_PUSH_BACK(l->l,cur);
 		}
 	}
-	return link_list_size(l->l);
+	return 1;
 }
