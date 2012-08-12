@@ -85,14 +85,14 @@ void       hash_map_iter_set_val(hash_map_iter,void*);
        ret;})	
 #endif
 
-#ifndef HASP_MAP_ITER_SET
-#define HASP_MAP_ITER_SET(VALTYPE,_ITER,VAL)\
+#ifndef HASH_MAP_ITER_SET
+#define HASH_MAP_ITER_SET(VALTYPE,_ITER,VAL)\
 	({VALTYPE __val = VAL;\
 	  hash_map_iter_set_val(_ITEM,&__val);}) 	
 #endif
 
-#ifndef HASP_MAP_ITER_VAILD
-#define HASP_MAP_ITER_VAILD(_ITER) hash_map_is_vaild_iter(_ITER)
+#ifndef HASH_MAP_ITER_VAILD
+#define HASH_MAP_ITER_VAILD(_ITER) hash_map_is_vaild_iter(_ITER)
 #endif
 
 #endif
