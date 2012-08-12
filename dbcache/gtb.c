@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include "global_table.h"
-
+#include "SysTime.h"
 
 int main()
 {
+	init_system_time(10);
 	global_table_t gtb = global_table_create(1024);
 	
 	db_array_t a1 = db_array_create(3);
@@ -90,7 +91,7 @@ int main()
 	/* shrink will cause the refcount of a4 reduce to zero,
 	 * then a4 will be destroyed
 	*/
-	db_list_shrink(l);
+	db_list_shrink(l,100);
 	
 	printf("the row size of kenny(a db_list_t),after remove and shrink: %d\n",db_list_size(l));		
 	

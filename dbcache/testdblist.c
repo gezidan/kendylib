@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include "data_struct.h"
-
+#include "SysTime.h"
 int main()
 {
-	
+	init_system_time(10);
 	db_list_t l = db_list_create();
 	
 	db_array_t a1 = db_array_create(3);
@@ -54,7 +54,7 @@ int main()
 	db_array_release(&a3);
 	db_array_release(&a4);
 	
-	db_list_shrink(l);
+	db_list_shrink(l,100);
 	
 	db_list_release(&l);	
 	return 0;
