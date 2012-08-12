@@ -281,14 +281,17 @@ void global_table_destroy(global_table_t *gt)
 #include "SysTime.h"
 void global_table_shrink(global_table_t gt,uint32_t maxtime)
 {
-	uint32_t end_tick = GetCurrentMs() + maxtime;
+	if(maxtime == 0)
+		return;
+	uint32_t tick =GetCurrentMs();
+	uint32_t end_tick = tick + maxtime;
 	int8_t finish = 1;
 	while(gt->last_shrink_node != &(gt->tail))
 	{
 		if(gt->last_shrink_node->val->type == DB_LIST)
 			//do shrink
-			finish = db_list_shrink((db_list_t)gt->last_shrink_node->val);
-		uint32_t tick = GetCurrentMs();
+			finish = db_list_shrink((db_list_t)gt->last_shrink_node->val,end_tick-tick);
+		tick = GetCurrentMs();
 		if(tick >= end_tick)
 			break;
 	} 

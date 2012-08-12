@@ -145,8 +145,12 @@ int32_t   db_list_size(db_list_t l)
 	return link_list_size(l->l);
 }
 
-int8_t   db_list_shrink(db_list_t l)
+int8_t   db_list_shrink(db_list_t l,uint32_t maxtime)
 {
+	if(maxtime == 0)
+		return 1;
+	uint32_t tick =GetCurrentMs();
+	uint32_t end_tick = tick + maxtime;	
 	int32_t s = link_list_size(l->l);
 	int32_t i = 0;
 	for(; i < s; ++i)
@@ -160,6 +164,9 @@ int8_t   db_list_shrink(db_list_t l)
 		{
 			LINK_LIST_PUSH_BACK(l->l,cur);
 		}
+		tick = GetCurrentMs();
+		if(tick >= end_tick)
+			break;
 	}
 	return 1;
 }
