@@ -46,14 +46,19 @@ int main()
 	FILE *f = fopen("dbdefine.txt","rb");
 	trans_table_t tt = trans_table_create(f);	
 	{
+		
+		db_list_t l = db_list_create();
+		global_table_add_list(gtb,"mission,chaid,1001",l,global_hash("mission,chaid,1001"));
+		db_list_release(&l);
+		
 		//insert 3 record
 		db_array_t record1 = db_array_create(4);
 		db_array_set(record1,0,basetype_create_int32(1001));
 		db_array_set(record1,1,basetype_create_int32(100));
 		db_array_set(record1,2,basetype_create_int32(12));
 		db_array_set(record1,3,basetype_create_int32(15));
-		global_table_add(gtb,"mission,chaid,missionid,1001,100",(db_element_t)record1,global_hash("mission,chaid,missionid,1001,100"));
-		global_table_add(gtb,"mission,chaid,1001",(db_element_t)record1,global_hash("mission,chaid,1001"));
+		global_table_add_array(gtb,"mission,chaid,missionid,1001,100",record1,global_hash("mission,chaid,missionid,1001,100"));
+		global_table_add_array(gtb,"mission,chaid,1001",record1,global_hash("mission,chaid,1001"));
 		db_array_release(&record1);
 		
 		record1 = db_array_create(4);
@@ -61,8 +66,8 @@ int main()
 		db_array_set(record1,1,basetype_create_int32(101));
 		db_array_set(record1,2,basetype_create_int32(13));
 		db_array_set(record1,3,basetype_create_int32(14));
-		global_table_add(gtb,"mission,chaid,missionid,1001,101",(db_element_t)record1,global_hash("mission,chaid,missionid,1001,101"));
-		global_table_add(gtb,"mission,chaid,1001",(db_element_t)record1,global_hash("mission,chaid,1001"));
+		global_table_add_array(gtb,"mission,chaid,missionid,1001,101",record1,global_hash("mission,chaid,missionid,1001,101"));
+		global_table_add_array(gtb,"mission,chaid,1001",record1,global_hash("mission,chaid,1001"));
 		db_array_release(&record1);
 		
 		record1 = db_array_create(4);
@@ -70,8 +75,8 @@ int main()
 		db_array_set(record1,1,basetype_create_int32(102));
 		db_array_set(record1,2,basetype_create_int32(18));
 		db_array_set(record1,3,basetype_create_int32(17));
-		global_table_add(gtb,"mission,chaid,1001",(db_element_t)record1,global_hash("mission,chaid,1001"));
-		global_table_add(gtb,"mission,chaid,missionid,1001,102",(db_element_t)record1,global_hash("mission,chaid,missionid,1001,102"));
+		global_table_add_array(gtb,"mission,chaid,1001",record1,global_hash("mission,chaid,1001"));
+		global_table_add_array(gtb,"mission,chaid,missionid,1001,102",record1,global_hash("mission,chaid,missionid,1001,102"));
 		db_array_release(&record1);		
 		
 		db_array_t record2 = db_array_create(5);
@@ -80,7 +85,7 @@ int main()
 		db_array_set(record2,2,basetype_create_int32(11));
 		db_array_set(record2,3,basetype_create_int32(12));
 		db_array_set(record2,4,basetype_create_int32(14));
-		global_table_add(gtb,"cha_attr,chaid,1001",(db_element_t)record2,global_hash("cha_attr,chaid,1001"));
+		global_table_add_array(gtb,"cha_attr,chaid,1001",record2,global_hash("cha_attr,chaid,1001"));
 		db_array_release(&record2);
 		
 		db_array_t record3 = db_array_create(5);
@@ -89,7 +94,7 @@ int main()
 		db_array_set(record3,2,basetype_create_int32(100));
 		db_array_set(record3,3,basetype_create_int32(12));
 		db_array_set(record3,4,basetype_create_int32(14));
-		global_table_add(gtb,"cha_bag,chaid,1001",(db_element_t)record3,global_hash("cha_bag,chaid,1001"));
+		global_table_add_array(gtb,"cha_bag,chaid,1001",record3,global_hash("cha_bag,chaid,1001"));
 		db_array_release(&record3);
 		 
 	}

@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "kstring.h"
-
-
+#include "SysTime.h"
 enum
 {
 	_EMPTY = 0,
@@ -37,8 +36,6 @@ static inline int32_t _hash_key_eq_(string_t l,string_t r)
 	return string_compare(l,r);
 }
 
-
-
 global_table_t global_table_create(int32_t initsize)
 {
 	if(initsize > 0)
@@ -53,7 +50,6 @@ global_table_t global_table_create(int32_t initsize)
 		return gt;
 	}
 	return NULL;
-
 }
 
 static inline int8_t isempty(struct tb_item *item)
@@ -87,6 +83,7 @@ static inline struct tb_item* _hash_map_insert(global_table_t h,string_t key,db_
 			item->next = &(h->tail);
 			h->tail.pre = item;
 			++h->size;
+			++val->hash_count;
 			return item;
 		}
 		else
@@ -112,16 +109,17 @@ static inline int32_t _hash_map_expand(global_table_t h)
 		return -1;
 	}
 	h->head.pre = h->head.next = &(h->tail);
-	h->tail.pre = h->tail.next = &(h->head);	
+	h->tail.pre = h->tail.next = &(h->head);
+	h->size = 0;	
 	for(; i < old_slot_size; ++i)
 	{
 		struct tb_item *_item = &old_items[i];
+		--_item->val->hash_count;
 		if(_item->flag == _USED)
 			_hash_map_insert(h,_item->key,_item->val,_item->hash_code);
 	}
 	h->expand_size = h->slot_size - h->slot_size/4;
 	free(old_items);
-	//h->last_shrink_node = h->head.next;
 	return 0;
 }
 
@@ -150,51 +148,13 @@ static inline struct tb_item* _hash_map_find(global_table_t h,string_t key,uint6
 	return NULL;
 }
 
-static inline void global_table_raw_set(global_table_t gt,struct tb_item *item,db_element_t e)
+static inline struct tb_item * check_space_and_insert(global_table_t gt,const char *key,db_element_t e,uint64_t hash_code)
 {
-	if(e == NULL)
-	{
-		//remove
-		string_destroy(&(item->key));		
-		gt->size -= item->val->hash_count;
-		if(gt->last_shrink_node == item)
-			gt->last_shrink_node = item->next;		
-		item->pre->next = item->next;
-		item->next->pre = item->pre;
-		item->next = item->pre = NULL;
-		
-		if(item->val->type == DB_ARRAY)
-			db_array_clear((db_array_t)item->val);
-		db_element_release(&(item->val));
-		item->val = NULL;
-		item->flag = _DELETE;
-	}
-	else
-	{
-		db_element_t old = item->val;
-		if(old)
-		{
-			--old->hash_count;
-			db_element_release(&old);
-		}
-		e = db_element_acquire(NULL,e);
-		item->val = e;
-		++e->hash_count;
-	}
-}
-
-db_element_t global_table_add(global_table_t gt,const char *key,db_element_t e,uint64_t hash_code)
-{
-	if(!key || !e)
-		return NULL;
-		
-	db_element_t ret;
 	//if not enough space,expand first
 	if(gt->slot_size < 0x80000000 && gt->size >= gt->expand_size)
 		_hash_map_expand(gt);
 	if(gt->size >= gt->slot_size)
-		return NULL;	
-		
+		return NULL;
 	string_t _key = string_create(key);	
 	struct tb_item *item = _hash_map_insert(gt,_key,e,hash_code);
 	if(!item)
@@ -203,42 +163,33 @@ db_element_t global_table_add(global_table_t gt,const char *key,db_element_t e,u
 		string_destroy(&_key);
 		return NULL;
 	}
-	
-	if(item->val != e)
+	return item;	
+}
+
+db_array_t global_table_add_array(global_table_t gt,const char *key,db_array_t a,uint64_t hash_code)
+{
+	struct tb_item *item = check_space_and_insert(gt,key,(db_element_t)a,hash_code);
+	if(!item)
+		return NULL;
+	if(item->val != (db_element_t)a)
 	{
-		string_destroy(&_key);
-		if(e->type == DB_LIST)
+		if(item->val->type == DB_ARRAY)
 			return NULL;
-		db_element_t _e = item->val;
-		db_list_t dbl;
-		if(_e->type == DB_ARRAY)
-		{
-			dbl = db_list_create();
-			db_list_append(dbl,(db_array_t)_e);
-			global_table_raw_set(gt,item,(db_element_t)dbl);
-			db_list_append(dbl,(db_array_t)e);
-			ret = (db_element_t)dbl;
-			db_list_release(&dbl);
-		}
-		else
-		{
-			dbl = (db_list_t)_e;
-			db_list_append(dbl,(db_array_t)e);
-			ret = (db_element_t)dbl;
-		}
+		db_list_append((db_list_t)item->val,a);
+		return a;
 	}
 	else
-	{
-		e = db_element_acquire(NULL,e);
-		ret = (db_element_t)e;
-		++e->hash_count;
-	}
-	if(ret->type == DB_LIST && ret->hash_count == 1)
-	{
-		if(gt->last_shrink_node == &gt->tail)
-			gt->last_shrink_node == item;
-	}
-	return ret;
+		return db_array_acquire(NULL,a);					
+}
+
+db_list_t global_table_add_list(global_table_t gt,const char *key,db_list_t l,uint64_t hash_code)
+{
+	struct tb_item *item = check_space_and_insert(gt,key,(db_element_t)l,hash_code);
+	if(!item || item->val != (db_element_t)l)
+		return NULL;
+	if(gt->last_shrink_node == &gt->tail)
+		gt->last_shrink_node == item;
+	return db_list_acquire(NULL,l);
 }
 
 db_element_t global_table_find(global_table_t gt,const char *key,uint64_t hash_code)
@@ -249,6 +200,23 @@ db_element_t global_table_find(global_table_t gt,const char *key,uint64_t hash_c
 	if(item)
 		return item->val;
 	return NULL;
+}
+
+static inline void _remove(global_table_t gt,struct tb_item *item)
+{
+	string_destroy(&(item->key));		
+	gt->size -= item->val->hash_count;
+	if(gt->last_shrink_node == item)
+		gt->last_shrink_node = item->next;		
+	item->pre->next = item->next;
+	item->next->pre = item->pre;
+	item->next = item->pre = NULL;
+	
+	if(item->val->type == DB_ARRAY)
+		db_array_clear((db_array_t)item->val);
+	db_element_release(&(item->val));
+	item->val = NULL;
+	item->flag = _DELETE;
 }
 
 int32_t global_table_remove(global_table_t gt,const char *key,uint64_t hash_code)
@@ -272,8 +240,7 @@ int32_t global_table_remove(global_table_t gt,const char *key,uint64_t hash_code
 			  gt->size -= a->base.hash_count;
 		  }		  			
 		}
- 
-		global_table_raw_set(gt,item,NULL);
+		_remove(gt,item);
 		return 0;		
 	}
 	return -1;
@@ -288,13 +255,13 @@ void global_table_destroy(global_table_t *gt)
 	{
 		struct tb_item *tmp = item;
 		item = item->next;
-		global_table_raw_set(*gt,tmp,NULL);
+		_remove(*gt,tmp);
 	}
 	free((*gt)->data);
 	free(*gt);
 	*gt = NULL;
 }
-#include "SysTime.h"
+
 void global_table_shrink(global_table_t gt,uint32_t maxtime)
 {
 	if(maxtime == 0)
