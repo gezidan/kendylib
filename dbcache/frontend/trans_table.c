@@ -67,7 +67,7 @@ trans_table_t trans_table_create(FILE *trans_rule)
 		{
 			string_t colname = string_create(string_c_str(s[0]));
 			colname = string_cat(colname,s[i]);
-			HASH_MAP_INSERT(string_t,int,h,colname,i);
+			HASH_MAP_INSERT(string_t,int,h,colname,i-1);
 		}
 		
 		for(i = 0; i < size; ++i)
@@ -97,6 +97,7 @@ int32_t trans_table_trans(trans_table_t tt,const char *tbname,const char *colnam
 	return HASH_MAP_ITER_GET(int32_t,it);
 }
 
+/*
 int main()
 {
 	FILE *f = fopen("test.txt","rb");
@@ -118,9 +119,8 @@ int main()
 	printf("%d ",trans_table_trans(tt,"tablename3","3column1"));
 	printf("%d ",trans_table_trans(tt,"tablename3","3column2"));
 	printf("%d ",trans_table_trans(tt,"tablename3","3column3"));
-	printf("\n");		
-	
+	printf("\n");
 	
 	return 0;
-}
+}*/
 

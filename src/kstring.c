@@ -123,7 +123,7 @@ string_t string_cat_cstr(string_t a,const char *b)
 	assert(b);
 	uint32_t len1 = string_size(a);
 	uint32_t len2 = strlen(b);
-	uint32_t len3 = len1+len2-1;
+	uint32_t len3 = len1+len2+1;
 	if(!a->str)
 	{
 		a->str = ALLOC(0,len2+1);

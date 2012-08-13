@@ -42,7 +42,7 @@ db_array_t db_array_create(int32_t size)
 	db_array_t a = calloc(1,sizeof(*a));
 	a->base.type = DB_ARRAY;
 	a->base.ref.mt = 0;
-	a->base.hash_index = -1;
+	a->base.hash_count = 0;
 	a->base.ref.destroyer = db_array_destroy;
 	a->size = size;
 	a->data = calloc(size,sizeof(*(a->data))); 
@@ -112,7 +112,7 @@ db_list_t db_list_create()
 	l->l = LINK_LIST_CREATE();
 	l->base.type = DB_LIST;
 	l->base.ref.destroyer = db_list_destroy;
-	l->base.hash_index = -1;
+	l->base.hash_count = 0;
 	l = (db_list_t)db_element_acquire(NULL,(db_element_t)l);
 	return l;	
 }

@@ -16,12 +16,12 @@
 */
 
 //transfrom string to integer
-#include "hash_table.h"
+#include "hash_map.h"
 #include <stdio.h>
 
 typedef struct trans_table
 {
-	
+	hash_map_t h;
 }*trans_table_t;
 
 
@@ -33,8 +33,13 @@ typedef struct trans_table
  * 
  * call trans_table_trans("tablename1",NULL) return 0
  * call trans_table_trans("tablename2",NULL) return 1
- * call trans_table_trans("tablename3","3column3") return 2,this return value could used as 
+ * call trans_table_trans("tablename1","1column1") return 0,this return value could used as 
  * index in db_array_t to fecth the column value.
+ * 
+ * if you want to get the all rows of tablename1,call global_table_find(gt,"0")
+ * suppose 1column1 is the index of tablename1,if you want to get one row of tablename1 with
+ * index == 1001,call global_table_find(gt,"0,0,1001")
+ * 
  */
 
 trans_table_t trans_table_create(FILE *trans_rule); 
@@ -43,6 +48,6 @@ void trans_table_destroy(trans_table_t*);
 /* para1 is the table name,para2 is the column name
  * if just want to transfrom the table name,let para2 be NULL
  */ 
-int32_t trans_table_trans(const char*,const char*); 
+int32_t trans_table_trans(trans_table_t,const char*,const char*); 
 
 
