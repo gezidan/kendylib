@@ -36,7 +36,10 @@ void del(global_table_t gt,wpacket_t wpk)
 	   snprintf(tmp,32,",%u",rpacket_read_uint32(rpk));
 	   strcat(key,tmp);			
 	}
-	global_table_remove(gt,key,global_hash(key));
+	db_element_t e = global_table_remove(gt,key,global_hash(key));
+	if(e->type == DB_ARRAY)
+		db_array_clear((db_array_t)e);
+	db_element_release(&e);
 }
 
 int main()

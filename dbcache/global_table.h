@@ -29,7 +29,7 @@ void           global_table_destroy(global_table_t*);
 
 
 db_element_t   global_table_find(global_table_t,const char *key,uint64_t hash_code);
-int32_t        global_table_remove(global_table_t,const char *key,uint64_t hash_code);
+db_element_t   global_table_remove(global_table_t,const char *key,uint64_t hash_code);
 db_array_t     global_table_add_array(global_table_t,const char *key,db_array_t a,uint64_t hash_code);
 db_list_t      global_table_add_list(global_table_t,const char *key,db_list_t l,uint64_t hash_code);
 

@@ -30,7 +30,6 @@ enum
 typedef struct db_element
 {
 	struct refbase ref;
-	int32_t hash_count;
 	int8_t type;
 }*db_element_t;
 

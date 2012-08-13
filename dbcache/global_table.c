@@ -83,7 +83,6 @@ static inline struct tb_item* _hash_map_insert(global_table_t h,string_t key,db_
 			item->next = &(h->tail);
 			h->tail.pre = item;
 			++h->size;
-			++val->hash_count;
 			return item;
 		}
 		else
@@ -114,7 +113,6 @@ static inline int32_t _hash_map_expand(global_table_t h)
 	for(; i < old_slot_size; ++i)
 	{
 		struct tb_item *_item = &old_items[i];
-		--_item->val->hash_count;
 		if(_item->flag == _USED)
 			_hash_map_insert(h,_item->key,_item->val,_item->hash_code);
 	}
@@ -205,45 +203,29 @@ db_element_t global_table_find(global_table_t gt,const char *key,uint64_t hash_c
 static inline void _remove(global_table_t gt,struct tb_item *item)
 {
 	string_destroy(&(item->key));		
-	gt->size -= item->val->hash_count;
+	gt->size--;
 	if(gt->last_shrink_node == item)
 		gt->last_shrink_node = item->next;		
 	item->pre->next = item->next;
 	item->next->pre = item->pre;
 	item->next = item->pre = NULL;
-	
-	if(item->val->type == DB_ARRAY)
-		db_array_clear((db_array_t)item->val);
-	db_element_release(&(item->val));
 	item->val = NULL;
 	item->flag = _DELETE;
 }
 
-int32_t global_table_remove(global_table_t gt,const char *key,uint64_t hash_code)
+db_element_t global_table_remove(global_table_t gt,const char *key,uint64_t hash_code)
 {
 	
 	string_t _key = string_create(key);
 	struct tb_item *item = _hash_map_find(gt,_key,hash_code);
 	string_destroy(&_key);
 	if(item)
-	{		
-		if(item->val->type == DB_LIST)
-		{
-		  db_list_t l = (db_list_t)item->val;
-		  list_node *head = link_list_head(l->l);
-		  while(head)
-		  {
-			  db_array_t a = (db_array_t)((struct db_node*)head)->array; 
-			  head = head->next;
-			  db_array_clear(a);
-			  db_array_release(&a);
-			  gt->size -= a->base.hash_count;
-		  }		  			
-		}
+	{
+		db_element_t ret = item->val;
 		_remove(gt,item);
-		return 0;		
+		return ret;		
 	}
-	return -1;
+	return NULL;
 }
 
 void global_table_destroy(global_table_t *gt)
