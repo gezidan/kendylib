@@ -40,4 +40,6 @@ static inline  uint64_t global_hash(const char *key)
 //collect unused db_element_t and destroy it
 void           global_table_shrink(global_table_t,uint32_t maxtime);
 
+int64_t        global_table_size(global_table_t);
+
 #endif

@@ -173,7 +173,10 @@ static inline void global_table_raw_set(global_table_t gt,struct tb_item *item,d
 	{
 		db_element_t old = item->val;
 		if(old)
+		{
+			--old->hash_count;
 			db_element_release(&old);
+		}
 		e = db_element_acquire(NULL,e);
 		item->val = e;
 		++e->hash_count;
@@ -216,7 +219,6 @@ db_element_t global_table_add(global_table_t gt,const char *key,db_element_t e,u
 			db_list_append(dbl,(db_array_t)e);
 			ret = (db_element_t)dbl;
 			db_list_release(&dbl);
-			--_e->hash_count;
 		}
 		else
 		{
@@ -229,6 +231,7 @@ db_element_t global_table_add(global_table_t gt,const char *key,db_element_t e,u
 	{
 		e = db_element_acquire(NULL,e);
 		ret = (db_element_t)e;
+		++e->hash_count;
 	}
 	if(ret->type == DB_LIST && ret->hash_count == 1)
 	{
@@ -310,4 +313,9 @@ void global_table_shrink(global_table_t gt,uint32_t maxtime)
 	} 
 	if(finish == 1 && gt->last_shrink_node == &gt->tail)
 		gt->last_shrink_node == gt->head.next;
+}
+
+int64_t global_table_size(global_table_t gt)
+{
+	return gt->size;
 }

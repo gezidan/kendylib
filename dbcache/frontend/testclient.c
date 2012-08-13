@@ -91,6 +91,7 @@ int main()
 		db_array_set(record3,4,basetype_create_int32(14));
 		global_table_add(gtb,"cha_bag,chaid,1001",(db_element_t)record3,global_hash("cha_bag,chaid,1001"));
 		db_array_release(&record3);
+		 
 	}
 	{
 		//test find mission
@@ -180,7 +181,8 @@ int main()
 			printf("bagpos3:%d\n",basetype_get_int32(db_array_get(ret,trans_table_trans(tt,"cha_bag","bagpos3"))));		
 		}
 		wpacket_destroy(&select);		
-	}	
+	}
+	printf("%d\n",global_table_size(gtb));	
 	return 0;
 	
 		
