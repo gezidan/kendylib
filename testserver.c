@@ -17,9 +17,9 @@ uint32_t tick = 0;
 uint32_t now = 0;
 uint32_t clientcount = 0;
 uint32_t last_send_tick = 0;
-allocator_t wpacket_allocator;
+allocator_t wpacket_allocator = NULL;
 
-#define MAX_CLIENT 1000
+#define MAX_CLIENT 400
 static struct connection *clients[MAX_CLIENT];
 
 void init_clients()
@@ -54,7 +54,7 @@ void send2_all_client(rpacket_t r)
 			assert(w);
 			++send_request;
 			connection_send(clients[i],w,NULL);
-			//connection_push_packet(clients[i],w);
+			//connection_push_packet(clients[i],w,NULL);
 		}
 	}
 }
@@ -80,7 +80,7 @@ void remove_client(struct connection *c,int32_t reason)
 void on_process_packet(struct connection *c,rpacket_t r)
 {
 	send2_all_client(r);
-	++send_request;
+	//++send_request;
 	rpacket_destroy(&r);
 	++packet_recv;	
 }
@@ -135,11 +135,6 @@ int main(int argc,char **argv)
 	wpacket_allocator = (allocator_t)create_block_obj_allocator(0,sizeof(struct wpacket));	
 
 	uint32_t i = 0;
-	//getchar();
-	//init_wpacket_pool(100000);
-	//init_rpacket_pool(50000);
-	//buffer_init_maxbuffer_size(2000);
-	//buffer_init_64(2000);
 	init_clients();
 
 	engine = CreateEngine();
@@ -158,7 +153,8 @@ int main(int argc,char **argv)
 			send_request = 0;
 			iocp_count = 0;
 		}
-		/*if(now - last_send_tick > 50)
+		/*
+		if(now - last_send_tick > 50)
 		{
 			//心跳,每50ms集中发一次包
 			last_send_tick = now;
@@ -167,7 +163,7 @@ int main(int argc,char **argv)
 				if(clients[i])
 				{
 					//++send_request;
-					connection_send(clients[i],0,0);
+					connection_send(clients[i],NULL,NULL);
 				}
 			}
 		}*/

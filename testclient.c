@@ -118,10 +118,6 @@ int32_t main(int32_t argc,char **argv)
 	uint32_t send_interval = 8;
 	uint32_t send_tick = 0;
 	wpacket_t wpk;
-	//init_wpacket_pool(50000);
-	//init_rpacket_pool(100000);
-	//buffer_init_maxbuffer_size(2000);
-	//buffer_init_64(2000);
 
 	init_clients();
 	engine = CreateEngine();

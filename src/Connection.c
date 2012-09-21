@@ -248,10 +248,14 @@ int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish call
 	}
 	if(!c->send_overlap.isUsed)
 	{
-		c->send_overlap.isUsed = 1;
-		O = prepare_send(c);	
-		return WSASend(c->socket,O,0,&err_code);
+		O = prepare_send(c);
+		if(O)
+		{
+			c->send_overlap.isUsed = 1;	
+			return WSASend(c->socket,O,0,&err_code);
+		}
 	}
+	return -1;
 }
 
 void connection_push_packet(struct connection *c,wpacket_t w,packet_send_finish callback)
