@@ -18,8 +18,9 @@ uint32_t now = 0;
 uint32_t clientcount = 0;
 uint32_t last_send_tick = 0;
 allocator_t wpacket_allocator = NULL;
+uint32_t total_bytes_recv = 0;
 
-#define MAX_CLIENT 400
+#define MAX_CLIENT 1000
 static struct connection *clients[MAX_CLIENT];
 
 void init_clients()
@@ -79,7 +80,7 @@ void remove_client(struct connection *c,int32_t reason)
 
 void on_process_packet(struct connection *c,rpacket_t r)
 {
-	send2_all_client(r);
+	//send2_all_client(r);
 	//++send_request;
 	rpacket_destroy(&r);
 	++packet_recv;	
@@ -142,16 +143,17 @@ int main(int argc,char **argv)
 	tick = GetSystemMs();
 	while(1)
 	{
-		EngineRun(engine,15);
+		EngineRun(engine,100);
 		now = GetSystemMs();
 		if(now - tick > 1000)
 		{
-			printf("recv:%u,send:%u,s_req:%u\n",packet_recv,packet_send,send_request);
+			printf("recv:%u,send:%u,s_req:%u,total_recv:%u\n",packet_recv,packet_send,send_request,total_bytes_recv/1024/1024);
 			tick = now;
 			packet_recv = 0;
 			packet_send = 0;
 			send_request = 0;
 			iocp_count = 0;
+			total_bytes_recv = 0;
 		}
 		/*
 		if(now - last_send_tick > 50)

@@ -92,30 +92,30 @@ static inline  __attribute__((always_inline)) void sche_add_timeout(sche_t s,cor
 
 void sche_schedule(sche_t s)
 {
-	while(!s->stop)
-	{
-		uint32_t now = GetCurrentMs();
-		if(now >= s->next_check_timeout)
-			check_time_out(s,now);
+	//while(!s->stop)
+	//{
+	uint32_t now = GetCurrentMs();
+	if(now >= s->next_check_timeout)
+		check_time_out(s,now);
 
-		if(link_list_is_empty(s->active_list))
+	if(link_list_is_empty(s->active_list))
+	{
+		printf("sleep\n");
+		sleepms(50);
+	}
+	else
+	{
+		coro_t co = _sche_next(s,s->co);
+		if(co->status == CORO_DIE && co->_heapele.index == 0)
 		{
-			printf("sleep\n");
-			sleepms(50);
-		}
-		else
-		{
-			coro_t co = _sche_next(s,s->co);
-			if(co->status == CORO_DIE && co->_heapele.index == 0)
-			{
-				coro_destroy(&co);
-				if(--s->coro_size == 0)
-					s->stop = 1;
-				printf("a coro destroy\n");
-			}
+			coro_destroy(&co);
+			//if(--s->coro_size == 0)
+			//	s->stop = 1;
+			printf("a coro destroy\n");
 		}
 	}
-	printf("schedule end\n");
+	//}
+	//printf("schedule end\n");
 }
 
 sche_t sche_create(int32_t max_coro,int32_t stack_size)
@@ -196,6 +196,17 @@ void coro_sleep(coro_t co,int32_t ms)
 {
 	co->timeout = GetCurrentMs() + ms;
 	sche_add_timeout(co->_sche,co);
+}
+
+void coro_block(coro_t co)
+{
+	sche_next(co->_sche,co,CORO_BLOCK);
+}
+
+void coro_wakeup(coro_t co)
+{
+	if(co->status == CORO_BLOCK)
+		LINK_LIST_PUSH_BACK(co->_sche->active_list,co);
 }
 
 

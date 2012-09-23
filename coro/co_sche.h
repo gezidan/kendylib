@@ -29,6 +29,7 @@ enum
 	CORO_ACTIVE,
 	CORO_DIE,
 	CORO_START,
+	CORO_BLOCK,
 };
 
 struct sche;
@@ -69,5 +70,7 @@ void coro_destroy(coro_t *);
 extern inline coro_t get_current_coro();
 extern inline void coro_sleep(coro_t,int32_t);
 extern inline void coro_yield(coro_t);
+extern inline void coro_block(coro_t);
+extern inline void coro_wakeup(coro_t);
 
 #endif

@@ -43,6 +43,7 @@ struct connection
 	uint8_t mt;
 	uint8_t raw;
 	uint16_t is_close;
+	void    *custom_ptr;
 };
 
 struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_packet,on_disconnect);

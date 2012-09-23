@@ -86,7 +86,6 @@ static inline void unpack(struct connection *c)
 	//return r;
 }
 
-
 void RecvFinish(int32_t bytestransfer,st_io *io)
 {
 	struct OVERLAPCONTEXT *OVERLAP = (struct OVERLAPCONTEXT *)io;
