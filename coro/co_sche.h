@@ -21,6 +21,7 @@
 #include "uthread.h"
 #include "minheap.h"
 #include "link_list.h"
+#include "rpacket.h"
 
 enum
 {
@@ -40,10 +41,12 @@ typedef struct coro
 	struct sche *_sche;
 	uthread_t    ut;
 	void *stack;
+	rpacket_t rpc_response;
 	uint8_t status;
 	uint32_t timeout;
 	void *arg;
 	void* (*fun)(void *);
+	
 }*coro_t;
 
 typedef struct sche

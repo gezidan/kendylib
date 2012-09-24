@@ -6,11 +6,12 @@
 #include "Connection.h"
 #include "link_list.h"
 #include "co_sche.h"
-
+#include "thread.h"
+#include "spinlock.h"
 struct channel
 {
 	struct connection *c;
-	spin_lock_t mtx;
+	spinlock_t mtx;
 	struct link_list   *send_list;
 	struct block_queue *msgQ;
 };
@@ -19,6 +20,7 @@ struct channel *g_channel = NULL;
 allocator_t wpacket_allocator = NULL;
 thread_t logic_thread;
 sche_t g_sche = NULL;
+uint32_t call_count = 0;
 
 //function for logic thread
 int32_t send_packet(struct channel *c,wpacket_t w)
@@ -42,33 +44,77 @@ rpacket_t peek_msg(struct channel *c,uint32_t timeout)
 	return msg;		
 }
 
-void *test_coro_fun(void *arg)
+
+int remote_fun1(coro_t co)
+{
+	wpacket_t wpk = wpacket_create(1,wpacket_allocator,64,0);
+	wpacket_write_uint32(wpk,(int32_t)co);
+	wpacket_write_string(wpk,"remote_fun1");
+	send_packet(g_channel,wpk);
+	//send and block until the response from rpc server
+	coro_block(co);
+	int ret = rpacket_read_uint32(co->rpc_response);
+	rpacket_destroy(&co->rpc_response);
+	return ret;
+}
+
+int remote_fun2(coro_t co)
+{
+	wpacket_t wpk = wpacket_create(1,wpacket_allocator,64,0);
+	wpacket_write_uint32(wpk,(int32_t)co);
+	wpacket_write_string(wpk,"remote_fun2");
+	send_packet(g_channel,wpk);
+	//send and block until the response from rpc server
+	coro_block(co);
+	int ret = rpacket_read_uint32(co->rpc_response);
+	rpacket_destroy(&co->rpc_response);
+	return ret;
+}
+
+
+void *test_coro_fun1(void *arg)
 {
 	coro_t co = get_current_coro();
 	while(1)
 	{
-		wpacket_t wpk = wpacket_create(0,wpacket_allocator,64,0);
-		wpacket_write_uint32(wpk,(int32_t)co);
-		//uint32_t sys_t = GetSystemMs();
-		//wpacket_write_uint32(wpk,sys_t);
-		//wpacket_write_string(wpk,"hello kenny");
-		send_packet(g_channel,wpk);
-		//send and block until the response from rpc server
-		coro_block(co);
+		if(1 != remote_fun1(co))
+		{
+			printf("rpc error\n");
+			exit(0);
+		}
+		coro_block(co);		
+		++call_count;
 	}
 }
+
+void *test_coro_fun2(void *arg)
+{
+	coro_t co = get_current_coro();
+	while(1)
+	{
+		if(2 != remote_fun2(co))
+		{
+			printf("rpc error\n");
+			exit(0);
+		}
+		++call_count;
+	}
+}
+
 
 void *logic_routine(void *arg)
 {
 	while(1)
 	{
-		rpacket_t rpk = peek_msg(g_channel,50);
+		rpacket_t rpk = peek_msg(g_channel,10);
 		if(rpk)
 		{
 			coro_t co = (coro_t)rpacket_read_uint32(rpk);
+			co->rpc_response = rpk;
 			coro_wakeup(co);
-			rpacket_destroy(&rpk);
+			//rpacket_destroy(&rpk);
 		}
+		//printf("do schedule\n");
 		sche_schedule(g_sche);	
 	}
 }
@@ -120,32 +166,49 @@ void on_channel_disconnect(struct connection *c,int32_t reason)
 	}	
 }
 
+connector_t con = NULL;
+
 void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 {
 	HANDLE *engine = (HANDLE*)ud;
 	struct connection *c;
 	if(s == -1)
 	{
-		printf("%d,Á¬½Óµ½:%s,%d,Ê§°Ü\n",s,ip,port);
+		printf("connect failed\n");
 	}
 	else
 	{
 		
 		setNonblock(s);
-		c = connection_create(s,0,0,on_process_packet,on_channel_disconnect);
-		printf("%d,Á¬½Óµ½:%s,%d,³É¹¦\n",s,ip,port);
+		c = connection_create(s,0,1,on_process_packet,on_channel_disconnect);
+		printf("connect successed\n");
 		Bind2Engine(*engine,s,RecvFinish,SendFinish);
 		//create channel and create logic thread
 		g_channel = channel_create(c);
 		c->custom_ptr = g_channel;
+		
+		g_sche = sche_create(50000,65536);
+		
+		int i = 0;
+		for(; i < 20000; ++i)
+		{
+			if(i%2 == 0)
+				sche_spawn(g_sche,test_coro_fun1,NULL);
+			else
+				sche_spawn(g_sche,test_coro_fun2,NULL);
+		}
+		thread_run(logic_routine,NULL);
 		connection_start_recv(c);
+		
+		
+		
 	}
 }
 
 int32_t main(int32_t argc,char **argv)
 {	
 	HANDLE engine;
-	
+	init_system_time(10);
 	const char *ip = argv[1];
 	uint32_t port = atoi(argv[2]);
 	int32_t client_count = atoi(argv[3]);
@@ -155,28 +218,31 @@ int32_t main(int32_t argc,char **argv)
 		printf("Init error\n");
 		return 0;
 	}
-	wpacket_allocator = (allocator_t)create_block_obj_allocator(0,sizeof(struct wpacket));		
+	//wpacket_allocator = (allocator_t)create_block_obj_allocator(1,sizeof(struct wpacket));		
 	
 	int32_t ret;
 	int32_t i = 0;
 	uint32_t send_interval = 8;
 	uint32_t send_tick = 0;
 	wpacket_t wpk;
-
-	init_clients();
 	engine = CreateEngine();
 	con =  connector_create();
-	for( ; i < client_count;++i)
-	{
-		ret = connector_connect(con,ip,port,on_connect_callback,&engine,1000*20);
-		sleepms(1);
-	}
+	ret = connector_connect(con,ip,port,on_connect_callback,&engine,1000*20);
+	uint32_t tick = GetSystemMs();	
 	while(1)
 	{
 		connector_run(con,1);
 		EngineRun(engine,1);
 		if(g_channel)
 			process_send(g_channel);
+		
+		uint32_t now = GetSystemMs();
+		if(now - tick > 1000)
+		{
+			printf("call_count:%u\n",call_count);
+			tick = now;
+			call_count = 0;
+		}		
 	}
 	return 0;
 }
