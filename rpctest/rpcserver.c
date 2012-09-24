@@ -10,15 +10,9 @@
 #include <stdint.h>
 #include "block_obj_allocator.h"
 #include <assert.h>
-uint32_t packet_recv = 0;
-uint32_t packet_send = 0;
-uint32_t send_request = 0;
-uint32_t tick = 0;
-uint32_t now = 0;
 uint32_t clientcount = 0;
-uint32_t last_send_tick = 0;
 allocator_t wpacket_allocator = NULL;
-uint32_t total_bytes_recv = 0;
+
 
 #define MAX_CLIENT 1000
 static struct connection *clients[MAX_CLIENT];
@@ -63,7 +57,6 @@ void send2_all_client(rpacket_t r)
 			else
 				wpacket_write_uint32(w,2);
 			assert(w);
-			++send_request;
 			connection_send(clients[i],w,NULL);
 			//connection_push_packet(clients[i],w,NULL);
 		}
@@ -93,7 +86,6 @@ void on_process_packet(struct connection *c,rpacket_t r)
 	send2_all_client(r);
 	//++send_request;
 	rpacket_destroy(&r);
-	++packet_recv;	
 }
 
 void accept_callback(HANDLE s,void *ud)
@@ -150,21 +142,9 @@ int main(int argc,char **argv)
 
 	engine = CreateEngine();
 	thread_run(_Listen,&engine);
-	tick = GetSystemMs();
 	while(1)
 	{
 		EngineRun(engine,100);
-		now = GetSystemMs();
-		if(now - tick > 1000)
-		{
-			printf("recv:%u,send:%u,s_req:%u,total_recv:%u\n",packet_recv,packet_send,send_request,total_bytes_recv/1024/1024);
-			tick = now;
-			packet_recv = 0;
-			packet_send = 0;
-			send_request = 0;
-			iocp_count = 0;
-			total_bytes_recv = 0;
-		}
 	}
 	return 0;
 }
