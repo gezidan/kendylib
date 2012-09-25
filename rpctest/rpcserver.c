@@ -52,7 +52,7 @@ void send2_client(rpacket_t r)
 		{
 			w = wpacket_create(0,wpacket_allocator,64,0);
 			wpacket_write_uint32(w,coro_id);
-			if(strcmp(function_name,"remote_fun1") == 0)
+			if(strcmp(function_name,"sum") == 0)
 				wpacket_write_uint32(w,arg1+arg2);
 			else
 				wpacket_write_uint32(w,arg1*arg2);

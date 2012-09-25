@@ -44,12 +44,12 @@ rpacket_t peek_msg(struct channel *c,uint32_t timeout)
 }
 
 
-int remote_fun1(int32_t arg1,int32_t arg2)
+int sum(int32_t arg1,int32_t arg2)
 {
 	coro_t co = get_current_coro();
-	wpacket_t wpk = wpacket_create(1,wpacket_allocator,64,0);
+	wpacket_t wpk = wpacket_create(1,NULL,64,0);
 	wpacket_write_uint32(wpk,(int32_t)co);
-	wpacket_write_string(wpk,"remote_fun1");
+	wpacket_write_string(wpk,"sum");
 	wpacket_write_uint32(wpk,arg1);
 	wpacket_write_uint32(wpk,arg2);
 	send_packet(g_channel,wpk);
@@ -60,12 +60,12 @@ int remote_fun1(int32_t arg1,int32_t arg2)
 	return ret;
 }
 
-int remote_fun2(int32_t arg1,int32_t arg2)
+int product(int32_t arg1,int32_t arg2)
 {
 	coro_t co = get_current_coro();
-	wpacket_t wpk = wpacket_create(1,wpacket_allocator,64,0);
+	wpacket_t wpk = wpacket_create(1,NULL,64,0);
 	wpacket_write_uint32(wpk,(int32_t)co);
-	wpacket_write_string(wpk,"remote_fun2");
+	wpacket_write_string(wpk,"product");
 	wpacket_write_uint32(wpk,arg1);
 	wpacket_write_uint32(wpk,arg2);	
 	send_packet(g_channel,wpk);
@@ -84,7 +84,7 @@ void *test_coro_fun1(void *arg)
 	{
 		int32_t arg1 = rand()%4096;
 		int32_t arg2 = rand()%4096;
-		if(arg1+arg2 != remote_fun1(arg1,arg2))
+		if(arg1+arg2 != sum(arg1,arg2))
 		{
 			printf("rpc error\n");
 			exit(0);
@@ -101,7 +101,7 @@ void *test_coro_fun2(void *arg)
 	{
 		int32_t arg1 = rand()%512;
 		int32_t arg2 = rand()%512;
-		if(arg1*arg2 != remote_fun2(arg1,arg2))
+		if(arg1*arg2 != product(arg1,arg2))
 		{
 			printf("rpc error\n");
 			exit(0);
