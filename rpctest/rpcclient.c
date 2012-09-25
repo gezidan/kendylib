@@ -17,7 +17,6 @@ struct channel
 };
 
 struct channel *g_channel = NULL;
-allocator_t wpacket_allocator = NULL;
 thread_t logic_thread;
 sche_t g_sche = NULL;
 uint32_t call_count = 0;
@@ -45,11 +44,14 @@ rpacket_t peek_msg(struct channel *c,uint32_t timeout)
 }
 
 
-int remote_fun1(coro_t co)
+int remote_fun1(int32_t arg1,int32_t arg2)
 {
+	coro_t co = get_current_coro();
 	wpacket_t wpk = wpacket_create(1,wpacket_allocator,64,0);
 	wpacket_write_uint32(wpk,(int32_t)co);
 	wpacket_write_string(wpk,"remote_fun1");
+	wpacket_write_uint32(wpk,arg1);
+	wpacket_write_uint32(wpk,arg2);
 	send_packet(g_channel,wpk);
 	//send and block until the response from rpc server
 	coro_block(co);
@@ -58,11 +60,14 @@ int remote_fun1(coro_t co)
 	return ret;
 }
 
-int remote_fun2(coro_t co)
+int remote_fun2(int32_t arg1,int32_t arg2)
 {
+	coro_t co = get_current_coro();
 	wpacket_t wpk = wpacket_create(1,wpacket_allocator,64,0);
 	wpacket_write_uint32(wpk,(int32_t)co);
 	wpacket_write_string(wpk,"remote_fun2");
+	wpacket_write_uint32(wpk,arg1);
+	wpacket_write_uint32(wpk,arg2);	
 	send_packet(g_channel,wpk);
 	//send and block until the response from rpc server
 	coro_block(co);
@@ -77,7 +82,9 @@ void *test_coro_fun1(void *arg)
 	coro_t co = get_current_coro();
 	while(1)
 	{
-		if(1 != remote_fun1(co))
+		int32_t arg1 = rand()%4096;
+		int32_t arg2 = rand()%4096;
+		if(arg1+arg2 != remote_fun1(arg1,arg2))
 		{
 			printf("rpc error\n");
 			exit(0);
@@ -92,7 +99,9 @@ void *test_coro_fun2(void *arg)
 	coro_t co = get_current_coro();
 	while(1)
 	{
-		if(2 != remote_fun2(co))
+		int32_t arg1 = rand()%512;
+		int32_t arg2 = rand()%512;
+		if(arg1*arg2 != remote_fun2(arg1,arg2))
 		{
 			printf("rpc error\n");
 			exit(0);
@@ -112,9 +121,7 @@ void *logic_routine(void *arg)
 			coro_t co = (coro_t)rpacket_read_uint32(rpk);
 			co->rpc_response = rpk;
 			coro_wakeup(co);
-			//rpacket_destroy(&rpk);
 		}
-		//printf("do schedule\n");
 		sche_schedule(g_sche);	
 	}
 }
@@ -211,19 +218,14 @@ int32_t main(int32_t argc,char **argv)
 	init_system_time(10);
 	const char *ip = argv[1];
 	uint32_t port = atoi(argv[2]);
-	int32_t client_count = atoi(argv[3]);
 	signal(SIGPIPE,SIG_IGN);
 	if(InitNetSystem() != 0)
 	{
 		printf("Init error\n");
 		return 0;
-	}
-	//wpacket_allocator = (allocator_t)create_block_obj_allocator(1,sizeof(struct wpacket));		
+	}		
 	
 	int32_t ret;
-	int32_t i = 0;
-	uint32_t send_interval = 8;
-	uint32_t send_tick = 0;
 	wpacket_t wpk;
 	engine = CreateEngine();
 	con =  connector_create();

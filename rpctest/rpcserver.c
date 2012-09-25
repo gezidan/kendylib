@@ -37,28 +37,27 @@ void add_client(struct connection *c)
 	}
 }
 
-void send2_all_client(rpacket_t r)
+void send2_client(rpacket_t r)
 {
 	
 	uint32_t coro_id = rpacket_read_uint32(r);
 	const  char *function_name = rpacket_read_string(r);
-	//printf("%d,%s\n",coro_id,function_name);
+	int32_t arg1 = rpacket_read_uint32(r);
+	int32_t arg2 = rpacket_read_uint32(r);
 	uint32_t i = 0;
 	wpacket_t w;
 	for(; i < MAX_CLIENT; ++i)
 	{
 		if(clients[i])
 		{
-			//w = wpacket_create_by_rpacket(wpacket_allocator,r);
 			w = wpacket_create(0,wpacket_allocator,64,0);
 			wpacket_write_uint32(w,coro_id);
 			if(strcmp(function_name,"remote_fun1") == 0)
-				wpacket_write_uint32(w,1);
+				wpacket_write_uint32(w,arg1+arg2);
 			else
-				wpacket_write_uint32(w,2);
+				wpacket_write_uint32(w,arg1*arg2);
 			assert(w);
 			connection_send(clients[i],w,NULL);
-			//connection_push_packet(clients[i],w,NULL);
 		}
 	}
 }
@@ -83,8 +82,7 @@ void remove_client(struct connection *c,int32_t reason)
 
 void on_process_packet(struct connection *c,rpacket_t r)
 {
-	send2_all_client(r);
-	//++send_request;
+	send2_client(r);
 	rpacket_destroy(&r);
 }
 
