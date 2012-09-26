@@ -23,7 +23,7 @@ uint32_t call_count = 0;
 allocator_t wpacket_allocator = NULL;
 
 //function for logic thread
-int32_t send_packet(struct channel *c,wpacket_t w)
+static inline int32_t send_packet(struct channel *c,wpacket_t w)
 {
 	spin_lock(c->mtx);
 	if(c->c == NULL)
@@ -37,7 +37,7 @@ int32_t send_packet(struct channel *c,wpacket_t w)
 	return 0;
 }
 
-rpacket_t peek_msg(struct channel *c,uint32_t timeout)
+static inline rpacket_t peek_msg(struct channel *c,uint32_t timeout)
 {
 	rpacket_t msg = NULL;
 	BLOCK_QUEUE_POP(c->msgQ,&msg,timeout);
@@ -45,7 +45,7 @@ rpacket_t peek_msg(struct channel *c,uint32_t timeout)
 }
 
 
-int sum(int32_t arg1,int32_t arg2)
+static inline int sum(int32_t arg1,int32_t arg2)
 {
 	coro_t co = get_current_coro();
 	wpacket_t wpk = wpacket_create(1,wpacket_allocator,64,0);
@@ -61,7 +61,7 @@ int sum(int32_t arg1,int32_t arg2)
 	return ret;
 }
 
-int product(int32_t arg1,int32_t arg2)
+static inline int product(int32_t arg1,int32_t arg2)
 {
 	coro_t co = get_current_coro();
 	wpacket_t wpk = wpacket_create(1,NULL,64,0);
@@ -111,19 +111,33 @@ void *test_coro_fun2(void *arg)
 	}
 }
 
+static inline void  sche_idel(void *arg)
+{
+	uint32_t ms = link_list_is_empty(g_sche->active_list) ? 100 : 0;
+	rpacket_t rpk = peek_msg(g_channel,ms);
+	if(rpk)
+	{
+		coro_t co = (coro_t)rpacket_read_uint32(rpk);
+		co->rpc_response = rpk;
+		coro_wakeup(co);
+	}
+}
+
 
 void *logic_routine(void *arg)
 {
+	uint32_t tick = GetSystemMs();
 	while(1)
 	{
-		rpacket_t rpk = peek_msg(g_channel,10);
-		if(rpk)
+		sche_idel(NULL);
+		uint32_t now = GetSystemMs();
+		if(now - tick > 1000)
 		{
-			coro_t co = (coro_t)rpacket_read_uint32(rpk);
-			co->rpc_response = rpk;
-			coro_wakeup(co);
+			printf("call_count:%u\n",call_count);
+			tick = now;
+			call_count = 0;
 		}
-		sche_schedule(g_sche);	
+		sche_schedule(g_sche);
 	}
 }
 
@@ -140,12 +154,12 @@ struct channel *channel_create(struct connection *con)
 }
 
 
-void push_msg(struct channel *c,rpacket_t r)
+static inline void push_msg(struct channel *c,rpacket_t r)
 {
 	BLOCK_QUEUE_PUSH(c->msgQ,r);
 }
 
-void process_send(struct channel *c)
+static inline void process_send(struct channel *c)
 {
 	spin_lock(c->mtx);
 	link_list_swap(c->c->send_list,c->send_list);
@@ -195,10 +209,10 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 		g_channel = channel_create(c);
 		c->custom_ptr = g_channel;
 		
-		g_sche = sche_create(50000,65536);
+		g_sche = sche_create(50000,4096,sche_idel,NULL);
 		
 		int i = 0;
-		for(; i < 1; ++i)
+		for(; i < 15000; ++i)
 		{
 			if(i%2 == 0)
 				sche_spawn(g_sche,test_coro_fun1,NULL);
@@ -231,23 +245,12 @@ int32_t main(int32_t argc,char **argv)
 	engine = CreateEngine();
 	con =  connector_create();
 	ret = connector_connect(con,ip,port,on_connect_callback,&engine,1000*20);
-	uint32_t tick = GetSystemMs();
-	wpacket_allocator = (allocator_t)create_block_obj_allocator(1,sizeof(struct wpacket));
-	wpk = wpacket_create(1,wpacket_allocator,64,0);	
 	while(1)
 	{
 		connector_run(con,1);
 		EngineRun(engine,1);
 		if(g_channel)
-			process_send(g_channel);
-		
-		uint32_t now = GetSystemMs();
-		if(now - tick > 1000)
-		{
-			printf("call_count:%u\n",call_count);
-			tick = now;
-			call_count = 0;
-		}		
+			process_send(g_channel);	
 	}
 	return 0;
 }

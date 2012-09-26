@@ -82,6 +82,7 @@ void remove_client(struct connection *c,int32_t reason)
 
 void on_process_packet(struct connection *c,rpacket_t r)
 {
+	//printf("recv packet\n");
 	send2_client(r);
 	rpacket_destroy(&r);
 }

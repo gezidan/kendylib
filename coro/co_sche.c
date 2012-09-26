@@ -17,7 +17,7 @@ static inline  __attribute__((always_inline))void set_current_coro(coro_t co)
 
 void* coro_fun(void *arg)
 {
-	printf("a coro start\n");
+	//printf("a coro start\n");
 	coro_t co = (coro_t)arg;
 	LINK_LIST_PUSH_BACK(co->_sche->active_list,co);
 	co->status = CORO_ACTIVE;
@@ -50,7 +50,7 @@ static inline  __attribute__((always_inline)) void check_time_out(sche_t s,uint3
 			coro_destroy(&co);
 			if(--s->coro_size == 0)
 				s->stop = 1;
-			printf("a coro destroy\n");
+			//printf("a coro destroy\n");
 		}	
 	}
 	s->next_check_timeout = now + 200;//check every 200 ms
@@ -92,16 +92,16 @@ static inline  __attribute__((always_inline)) void sche_add_timeout(sche_t s,cor
 
 void sche_schedule(sche_t s)
 {
-	//while(!s->stop)
-	//{
 	uint32_t now = GetCurrentMs();
 	if(now >= s->next_check_timeout)
 		check_time_out(s,now);
 
 	if(link_list_is_empty(s->active_list))
 	{
-		//printf("sleep\n");
-		sleepms(5);
+		if(s->idel)
+			s->idel(s->idel_arg);
+		else
+			sleepms(50);
 	}
 	else
 	{
@@ -109,16 +109,12 @@ void sche_schedule(sche_t s)
 		if(co->status == CORO_DIE && co->_heapele.index == 0)
 		{
 			coro_destroy(&co);
-			//if(--s->coro_size == 0)
-			//	s->stop = 1;
 			printf("a coro destroy\n");
 		}
 	}
-	//}
-	//printf("schedule end\n");
 }
 
-sche_t sche_create(int32_t max_coro,int32_t stack_size)
+sche_t sche_create(int32_t max_coro,int32_t stack_size,void (*idel)(void*),void *idel_arg)
 {
 	init_system_time(10);
 	sche_t s = calloc(1,sizeof(*s));
@@ -128,6 +124,8 @@ sche_t sche_create(int32_t max_coro,int32_t stack_size)
 	s->_minheap = minheap_create(max_coro,_less);
 	s->next_check_timeout = GetSystemMs() + 200;
 	s->co = coro_create(s,0,NULL);
+	s->idel = idel;
+	s->idel_arg = idel_arg;
 	set_current_coro(s->co);
 	return s;
 }

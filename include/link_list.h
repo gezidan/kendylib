@@ -59,6 +59,9 @@ int32_t block_queue_pop(struct block_queue*,list_node**,int32_t timeout);
 void block_queue_force_wakeup(struct block_queue*);
 void block_queue_clear(struct block_queue*);
 
+void block_queue_swap(struct block_queue*bq,struct link_list*from);
+
+
 #define BLOCK_QUEUE_PUSH(L,N) block_queue_push(L,(list_node*)N)
 
 #define BLOCK_QUEUE_POP(L,N,M) block_queue_pop(L,(list_node**)N,M)

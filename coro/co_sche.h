@@ -58,14 +58,16 @@ typedef struct sche
   	struct link_list *active_list;
   	int32_t next_check_timeout;
   	volatile int8_t  stop;
-  	int32_t coro_size;		
+  	int32_t coro_size;
+  	void (*idel)(void*);
+  	void *idel_arg;		
 }*sche_t;
 
 
-sche_t sche_create(int32_t max_coro,int32_t stack_size);
+sche_t sche_create(int32_t max_coro,int32_t stack_size,void (*)(void*),void*);
 void sche_destroy(sche_t *);
 
-void sche_schedule(sche_t );
+void sche_schedule(sche_t);
 struct coro *sche_spawn(sche_t,void*(*fun)(void*),void*arg);
 coro_t coro_create(struct sche *,uint32_t stack_size,void*(*fun)(void*));
 void coro_destroy(coro_t *);

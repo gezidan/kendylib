@@ -153,6 +153,16 @@ void block_queue_push(block_queue *bq,list_node *n)
 	
 }
 
+void block_queue_swap(struct block_queue*bq,struct link_list*from)
+{
+	mutex_lock(bq->mtx);
+	int32_t isEmpty = LINK_LIST_IS_EMPTY(bq->l);
+	link_list_swap(bq->l,from);
+	mutex_unlock(bq->mtx);
+	if(isEmpty)
+		condition_signal(bq->cond);	
+}
+
 
 int32_t block_queue_pop(block_queue *bq,list_node **n,int32_t ms)
 {

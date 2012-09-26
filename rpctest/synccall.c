@@ -16,7 +16,7 @@ struct block_queue *msgQ1;
 struct block_queue *msgQ2;
 
 
-rpacket_t peek_msg(struct block_queue *msgQ,uint32_t timeout)
+static inline rpacket_t peek_msg(struct block_queue *msgQ,uint32_t timeout)
 {
 	rpacket_t msg = NULL;
 	wpacket_t pk = NULL;
@@ -29,12 +29,12 @@ rpacket_t peek_msg(struct block_queue *msgQ,uint32_t timeout)
 	return msg;		
 }
 
-void push_msg(struct block_queue *msgQ,wpacket_t w)
+static inline void push_msg(struct block_queue *msgQ,wpacket_t w)
 {
 	BLOCK_QUEUE_PUSH(msgQ,w);
 }
 
-int sum(int32_t arg1,int32_t arg2)
+static inline int sum(int32_t arg1,int32_t arg2)
 {
 	//printf("sum\n");
 	coro_t co = get_current_coro();
@@ -52,7 +52,7 @@ int sum(int32_t arg1,int32_t arg2)
 	return ret;
 }
 
-int product(int32_t arg1,int32_t arg2)
+static inline int product(int32_t arg1,int32_t arg2)
 {
 	//printf("product\n");
 	coro_t co = get_current_coro();
@@ -104,18 +104,24 @@ void *test_coro_fun2(void *arg)
 }
 
 
+static inline void  sche_idel(void *arg)
+{
+	uint32_t ms = link_list_is_empty(g_sche->active_list) ? 100 : 0;
+	rpacket_t rpk = peek_msg(msgQ2,ms);
+	if(rpk)
+	{
+		coro_t co = (coro_t)rpacket_read_uint32(rpk);
+		co->rpc_response = rpk;
+		coro_wakeup(co);
+	}
+}
+
 void *client_routine(void *arg)
 {
 	uint32_t tick = GetSystemMs();	
 	while(1)
 	{
-		rpacket_t rpk = peek_msg(msgQ2,0);
-		if(rpk)
-		{
-			coro_t co = (coro_t)rpacket_read_uint32(rpk);
-			co->rpc_response = rpk;
-			coro_wakeup(co);
-		}
+		sche_idel(NULL);
 		uint32_t now = GetSystemMs();
 		if(now - tick > 1000)
 		{
@@ -131,7 +137,7 @@ void *server_routine(void *arg)
 {
 	while(1)
 	{
-		rpacket_t rpk = peek_msg(msgQ1,0);
+		rpacket_t rpk = peek_msg(msgQ1,50);
 		if(rpk)
 		{
 			uint32_t coro_id = rpacket_read_uint32(rpk);
@@ -155,12 +161,10 @@ int main()
 	init_system_time(10);
 	
 	wpacket_allocator = (allocator_t)create_block_obj_allocator(1,sizeof(struct wpacket));
-	//wpacket_t wpk = wpacket_create(1,wpacket_allocator,64,0);
 
-	
 	msgQ1 = BLOCK_QUEUE_CREATE();
 	msgQ2 = BLOCK_QUEUE_CREATE();
-	g_sche = sche_create(50000,4096);
+	g_sche = sche_create(50000,4096,sche_idel,NULL);
 			
 	int i = 0;
 	for(; i < 1000; ++i)
