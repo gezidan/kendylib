@@ -100,8 +100,8 @@ void sche_schedule(sche_t s)
 
 	if(link_list_is_empty(s->active_list))
 	{
-		printf("sleep\n");
-		sleepms(50);
+		//printf("sleep\n");
+		sleepms(5);
 	}
 	else
 	{
@@ -155,7 +155,9 @@ void sche_destroy(sche_t *s)
 
 struct coro *sche_spawn(sche_t s,void*(*fun)(void*),void*arg)
 {
-	coro_t co = coro_create(s,4096,coro_fun);
+	if(s->coro_size >= s->max_coro)
+		return NULL;
+	coro_t co = coro_create(s,s->stack_size,coro_fun);
 	co->arg = arg;
 	co->fun = fun;
 	++s->coro_size;
@@ -168,7 +170,14 @@ coro_t coro_create(struct sche *_sche,uint32_t stack_size,void*(*fun)(void*))
 	coro_t co = calloc(1,sizeof(*co));
 	co->_sche = _sche;
 	if(stack_size)
+	{
 		co->stack = calloc(1,stack_size);
+		if(!co->stack)
+		{
+			free(co);
+			return NULL;
+		}
+	}
 	co->ut = uthread_create(NULL,co->stack,stack_size,fun);
 	return co;
 }

@@ -35,7 +35,7 @@ void uthread_main_function()
 }
 #else
 //for release version
-void __attribute__((regparm(3))) uthread_main_function(void *arg)
+void __attribute__((regparm(1))) uthread_main_function(void *arg)
 {
 	uthread_t u = (uthread_t)arg;
 	void *ret = u->main_fun(u->para);
@@ -54,8 +54,8 @@ uthread_t uthread_create(uthread_t parent,void*stack,uint32_t stack_size,void*(*
 	u->ssize = stack_size;
 	if(stack)
 	{
-		u->reg[0] = (int32_t)stack+stack_size;
-		u->reg[1] = (int32_t)stack+stack_size;
+		u->reg[0] = (int32_t)stack+stack_size-4;
+		u->reg[1] = (int32_t)stack+stack_size-4;
 	}
 	if(u->main_fun)
 		u->first_run = 1;
@@ -170,7 +170,7 @@ void* __attribute__((regparm(3))) uthread_switch(uthread_t from,uthread_t to,voi
 			"movl %%ebp,%%esp\t\n"
 			:
 			:"m"(to->reg[0])
-		);	   
+		);			   
 	   uthread_main_function((void*)to);
 	}
 	else

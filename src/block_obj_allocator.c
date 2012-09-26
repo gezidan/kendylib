@@ -80,6 +80,15 @@ static struct free_list *creat_new_freelist(uint32_t size)
 	return f;	
 }
 
+
+static struct free_list *creat_empty_freelist()
+{
+	struct free_list *f = (struct free_list*)calloc(1,sizeof(*f));
+	f->size = 0;
+	f->mem = NULL;
+	return f;	
+}
+
 static inline struct free_list *central_get_freelist(block_obj_allocator_t central)
 {
 	//printf("central_get_freelist\n");
@@ -170,7 +179,12 @@ static inline void thread_allocator_dealloc(struct thread_allocator *a,void *ptr
 	else
 	{
 		f = (struct free_list*)link_list_head(a->_free_list);
-		assert(f);
+		if(!f)
+		{
+			f = creat_empty_freelist();
+			link_list_push_back(a->_free_list,(list_node*)f);
+		}
+		//assert(f);
 		free_list_put(f,ptr);
 		++a->free_size;
 	}
@@ -183,7 +197,8 @@ static void release_freelist(struct link_list *flist)
 	{
 		struct free_list *f = (struct free_list*)l;
 		l = l->next;
-		free(f->mem);
+		if(f->mem)
+			free(f->mem);
 		free(f);
 		//printf("destroy_freelist\n");
 	}	
@@ -239,7 +254,14 @@ static void  block_obj_al_dealloc(struct allocator*a, void *ptr)
 	block_obj_allocator_t ba = (block_obj_allocator_t)a;
 	struct thread_allocator *ta;
 	if(ba->mtx)
+	{
 		ta = (struct thread_allocator*)pthread_getspecific(ba->t_key);
+		if(!ta)
+		{
+			ta = create_thread_allocator(ba);
+			pthread_setspecific(ba->t_key,(void*)ta);
+		}
+	}
 	else
 		ta = (struct thread_allocator*)link_list_head(ba->_thread_allocators);
 	assert(ta);
