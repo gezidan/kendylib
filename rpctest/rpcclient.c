@@ -209,10 +209,10 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 		g_channel = channel_create(c);
 		c->custom_ptr = g_channel;
 		
-		g_sche = sche_create(50000,4096,sche_idel,NULL);
+		g_sche = sche_create(250000,4096,sche_idel,NULL);
 		
 		int i = 0;
-		for(; i < 15000; ++i)
+		for(; i < 250000; ++i)
 		{
 			if(i%2 == 0)
 				sche_spawn(g_sche,test_coro_fun1,NULL);
@@ -248,7 +248,7 @@ int32_t main(int32_t argc,char **argv)
 	while(1)
 	{
 		connector_run(con,1);
-		EngineRun(engine,1);
+		EngineRun(engine,50);
 		if(g_channel)
 			process_send(g_channel);	
 	}
