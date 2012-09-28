@@ -7,20 +7,21 @@
 #include "wpacket.h"
 #include "rpacket.h"
 #include <stdlib.h>
+#include "mq.h"
 allocator_t wpacket_allocator = NULL;
 sche_t g_sche = NULL;
 thread_t client;
 thread_t server;
 uint32_t call_count = 0;
-struct block_queue *msgQ1;
-struct block_queue *msgQ2;
+mq_t msgQ1;
+mq_t msgQ2;
 
 
-static inline rpacket_t peek_msg(struct block_queue *msgQ,uint32_t timeout)
+static inline rpacket_t peek_msg(mq_t msgQ,uint32_t timeout)
 {
 	rpacket_t msg = NULL;
-	wpacket_t pk = NULL;
-	BLOCK_QUEUE_POP(msgQ,&pk,timeout);
+	wpacket_t pk = (wpacket_t)mq_pop(msgQ);
+	//BLOCK_QUEUE_POP(msgQ,&pk,timeout);
 	if(pk)
 	{
 		msg = rpacket_create_by_wpacket(NULL,pk);
@@ -29,9 +30,10 @@ static inline rpacket_t peek_msg(struct block_queue *msgQ,uint32_t timeout)
 	return msg;		
 }
 
-static inline void push_msg(struct block_queue *msgQ,wpacket_t w)
+static inline void push_msg(mq_t msgQ,wpacket_t w)
 {
-	BLOCK_QUEUE_PUSH(msgQ,w);
+	//BLOCK_QUEUE_PUSH(msgQ,w);
+	mq_push(msgQ,(struct list_node*)w);
 }
 
 static inline int sum(int32_t arg1,int32_t arg2)
@@ -162,12 +164,12 @@ int main()
 	
 	wpacket_allocator = (allocator_t)create_block_obj_allocator(1,sizeof(struct wpacket));
 
-	msgQ1 = BLOCK_QUEUE_CREATE();
-	msgQ2 = BLOCK_QUEUE_CREATE();
-	g_sche = sche_create(50000,4096,sche_idel,NULL);
+	msgQ1 = create_mq(4096);//BLOCK_QUEUE_CREATE();
+	msgQ2 = create_mq(4096);//BLOCK_QUEUE_CREATE();
+	g_sche = sche_create(250000,4096,sche_idel,NULL);
 			
 	int i = 0;
-	for(; i < 1000; ++i)
+	for(; i < 100000; ++i)
 	{		
 		if(i%2 == 0)
 			sche_spawn(g_sche,test_coro_fun1,NULL);

@@ -40,6 +40,7 @@ mq_t create_mq(uint32_t push_size)
 	pthread_key_create(&m->t_key,0);
 	m->share_list = LINK_LIST_CREATE();
 	m->local_lists = LINK_LIST_CREATE();
+	m->push_size = push_size;
 	return m; 	
 }
 
