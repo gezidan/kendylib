@@ -63,14 +63,10 @@ static inline int32_t cal_blocks(struct map *m,struct point2D *pos,uint32_t view
 	bottom_right.y = pos->y + view_radius;
 	
 	//规整坐标,使正方形成为一个在地图之内的长方形
-	if(top_left.x < m->top_left.x)
-		top_left.x = m->top_left.x;
-	if(top_left.y < m->top_left.y)
-		top_left.y = m->top_left.y;
-	if(bottom_right.x > m->bottom_right.x)
-		bottom_right.x = m->bottom_right.x;
-	if(bottom_right.y > m->bottom_right.y)
-		bottom_right.y = m->bottom_right.y;
+	if(top_left.x < m->top_left.x) top_left.x = m->top_left.x;
+	if(top_left.y < m->top_left.y) top_left.y = m->top_left.y;
+	if(bottom_right.x > m->bottom_right.x) bottom_right.x = m->bottom_right.x;
+	if(bottom_right.y > m->bottom_right.y) bottom_right.y = m->bottom_right.y;
 	
 	struct map_block *_top_left = get_block_by_point(m,&top_left);
 	struct map_block *_bottom_right = get_block_by_point(m,&bottom_right);
