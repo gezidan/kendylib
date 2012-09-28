@@ -142,7 +142,7 @@ struct map
 
 #define STAND_RADIUS 700//标准视距,视距大于STAND_RADIUS的对象拥有超视距需要特殊处理
 
-struct map *create_map(struct point2D *top_left,struct point2D *bottom_right,callback_ enter_callback,callback_ leave_callback);
+struct map *create_map(struct point2D *t_left,struct point2D *b_right,callback_ enter,callback_ leave);
 void move_to(struct map *m,struct aoi_object *o,struct point2D *new_pos);
 int32_t enter_map(struct map *m,struct aoi_object *o);
 int32_t leave_map(struct map *m,struct aoi_object *o);
