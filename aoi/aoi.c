@@ -140,17 +140,13 @@ void move_to(struct map *m,struct aoi_object *o,struct point2D *new_pos)
 	struct map_block *old_block = get_block_by_point(m,&old_pos);
 	struct map_block *new_block = get_block_by_point(m,new_pos);
 	if(old_block != new_block)
-	{
-		//从旧block中移除,加入到新的block中
 		double_link_remove(&o->block_node);
-		double_link_push(&new_block->aoi_objs,&o->block_node);
-	}
 	
 	//计算新旧管理区域
 	uint32_t n_x1,n_y1,n_x2,n_y2;
 	uint32_t o_x1,o_y1,o_x2,o_y2;
-	cal_blocks(m,&old_pos,o->view_radius,&o_x1,&o_y1,&o_x2,&o_y2);
-	cal_blocks(m,new_pos,o->view_radius,&n_x1,&n_y1,&n_x2,&n_y2);
+	cal_blocks(m,&old_pos,STAND_RADIUS,&o_x1,&o_y1,&o_x2,&o_y2);
+	cal_blocks(m,new_pos,STAND_RADIUS,&n_x1,&n_y1,&n_x2,&n_y2);
 	
 	uint32_t y = n_y1;
 	uint32_t x;
@@ -186,7 +182,9 @@ void move_to(struct map *m,struct aoi_object *o,struct point2D *new_pos)
 				block_process_enter(m,get_block(m,y,x),o);
 			}
 		}
-	}	
+	}
+	if(old_block != new_block)
+		double_link_push(&new_block->aoi_objs,&o->block_node);
 	y = o_y1;
 	for( ; y <= o_y2; ++y)
 	{
@@ -204,6 +202,8 @@ int32_t enter_map(struct map *m,struct aoi_object *o)
 	struct map_block *block = get_block_by_point(m,&o->current_pos);
 	if(!block)
 		return -1;
+	if(o->view_radius > STAND_RADIUS)
+		o->view_radius = STAND_RADIUS;
 	double_link_push(&block->aoi_objs,&o->block_node);
 	uint32_t x1,y1,x2,y2;
 	cal_blocks(m,&o->current_pos,STAND_RADIUS,&x1,&y1,&x2,&y2);

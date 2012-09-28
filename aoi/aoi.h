@@ -140,7 +140,7 @@ struct map
 	struct map_block blocks[];
 };
 
-#define STAND_RADIUS 500//标准视距,视距大于STAND_RADIUS的对象拥有超视距需要特殊处理
+#define STAND_RADIUS 700//标准视距,视距大于STAND_RADIUS的对象拥有超视距需要特殊处理
 
 struct map *create_map(struct point2D *top_left,struct point2D *bottom_right,callback_ enter_callback,callback_ leave_callback);
 void move_to(struct map *m,struct aoi_object *o,struct point2D *new_pos);
