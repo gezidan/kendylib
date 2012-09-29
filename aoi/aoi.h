@@ -117,26 +117,31 @@ struct map_block
 
 struct aoi_object
 {
-	struct double_link_node block_node;             //同一个map_block内的对象形成一个列表      
+	struct double_link_node block_node;             //同一个map_block内的对象形成一个列表 
+	struct double_link_node super_node;     
 	struct map_block *current_block;	
 	uint32_t aoi_object_id; 
 	struct bit_set self_view_objs;                  //自己观察到的对象集合
 	struct point2D current_pos;                     //当前坐标
 	uint32_t view_radius;                           //可视半径
+	uint32_t last_update_tick;
 };
 
 #define BLOCK_LENGTH 500 //一个单元格的大小为5米正方形
+#define UPDATE_INTERVAL 500
 
 typedef void (*callback_)(struct aoi_object *me,struct aoi_object *who);
 
 struct map
 {
-	struct point2D top_left;          //左上角
-	struct point2D bottom_right;      //右下角
+	struct point2D top_left;            //左上角
+	struct point2D bottom_right;        //右下角
+	struct double_link super_aoi_objs;  //super vision objects in the map,this type of object should be Scarce
 	uint32_t x_count;
 	uint32_t y_count;
 	callback_ enter_callback;
 	callback_ leave_callback;
+	struct aoi_object *all_aoi_objects[MAX_BITS*sizeof(uint32_t)*8];
 	struct map_block blocks[];
 };
 
@@ -146,5 +151,6 @@ struct map *create_map(struct point2D *t_left,struct point2D *b_right,callback_ 
 void move_to(struct map *m,struct aoi_object *o,struct point2D *new_pos);
 int32_t enter_map(struct map *m,struct aoi_object *o);
 int32_t leave_map(struct map *m,struct aoi_object *o);
+void    tick_super_objects(struct map*m);
 
 #endif

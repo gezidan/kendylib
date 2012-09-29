@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "aoi.h"
-
+#include "SysTime.h"
 
 struct entity
 {
@@ -40,6 +40,7 @@ struct map *create_scene()
 
 int main()
 {
+	init_system_time(10);
 	struct map *m = create_scene();
 	struct entity *e1,*e2;
 	e1 = create_entity(700);

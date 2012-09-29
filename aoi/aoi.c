@@ -1,4 +1,5 @@
 #include "aoi.h"
+#include "SysTime.h"
 
 static inline struct map_block *get_block(struct map *m,uint32_t r,uint32_t c)
 {
@@ -137,12 +138,15 @@ void move_to(struct map *m,struct aoi_object *o,struct point2D *new_pos)
 	struct map_block *new_block = get_block_by_point(m,new_pos);
 	if(old_block != new_block)
 		double_link_remove(&o->block_node);
-	
+		
+	uint32_t radius = STAND_RADIUS;	
+	if(o->view_radius > STAND_RADIUS)
+		radius = o->view_radius;		
 	//计算新旧管理区域
 	uint32_t n_x1,n_y1,n_x2,n_y2;
 	uint32_t o_x1,o_y1,o_x2,o_y2;
-	cal_blocks(m,&old_pos,STAND_RADIUS,&o_x1,&o_y1,&o_x2,&o_y2);
-	cal_blocks(m,new_pos,STAND_RADIUS,&n_x1,&n_y1,&n_x2,&n_y2);
+	cal_blocks(m,&old_pos,radius,&o_x1,&o_y1,&o_x2,&o_y2);
+	cal_blocks(m,new_pos,radius,&n_x1,&n_y1,&n_x2,&n_y2);
 	
 	uint32_t y = n_y1;
 	uint32_t x;
@@ -191,18 +195,25 @@ void move_to(struct map *m,struct aoi_object *o,struct point2D *new_pos)
 			block_process_leave(m,get_block(m,y,x),o,0);
 		}		
 	}
+	o->last_update_tick = GetCurrentMs();
 }
+
 
 int32_t enter_map(struct map *m,struct aoi_object *o)
 {
 	struct map_block *block = get_block_by_point(m,&o->current_pos);
 	if(!block)
 		return -1;
-	if(o->view_radius > STAND_RADIUS)
-		o->view_radius = STAND_RADIUS;
 	double_link_push(&block->aoi_objs,&o->block_node);
+	m->all_aoi_objects[o->aoi_object_id] = o;
+	uint32_t radius = STAND_RADIUS;	
+	if(o->view_radius > STAND_RADIUS)
+	{
+		radius = o->view_radius;
+		double_link_push(&m->super_aoi_objs,&o->super_node);
+	}
 	uint32_t x1,y1,x2,y2;
-	cal_blocks(m,&o->current_pos,STAND_RADIUS,&x1,&y1,&x2,&y2);
+	cal_blocks(m,&o->current_pos,radius,&x1,&y1,&x2,&y2);
 	uint32_t y = y1;
 	uint32_t x;
 	for( ; y <= y2; ++y)
@@ -211,7 +222,9 @@ int32_t enter_map(struct map *m,struct aoi_object *o)
 		{
 			block_process_enter(m,get_block(m,y,x),o);
 		}		
-	}		
+	}
+	o->last_update_tick = GetCurrentMs();
+	
 }
 
 int32_t leave_map(struct map *m,struct aoi_object *o)
@@ -220,8 +233,14 @@ int32_t leave_map(struct map *m,struct aoi_object *o)
 	if(!block)
 		return -1;
 	double_link_remove(&o->block_node);
+	uint32_t radius = STAND_RADIUS;	
+	if(o->view_radius > STAND_RADIUS)
+	{
+		radius = o->view_radius;
+		double_link_remove(&o->super_node);
+	}	
 	uint32_t x1,y1,x2,y2;
-	cal_blocks(m,&o->current_pos,STAND_RADIUS,&x1,&y1,&x2,&y2);
+	cal_blocks(m,&o->current_pos,radius,&x1,&y1,&x2,&y2);
 	uint32_t y = y1;
 	uint32_t x;
 	for( ; y <= y2; ++y)
@@ -230,5 +249,70 @@ int32_t leave_map(struct map *m,struct aoi_object *o)
 		{
 			block_process_leave(m,get_block(m,y,x),o,1);
 		}		
-	}			
+	}
+	m->all_aoi_objects[o->aoi_object_id] = NULL;			
+}
+
+static inline tick_super_object(struct map *m,struct aoi_object *o)
+{
+	uint32_t now = GetCurrentMs();
+	if(now - o->last_update_tick >= UPDATE_INTERVAL)
+	{ 
+		//remove out of view object first
+		uint32_t i = 0;
+		for( ; i < MAX_BITS; ++i)
+		{
+			if(o->self_view_objs.bits[i] > 0)
+			{
+				uint32_t j = 0;
+				for( ; j < sizeof(uint32_t); ++j)
+				{
+					if(o->self_view_objs.bits[i] & (1 << j))
+					{
+						uint32_t aoi_object_id = i*sizeof(uint32_t) + j;
+						struct aoi_object *other = m->all_aoi_objects[aoi_object_id];
+						uint64_t distance = cal_distance_2D(&o->current_pos,&other->current_pos);
+						if(distance > o->view_radius)
+							leave_me(m,o,other);
+					}
+				}
+			}
+		}
+		//process enter view
+		uint32_t x1,y1,x2,y2;
+		cal_blocks(m,&o->current_pos,o->view_radius,&x1,&y1,&x2,&y2);
+		uint32_t y = y1;
+		uint32_t x;
+		for( ; y <= y2; ++y)
+		{
+			for( x=x1; x <= x2; ++x)
+			{
+				struct map_block *bl = get_block(m,y,x);
+				struct aoi_object *cur = (struct aoi_object*)bl->aoi_objs.head.next;
+				while(cur != (struct aoi_object*)&bl->aoi_objs.tail)
+				{
+					if(is_set(&o->self_view_objs,cur->aoi_object_id) == 0)
+					{
+						uint64_t distance = cal_distance_2D(&o->current_pos,&cur->current_pos);
+						if(o->view_radius >= distance)
+							enter_me(m,o,cur);
+					}
+					cur = (struct aoi_object *)cur->block_node.next;
+				}
+			}		
+		}		
+		o->last_update_tick = now;	
+	}
+	
+}
+
+void tick_super_objects(struct map *m)
+{
+	struct double_link_node *cur = m->super_aoi_objs.head.next;
+	while(cur != &m->super_aoi_objs.head)
+	{
+		struct aoi_object *o = (struct aoi_object*)((uint8_t*)cur - sizeof(struct double_link_node));
+		tick_super_object(m,o);
+		cur = cur->next;
+	}
 }
