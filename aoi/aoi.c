@@ -275,14 +275,17 @@ static inline tick_super_object(struct map *m,struct aoi_object *o)
 					if(o->self_view_objs.bits[i] & (1 << j))
 					{
 						uint32_t aoi_object_id = i*sizeof(uint32_t) + j;
-						struct aoi_object *other = m->all_aoi_objects[aoi_object_id];
-						if(other->is_leave_map)
-							leave_me(m,o,other);
-						else
+						if(aoi_object_id != o->aoi_object_id)
 						{
-							uint64_t distance = cal_distance_2D(&o->current_pos,&other->current_pos);
-							if(distance > o->view_radius)
+							struct aoi_object *other = m->all_aoi_objects[aoi_object_id];
+							if(other->is_leave_map)
 								leave_me(m,o,other);
+							else
+							{
+								uint64_t distance = cal_distance_2D(&o->current_pos,&other->current_pos);
+								if(distance > o->view_radius)
+									leave_me(m,o,other);
+							}
 						}
 					}
 				}
