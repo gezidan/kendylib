@@ -99,6 +99,7 @@ static inline int32_t double_link_remove(struct double_link_node *dln)
 
 static inline void double_link_clear(struct double_link *dl)
 {
+	dl->head.pre = dl->tail.next = NULL;
 	dl->head.next = &dl->tail;
 	dl->tail.pre = &dl->head;
 }
@@ -125,6 +126,8 @@ struct aoi_object
 	struct point2D current_pos;                     //当前坐标
 	uint32_t view_radius;                           //可视半径
 	uint32_t last_update_tick;
+	uint32_t watch_me_count;
+	uint8_t  is_leave_map;
 };
 
 #define BLOCK_LENGTH 500 //一个单元格的大小为5米正方形

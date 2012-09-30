@@ -25,12 +25,11 @@ struct map *create_map(struct point2D *top_left,struct point2D *bottom_right,cal
 		for(x = 0; x < x_count; ++x)
 		{
 			struct map_block * b = get_block(m,y,x);
-			b->aoi_objs.head.pre = b->aoi_objs.tail.next = NULL;
-			b->aoi_objs.head.next = &b->aoi_objs.tail;
-			b->aoi_objs.tail.pre = &b->aoi_objs.head;
+			double_link_clear(&b->aoi_objs);
 			b->x = x;
 			b->y = y;
 		}
+	double_link_clear(&m->super_aoi_objs);
 	m->enter_callback = enter_callback;
 	m->leave_callback = leave_callback;
 	return m;
@@ -82,6 +81,7 @@ static inline int32_t cal_blocks(struct map *m,struct point2D *pos,uint32_t view
 static inline enter_me(struct map *m,struct aoi_object *me,struct aoi_object *other)
 {
 	set_bit(&me->self_view_objs,other->aoi_object_id);
+	++other->watch_me_count;
 	//通知me,other进入视野
 	m->enter_callback(me,other);
 }
@@ -89,6 +89,8 @@ static inline enter_me(struct map *m,struct aoi_object *me,struct aoi_object *ot
 static inline leave_me(struct map *m,struct aoi_object *me,struct aoi_object *other)
 {
 	clear_bit(&me->self_view_objs,other->aoi_object_id);
+	if(--other->watch_me_count == 0)
+		m->all_aoi_objects[other->aoi_object_id] = NULL;
 	//通知me,other离开视野
 	m->leave_callback(me,other);
 }
@@ -113,8 +115,8 @@ static inline block_process_leave(struct map *m,struct map_block *bl,struct aoi_
 	while(cur != (struct aoi_object*)&bl->aoi_objs.tail)
 	{
 		if(isleave_map)
-		{
-			if(is_set(&o->self_view_objs,cur->aoi_object_id))
+		{		
+			if(is_set(&cur->self_view_objs,o->aoi_object_id))
 				leave_me(m,cur,o);
 		}
 		else
@@ -224,6 +226,7 @@ int32_t enter_map(struct map *m,struct aoi_object *o)
 		}		
 	}
 	o->last_update_tick = GetCurrentMs();
+	o->is_leave_map = 0;
 	
 }
 
@@ -250,7 +253,9 @@ int32_t leave_map(struct map *m,struct aoi_object *o)
 			block_process_leave(m,get_block(m,y,x),o,1);
 		}		
 	}
-	m->all_aoi_objects[o->aoi_object_id] = NULL;			
+	o->is_leave_map = 1;
+	if(--o->watch_me_count == 0)
+		m->all_aoi_objects[o->aoi_object_id] = NULL;			
 }
 
 static inline tick_super_object(struct map *m,struct aoi_object *o)
@@ -271,9 +276,14 @@ static inline tick_super_object(struct map *m,struct aoi_object *o)
 					{
 						uint32_t aoi_object_id = i*sizeof(uint32_t) + j;
 						struct aoi_object *other = m->all_aoi_objects[aoi_object_id];
-						uint64_t distance = cal_distance_2D(&o->current_pos,&other->current_pos);
-						if(distance > o->view_radius)
+						if(other->is_leave_map)
 							leave_me(m,o,other);
+						else
+						{
+							uint64_t distance = cal_distance_2D(&o->current_pos,&other->current_pos);
+							if(distance > o->view_radius)
+								leave_me(m,o,other);
+						}
 					}
 				}
 			}
@@ -309,7 +319,7 @@ static inline tick_super_object(struct map *m,struct aoi_object *o)
 void tick_super_objects(struct map *m)
 {
 	struct double_link_node *cur = m->super_aoi_objs.head.next;
-	while(cur != &m->super_aoi_objs.head)
+	while(cur != &m->super_aoi_objs.tail)
 	{
 		struct aoi_object *o = (struct aoi_object*)((uint8_t*)cur - sizeof(struct double_link_node));
 		tick_super_object(m,o);
