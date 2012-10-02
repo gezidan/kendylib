@@ -4,13 +4,6 @@
 #include "sync.h"
 #include "double_link.h"
 #include "link_list.h"
-/*
-struct localQ
-{
-	list_node next;
-	struct link_list *local_q;
-};
-*/
 
 struct per_thread_struct
 {
@@ -30,22 +23,6 @@ struct mq
 	struct link_list  *local_lists;
 	
 };
-
-/*
-struct localQ *localQ_create()
-{
-	struct localQ *local_q = calloc(1,sizeof(*local_q));
-	local_q->local_q = LINK_LIST_CREATE();
-	return local_q;
-}
-
-void localQ_destroy(struct localQ **local_q)
-{
-	LINK_LIST_DESTROY(&(*local_q)->local_q);
-	free(*local_q);
-	*local_q = NULL;
-}
-*/
 
 static struct per_thread_struct *per_thread_create()
 {
@@ -99,20 +76,16 @@ static inline mq_sync_push(mq_t m,struct per_thread_struct *pts)
 	link_list_swap(m->share_list,pts->local_q);
 	if(empty)
 	{
-		//struct list_node *l = LINK_LIST_POP(struct list_node*,m->block_list);
 		struct double_link_node *l = double_link_pop(&m->blocks);
 		if(l)
 		{
 			//if there is block per_thread_struct wake it up
 			struct per_thread_struct *block_pts = (struct per_thread_struct *)((uint8_t*)l - sizeof(struct list_node));
-			//link_list_swap(block_pts->local_q,m->share_list);
 			mutex_unlock(m->mtx);
 			condition_signal(block_pts->cond);
 			return;
 		}
 	}
-	//else
-	//	link_list_swap(m->share_list,pts->local_q);
 	mutex_unlock(m->mtx);
 }
 
@@ -128,12 +101,9 @@ static inline mq_sync_pop(mq_t m,struct per_thread_struct *pts,uint32_t timeout)
 				double_link_push(&m->blocks,&pts->block);
 				if(0 != condition_timedwait(pts->cond,m->mtx,timeout))
 				{
-					//timeout,remove sefl from m->block_list
 					double_link_remove(&pts->block);
 					break;
 				}
-				//else
-				//	printf("success wake up\n");
 			}
 		}
 	}
