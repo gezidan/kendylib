@@ -77,8 +77,10 @@ int32_t condition_timedwait(condition_t c,mutex_t m,int32_t ms)
    //ts.tv_sec += 1;
    struct timeval now;
    gettimeofday(&now, NULL);
-   ts.tv_sec = now.tv_sec + 5;
-   ts.tv_nsec = now.tv_usec * 1000;   
+   uint64_t sec = ms/1000;
+   uint64_t msec = ms%1000;
+   ts.tv_sec = now.tv_sec + sec;
+   ts.tv_nsec = now.tv_usec * 1000 + msec*1000*1000;   
 	
 	return pthread_cond_timedwait(&c->cond,&m->m_mutex,&ts);
 }

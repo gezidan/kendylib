@@ -20,7 +20,7 @@ mq_t msgQ2;
 static inline rpacket_t peek_msg(mq_t msgQ,uint32_t timeout)
 {
 	rpacket_t msg = NULL;
-	wpacket_t pk = (wpacket_t)mq_pop(msgQ);
+	wpacket_t pk = (wpacket_t)mq_pop(msgQ,timeout);
 	//BLOCK_QUEUE_POP(msgQ,&pk,timeout);
 	if(pk)
 	{
@@ -142,6 +142,7 @@ void *server_routine(void *arg)
 		rpacket_t rpk = peek_msg(msgQ1,50);
 		if(rpk)
 		{
+			//printf("recv pk\n");
 			uint32_t coro_id = rpacket_read_uint32(rpk);
 			const  char *function_name = rpacket_read_string(rpk);
 			int32_t arg1 = rpacket_read_uint32(rpk);
@@ -169,7 +170,7 @@ int main()
 	g_sche = sche_create(250000,4096,sche_idel,NULL);
 			
 	int i = 0;
-	for(; i < 100000; ++i)
+	for(; i < 25000; ++i)
 	{		
 		if(i%2 == 0)
 			sche_spawn(g_sche,test_coro_fun1,NULL);

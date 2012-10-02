@@ -95,22 +95,24 @@ void destroy_mq(mq_t *m)
 static inline mq_sync_push(mq_t m,struct per_thread_struct *pts)
 {
 	mutex_lock(m->mtx);
-	if(link_list_is_empty(m->share_list))
+	uint8_t empty = link_list_is_empty(m->share_list);
+	link_list_swap(m->share_list,pts->local_q);
+	if(empty)
 	{
 		//struct list_node *l = LINK_LIST_POP(struct list_node*,m->block_list);
 		struct double_link_node *l = double_link_pop(&m->blocks);
 		if(l)
 		{
 			//if there is block per_thread_struct wake it up
-			struct per_thread_struct *pts = (struct per_thread_struct *)((uint8_t*)l - sizeof(struct list_node));
-			link_list_swap(m->share_list,pts->local_q);
+			struct per_thread_struct *block_pts = (struct per_thread_struct *)((uint8_t*)l - sizeof(struct list_node));
+			//link_list_swap(block_pts->local_q,m->share_list);
 			mutex_unlock(m->mtx);
-			condition_signal(pts->cond);
+			condition_signal(block_pts->cond);
 			return;
 		}
 	}
-	else
-		link_list_swap(m->share_list,pts->local_q);
+	//else
+	//	link_list_swap(m->share_list,pts->local_q);
 	mutex_unlock(m->mtx);
 }
 
@@ -123,11 +125,15 @@ static inline mq_sync_pop(mq_t m,struct per_thread_struct *pts,uint32_t timeout)
 		{	
 			while(link_list_is_empty(m->share_list))
 			{
+				double_link_push(&m->blocks,&pts->block);
 				if(0 != condition_timedwait(pts->cond,m->mtx,timeout))
 				{
 					//timeout,remove sefl from m->block_list
 					double_link_remove(&pts->block);
+					break;
 				}
+				//else
+				//	printf("success wake up\n");
 			}
 		}
 	}
