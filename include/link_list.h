@@ -8,7 +8,7 @@
 //typedef struct list_node list_node;
 
 struct link_list;
-struct block_queue;
+//struct block_queue;
 
 
 void link_list_push_back(struct link_list*,list_node*);
@@ -45,7 +45,7 @@ void    link_list_swap(struct link_list*to,struct link_list*from);
 
 #define LINK_LIST_CLEAR(L) link_list_clear(L)
 
-
+/*
 struct block_queue* create_block_queue();
 void destroy_block_queue(struct block_queue**);
 void block_queue_push(struct block_queue*,list_node*);
@@ -73,6 +73,6 @@ void block_queue_swap(struct block_queue*bq,struct link_list*from);
 #define BLOCK_QUEUE_CLEAR(L)  block_queue_clear(L)
 
 #define BLOCK_QUEUE_FORCE_WAKEUP(L) block_queue_force_wakeup(L)
-
+*/
 
 #endif

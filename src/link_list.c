@@ -112,7 +112,7 @@ int32_t link_list_size(link_list *l)
 {
 	return l->size;
 }
-
+/*
 //阻塞队列,当queue为空时,可选择阻塞在pop操作上,直到push把其唤醒
 typedef struct block_queue
 {
@@ -219,3 +219,4 @@ void block_queue_clear(block_queue *bq)
 	link_list_clear(bq->l);
 	mutex_unlock(bq->mtx);
 }
+*/

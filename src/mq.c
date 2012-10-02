@@ -139,6 +139,22 @@ struct list_node* mq_pop(mq_t m,uint32_t timeout)
 	return LINK_LIST_POP(struct list_node*,pts->local_q);
 }
 
+
+void   mq_swap(mq_t m,struct link_list *l)
+{
+	struct per_thread_struct *pts = (struct per_thread_struct*)pthread_getspecific(m->t_key);
+	if(!pts)
+	{
+		pts = per_thread_create();
+		LINK_LIST_PUSH_BACK(m->local_lists,pts);
+		pthread_setspecific(m->t_key,(void*)pts);
+	}
+	if(link_list_is_empty(pts->local_q))
+		mq_sync_pop(m,pts,0);
+	link_list_swap(l,pts->local_q);
+}
+
+
 void mq_timeout(mq_t m)
 {
 	struct per_thread_struct *pts = (struct per_thread_struct*)pthread_getspecific(m->t_key);

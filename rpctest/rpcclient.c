@@ -7,13 +7,13 @@
 #include "link_list.h"
 #include "co_sche.h"
 #include "thread.h"
-#include "spinlock.h"
+#include "mq.h"
+//#include "spinlock.h"
 struct channel
 {
 	struct connection *c;
-	spinlock_t mtx;
-	struct link_list   *send_list;
-	struct block_queue *msgQ;
+	mq_t   send_list;
+	mq_t   msgQ;
 };
 
 struct channel *g_channel = NULL;
@@ -25,23 +25,13 @@ allocator_t wpacket_allocator = NULL;
 //function for logic thread
 static inline int32_t send_packet(struct channel *c,wpacket_t w)
 {
-	spin_lock(c->mtx);
-	if(c->c == NULL)
-	{
-		spin_unlock(c->mtx);
-		wpacket_destroy(&w);
-		return -1;
-	}
-	LINK_LIST_PUSH_BACK(c->send_list,w);
-	spin_unlock(c->mtx);
+	mq_push(c->send_list,(struct list_node*)w);
 	return 0;
 }
 
 static inline rpacket_t peek_msg(struct channel *c,uint32_t timeout)
 {
-	rpacket_t msg = NULL;
-	BLOCK_QUEUE_POP(c->msgQ,&msg,timeout);
-	return msg;		
+	return (rpacket_t)mq_pop(c->msgQ,timeout);		
 }
 
 
@@ -147,23 +137,21 @@ struct channel *channel_create(struct connection *con)
 {
 	struct channel *c = calloc(1,sizeof(*c));
 	c->c = con;
-	c->mtx = spin_create();
-	c->send_list = LINK_LIST_CREATE();
-	c->msgQ = BLOCK_QUEUE_CREATE();
+	c->send_list = create_mq(4096);
+	c->msgQ = create_mq(4096);
 	return c;
 }
 
 
 static inline void push_msg(struct channel *c,rpacket_t r)
 {
-	BLOCK_QUEUE_PUSH(c->msgQ,r);
+	mq_push(c->msgQ,(struct list_node*)r);
+	
 }
 
 static inline void process_send(struct channel *c)
 {
-	spin_lock(c->mtx);
-	link_list_swap(c->c->send_list,c->send_list);
-	spin_unlock(c->mtx);
+	mq_swap(c->send_list,c->c->send_list);
 	connection_send(c->c,NULL,NULL);
 }
 
@@ -182,9 +170,9 @@ void on_channel_disconnect(struct connection *c,int32_t reason)
 	if(0 == connection_destroy(&c))
 	{
 		ReleaseSocketWrapper(sock);
-		spin_lock(_channel->mtx);
+		//spin_lock(_channel->mtx);
 		_channel->c = NULL;
-		spin_unlock(_channel->mtx);		
+		//spin_unlock(_channel->mtx);		
 	}	
 }
 
