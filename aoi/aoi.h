@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-
+#include "double_link.h"
 #define MAX_BITS 1024
 
 struct point2D
@@ -64,50 +64,6 @@ static inline uint8_t is_set(struct bit_set *bs,uint32_t index)
 	return bs->bits[b_index] & (1 << index)?1:0;
 }
 
-struct double_link_node
-{
-	struct double_link_node *pre;
-	struct double_link_node *next;
-};
-
-struct double_link
-{
-	struct double_link_node head;
-	struct double_link_node tail;
-};
-
-static inline int32_t double_link_push(struct double_link *dl,struct double_link_node *dln)
-{
-	if(dln->pre || dln->next)
-		return -1;
-	dl->tail.pre->next = dln;
-	dln->pre = dl->tail.pre;
-	dl->tail.pre = dln;
-	dln->next = &dl->tail;
-	return 0;
-}
-
-static inline int32_t double_link_remove(struct double_link_node *dln)
-{
-	if(!dln->pre || !dln->next)
-		return -1;
-	dln->pre->next = dln->next;
-	dln->next->pre = dln->pre;	
-	dln->pre = dln->next = NULL;		
-	return 0;
-}
-
-static inline void double_link_clear(struct double_link *dl)
-{
-	dl->head.pre = dl->tail.next = NULL;
-	dl->head.next = &dl->tail;
-	dl->tail.pre = &dl->head;
-}
-
-static inline int32_t double_link_empty(struct double_link *dl)
-{
-	return dl->head.next == &dl->tail ? 1:0;
-}
 
 struct map_block
 {
