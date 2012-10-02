@@ -51,14 +51,14 @@ static inline void link_list_swap(struct link_list *to,struct link_list *from)
 static inline void link_list_clear(struct link_list *l)
 {
 	l->size = 0;
-	l->head = l->tail = 0;
+	l->head = l->tail = NULL;
 }
 
 static inline void link_list_push_back(struct link_list *l,struct list_node *n)
 {
 	if(n->next)
 		return;
-	n->next = 0;
+	n->next = NULL;
 	if(0 == l->size)
 		l->head = l->tail = n;
 	else
@@ -73,7 +73,7 @@ static inline void link_list_push_front(struct link_list *l,struct list_node *n)
 {
 	if(n->next)
 		return;
-	n->next = 0;
+	n->next = NULL;
 	if(0 == l->size)
 		l->head = l->tail = n;
 	else
@@ -88,13 +88,13 @@ static inline void link_list_push_front(struct link_list *l,struct list_node *n)
 static inline struct list_node* link_list_pop(struct link_list *l)
 {
 	if(0 == l->size)
-		return 0;
+		return NULL;
 	list_node *ret = l->head;
 	l->head = l->head->next;
-	if(0 == l->head)
-		l->tail = 0;
+	if(NULL == l->head)
+		l->tail = NULL;
 	--l->size;
-	ret->next = 0;
+	ret->next = NULL;
 	return ret;
 }
 
