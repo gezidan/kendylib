@@ -14,16 +14,16 @@
 #include <errno.h>
 #include "allocator.h"
 #include "wpacket.h"
-#include "mq.h"
 #define max_write_buf 1024
-static const uint32_t max_log_filse_size = 1024*1024*100;//超过100MB,更换文件
+static const uint32_t max_log_filse_size = 1024*1024*100;
 extern uint32_t log_count;
 
 struct log
 {
 	struct list_node lnode;
 	int32_t file_descriptor;
-	mq_t log_queue;
+	mutex_t mtx;
+	struct link_list *log_queue;
 	struct link_list *pending_log;
 	uint64_t file_size;
 	struct iovec wbuf[max_write_buf];
@@ -66,7 +66,6 @@ int32_t	init_log_system()
 void close_log_system()
 {
 	COMPARE_AND_SWAP(&(g_log_system->is_close),0,1);
-	//停止写日志线程,并等待结束
 	//g_log_system->is_close = 1;
 	thread_join(g_log_system->worker_thread);
 	mutex_lock(g_log_system->mtx);
@@ -123,7 +122,6 @@ static inline void on_write_finish(log_t l,int32_t bytestransfer)
 		assert(w);
 		if((uint32_t)bytestransfer >= w->data_size)
 		{
-			//一个wpacket写完了
 			bytestransfer -= w->data_size;
 			++log_count;
 			wpacket_destroy(&w);
@@ -152,10 +150,12 @@ static uint32_t last_tick = 0;
 
 static void write_to_file(log_t l,int32_t is_close)
 {
-	mq_swap(l->log_queue,l->pending_log);
+	mutex_lock(l->mtx);
+	if(!list_is_empty(l->log_queue))
+		link_list_swap(l->pending_log,l->log_queue);
+	mutex_unlock(l->mtx);
 	if(is_close)
 	{
-		//日志系统关闭,写入关闭消息
 		char buf[4096];
 		snprintf(buf,4096,"%s close log sucessful\n",GetCurrentTimeStr());
 		int32_t str_len = strlen(buf);
@@ -184,12 +184,12 @@ static void write_to_file(log_t l,int32_t is_close)
 			log_count = 0;
 		}
 	}
-	
+
 	if(!is_close)
 	{
 		/*
 		* if(l->file_size > max_log_filse_size)
-		* 文件超过一定大小,将原文件重命名,开一个新的文件
+		* 
 		*/
 	}
 }
@@ -208,7 +208,8 @@ log_t create_log(const char *path)
    else
    {
 		l->file_size = 0;
-		l->log_queue = create_mq(4096);//create_link_list();
+		l->mtx = mutex_create();
+		l->log_queue = create_link_list();
 		l->pending_log = create_link_list();
 		//add to log system
 		mutex_lock(g_log_system->mtx);
@@ -221,8 +222,16 @@ log_t create_log(const char *path)
 
 static void  destroy_log(log_t *l)
 {
+	mutex_lock((*l)->mtx);
+	while(!link_list_is_empty((*l)->log_queue))
+	{
+		wpacket_t w = LINK_LIST_POP(wpacket_t,(*l)->log_queue);
+		wpacket_destroy(&w);
+	}
+	mutex_unlock((*l)->mtx);
 	close((*l)->file_descriptor);
-	destroy_mq(&(*l)->log_queue);
+	mutex_destroy(&(*l)->mtx);
+	destroy_link_list(&(*l)->log_queue);
 	destroy_link_list(&(*l)->pending_log);
 	free(*l);
 	*l = 0;
@@ -232,13 +241,15 @@ int32_t log_write(log_t l,const char *content,int32_t level)
 {
 	if(g_log_system->is_close)
 		return -1;
-		
+
 	char buf[4096];	
 	snprintf(buf,4096,"%s%s\n",GetCurrentTimeStr(),content);
 	int32_t str_len = strlen(buf);
 	wpacket_t w = wpacket_create(0,NULL,str_len,1);
 	wpacket_write_binary(w,buf,str_len);
-	mq_push(l->log_queue,(struct list_node*)w);
+	mutex_lock(l->mtx);
+	LINK_LIST_PUSH_BACK(l->log_queue,w);
+	mutex_unlock(l->mtx);
 	return 0;
 }
 
@@ -267,9 +278,8 @@ static void *worker_routine(void *arg)
 			last_tick = GetCurrentMs();
 			log_count = 0;
 		}				
-			
+
 	}
 	write_all_log_file(1);
 	return 0;
 }
-
