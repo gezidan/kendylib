@@ -14,6 +14,7 @@
 #include <errno.h>
 #include "allocator.h"
 #include "wpacket.h"
+#include "mq.h"
 #define max_write_buf 1024
 static const uint32_t max_log_filse_size = 1024*1024*100;//超过100MB,更换文件
 extern uint32_t log_count;
@@ -22,8 +23,7 @@ struct log
 {
 	struct list_node lnode;
 	int32_t file_descriptor;
-	mutex_t mtx;
-	struct link_list *log_queue;
+	mq_t log_queue;
 	struct link_list *pending_log;
 	uint64_t file_size;
 	struct iovec wbuf[max_write_buf];
@@ -152,10 +152,7 @@ static uint32_t last_tick = 0;
 
 static void write_to_file(log_t l,int32_t is_close)
 {
-	mutex_lock(l->mtx);
-	if(!list_is_empty(l->log_queue))
-		link_list_swap(l->pending_log,l->log_queue);
-	mutex_unlock(l->mtx);
+	mq_swap(l->log_queue,l->pending_log);
 	if(is_close)
 	{
 		//日志系统关闭,写入关闭消息
@@ -211,8 +208,7 @@ log_t create_log(const char *path)
    else
    {
 		l->file_size = 0;
-		l->mtx = mutex_create();
-		l->log_queue = create_link_list();
+		l->log_queue = create_mq(4096);//create_link_list();
 		l->pending_log = create_link_list();
 		//add to log system
 		mutex_lock(g_log_system->mtx);
@@ -225,16 +221,8 @@ log_t create_log(const char *path)
 
 static void  destroy_log(log_t *l)
 {
-	mutex_lock((*l)->mtx);
-	while(!link_list_is_empty((*l)->log_queue))
-	{
-		wpacket_t w = LINK_LIST_POP(wpacket_t,(*l)->log_queue);
-		wpacket_destroy(&w);
-	}
-	mutex_unlock((*l)->mtx);
 	close((*l)->file_descriptor);
-	mutex_destroy(&(*l)->mtx);
-	destroy_link_list(&(*l)->log_queue);
+	destroy_mq(&(*l)->log_queue);
 	destroy_link_list(&(*l)->pending_log);
 	free(*l);
 	*l = 0;
@@ -250,9 +238,7 @@ int32_t log_write(log_t l,const char *content,int32_t level)
 	int32_t str_len = strlen(buf);
 	wpacket_t w = wpacket_create(0,NULL,str_len,1);
 	wpacket_write_binary(w,buf,str_len);
-	mutex_lock(l->mtx);
-	LINK_LIST_PUSH_BACK(l->log_queue,w);
-	mutex_unlock(l->mtx);
+	mq_push(l->log_queue,(struct list_node*)w);
 	return 0;
 }
 

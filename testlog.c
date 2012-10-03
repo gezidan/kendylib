@@ -7,9 +7,9 @@ uint32_t log_count = 0;
 uint32_t GetSize_of_pow2(uint32_t size);
 
 int main()
-{
-   init_log_system();
+{   
    init_system_time(10);
+   init_log_system();
    log_t l = create_log("log.log");
    int i = 0; 
    uint32_t tick = GetSystemMs();
