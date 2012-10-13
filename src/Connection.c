@@ -169,17 +169,20 @@ static inline st_io *prepare_send(struct connection *c)
 	st_io *O = NULL;
 	uint32_t buffer_size = 0;
 	uint32_t size = 0;
-	while(w && i < MAX_WBAF)
+	uint32_t send_size_remain = MAX_SEND_SIZE;
+	while(w && i < MAX_WBAF && send_size_remain > 0)
 	{
 		pos = w->begin_pos;
 		b = w->buf;
 		buffer_size = w->data_size;
-		while(i < MAX_WBAF && b && buffer_size)
+		while(i < MAX_WBAF && b && buffer_size && send_size_remain > 0)
 		{
 			c->wsendbuf[i].iov_base = b->buf + pos;
 			size = b->size - pos;
 			size = size > buffer_size ? buffer_size:size;
+			size = size > send_size_remain ? send_size_remain:size;
 			buffer_size -= size;
+			send_size_remain -= size;
 			c->wsendbuf[i].iov_len = size;
 			++i;
 			b = b->next;

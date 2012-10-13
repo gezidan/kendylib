@@ -19,6 +19,7 @@ typedef void (*on_disconnect)(struct connection*,int32_t reason);
 
 
 #define MAX_WBAF 1024
+#define MAX_SEND_SIZE 65536
 
 struct connection
 {
