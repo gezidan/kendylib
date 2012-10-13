@@ -56,15 +56,16 @@ uint32_t port;
 
 void *_Listen(void *arg)
 {
-	struct listen_arg* args[2];
+	/*struct listen_arg* args[2];
 	args[0] = (struct listen_arg*)calloc(1,sizeof(*args[0]));
 	args[0]->ip = ip;
 	args[0]->port = port;
 	args[0]->accept_callback = &accept_callback;
 	args[0]->ud = arg;
-	args[1] = NULL;
-	acceptor_t a = create_acceptor((struct listen_arg**)&args);
-	free(args[0]);
+	args[1] = NULL;*/
+	acceptor_t a = create_acceptor();
+	add_listener(a,ip,port,accept_callback,arg);
+	//free(args[0]);
 	while(1)
 		acceptor_run(a,100);
 	return 0;

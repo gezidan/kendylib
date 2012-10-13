@@ -26,11 +26,11 @@ struct acceptor
 	struct link_list *st_listens;
 };
 
-acceptor_t create_acceptor(struct listen_arg **args)
+acceptor_t create_acceptor(/*struct listen_arg **args*/)
 {
 	acceptor_t a = (acceptor_t)calloc(1,sizeof(*a));
 	a->st_listens = LINK_LIST_CREATE();
-	int i = 0;
+/*	int i = 0;
 	for(; args[i] != NULL; ++i)
 	{
 		HANDLE ListenSocket;
@@ -59,6 +59,7 @@ acceptor_t create_acceptor(struct listen_arg **args)
 		free(a);
 		a = NULL;
 	}
+*/ 
 	return a;
 }
 
@@ -76,6 +77,58 @@ void destroy_acceptor(acceptor_t *a)
 	free(*a);
 	*a = NULL;
 }
+
+HANDLE    add_listener(acceptor_t a,const char *ip,uint32_t port,on_accept call_back,void *ud)
+{
+	if(!a)
+		return -1;
+	HANDLE ListenSocket;
+	struct sockaddr_in servaddr;
+	ListenSocket = Tcp_Listen(ip,port,&servaddr,256);
+	if(ListenSocket >= 0)
+	{
+		socket_t s = GetSocketByHandle(ListenSocket);
+		setNonblock(ListenSocket);
+		struct st_listen *_st = (struct st_listen *)calloc(1,sizeof(*_st));
+		_st->accept_callback = call_back;
+		_st->ud = ud;
+		_st->sock = ListenSocket;
+		_st->real_fd = GetSocketByHandle(ListenSocket)->fd;
+		FD_SET(_st->real_fd,&a->Set);
+		LINK_LIST_PUSH_BACK(a->st_listens,_st);
+		return ListenSocket;
+	}
+	else
+	{
+		printf("listen %s:%d error\n",ip,port);
+		return -1;
+	}	
+}
+
+void rem_listener(acceptor_t a,HANDLE l)
+{
+	if(a)
+	{
+		int32_t size = link_list_size(a->st_listens);
+		int32_t i = 0;
+		FD_ZERO(&a->Set);
+		for( ; i < size; ++i)
+		{
+			struct st_listen *_st = LINK_LIST_POP(struct st_listen*,a->st_listens);
+			if(_st->sock == l)
+			{
+				CloseSocket(_st->sock);
+				free(_st);
+			}
+			else
+			{
+				FD_SET(_st->real_fd,&a->Set);
+				LINK_LIST_PUSH_BACK(a->st_listens,_st);
+			}			
+		}
+	}
+}
+
 
 void acceptor_run(acceptor_t a,int32_t ms)
 {
