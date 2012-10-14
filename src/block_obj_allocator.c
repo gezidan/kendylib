@@ -6,6 +6,7 @@
 #include "spinlock.h"
 #include <stdlib.h>
 #include "allocator.h"
+#include "common_define.h"
 
 struct free_list{
 	list_node next;
@@ -301,7 +302,7 @@ block_obj_allocator_t create_block_obj_allocator(uint8_t mt,uint32_t obj_size)
 	uint8_t k = GetK(obj_size);
 	obj_size = 1 << k;
 	block_obj_allocator_t ba = (block_obj_allocator_t)calloc(1,sizeof(*ba));
-	if(mt)
+	if(MUTIL_THREAD == mt)
 	{
 		ba->mtx = spin_create();
 		pthread_key_create(&ba->t_key,0);

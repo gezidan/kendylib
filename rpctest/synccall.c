@@ -8,6 +8,7 @@
 #include "rpacket.h"
 #include <stdlib.h>
 #include "mq.h"
+#include "common_define.h"
 allocator_t wpacket_allocator = NULL;
 sche_t g_sche = NULL;
 thread_t client;
@@ -41,7 +42,7 @@ static inline int sum(int32_t arg1,int32_t arg2)
 	//printf("sum\n");
 	coro_t co = get_current_coro();
 	
-	wpacket_t wpk = wpacket_create(1,wpacket_allocator,64,0);
+	wpacket_t wpk = wpacket_create(MUTIL_THREAD,wpacket_allocator,64,0);
 	wpacket_write_uint32(wpk,(int32_t)co);
 	wpacket_write_string(wpk,"sum");
 	wpacket_write_uint32(wpk,arg1);
@@ -58,7 +59,7 @@ static inline int product(int32_t arg1,int32_t arg2)
 {
 	//printf("product\n");
 	coro_t co = get_current_coro();
-	wpacket_t wpk = wpacket_create(1,wpacket_allocator,64,0);
+	wpacket_t wpk = wpacket_create(MUTIL_THREAD,wpacket_allocator,64,0);
 	wpacket_write_uint32(wpk,(int32_t)co);
 	wpacket_write_string(wpk,"product");
 	wpacket_write_uint32(wpk,arg1);
@@ -147,7 +148,7 @@ void *server_routine(void *arg)
 			const  char *function_name = rpacket_read_string(rpk);
 			int32_t arg1 = rpacket_read_uint32(rpk);
 			int32_t arg2 = rpacket_read_uint32(rpk);
-			wpacket_t w = wpacket_create(1,wpacket_allocator,64,0);
+			wpacket_t w = wpacket_create(MUTIL_THREAD,wpacket_allocator,64,0);
 			wpacket_write_uint32(w,coro_id);
 			if(strcmp(function_name,"sum") == 0)
 				wpacket_write_uint32(w,arg1+arg2);
@@ -163,7 +164,7 @@ int main()
 {
 	init_system_time(10);
 	
-	wpacket_allocator = (allocator_t)create_block_obj_allocator(1,sizeof(struct wpacket));
+	wpacket_allocator = (allocator_t)create_block_obj_allocator(MUTIL_THREAD,sizeof(struct wpacket));
 
 	msgQ1 = create_mq(4096);//BLOCK_QUEUE_CREATE();
 	msgQ2 = create_mq(4096);//BLOCK_QUEUE_CREATE();

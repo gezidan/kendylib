@@ -4,6 +4,7 @@
 #include "KendyNet.h"
 #include "Connector.h"
 #include "Connection.h"
+#include "common_define.h"
 allocator_t wpacket_allocator = NULL;
 
 static int32_t connect_count = 0;
@@ -87,11 +88,11 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 	{
 		
 		setNonblock(s);
-		c = connection_create(s,0,0,on_process_packet,remove_client);
+		c = connection_create(s,0,SINGLE_THREAD,on_process_packet,remove_client);
 		printf("%d,连接到:%s,%d,成功\n",s,ip,port);
 		add_client(c);
 		Bind2Engine(*engine,s,RecvFinish,SendFinish);
-		wpk = wpacket_create(0,NULL,64,0);
+		wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
 		wpacket_write_uint32(wpk,(uint32_t)s);
 		uint32_t sys_t = GetSystemMs();
 		wpacket_write_uint32(wpk,sys_t);
@@ -114,7 +115,7 @@ int32_t main(int32_t argc,char **argv)
 		printf("Init error\n");
 		return 0;
 	}
-	wpacket_allocator = (allocator_t)create_block_obj_allocator(0,sizeof(struct wpacket));		
+	wpacket_allocator = (allocator_t)create_block_obj_allocator(SINGLE_THREAD,sizeof(struct wpacket));		
 	
 	int32_t ret;
 	int32_t i = 0;
@@ -158,7 +159,7 @@ int32_t main(int32_t argc,char **argv)
 						int j = 0;
 						for( ; j < 300; ++j)
 						{
-						wpk = wpacket_create(0,wpacket_allocator,64,0);
+						wpk = wpacket_create(SINGLE_THREAD,wpacket_allocator,64,0);
 						wpacket_write_uint32(wpk,clients[i]->socket);
 						uint32_t sys_t = GetSystemMs();
 						wpacket_write_uint32(wpk,sys_t);

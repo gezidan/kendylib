@@ -8,6 +8,7 @@
 #include "co_sche.h"
 #include "thread.h"
 #include "mq.h"
+#include "common_define.h"
 //#include "spinlock.h"
 struct channel
 {
@@ -38,7 +39,7 @@ static inline rpacket_t peek_msg(struct channel *c,uint32_t timeout)
 static inline int sum(int32_t arg1,int32_t arg2)
 {
 	coro_t co = get_current_coro();
-	wpacket_t wpk = wpacket_create(1,wpacket_allocator,64,0);
+	wpacket_t wpk = wpacket_create(MUTIL_THREAD,wpacket_allocator,64,0);
 	wpacket_write_uint32(wpk,(int32_t)co);
 	wpacket_write_string(wpk,"sum");
 	wpacket_write_uint32(wpk,arg1);
@@ -54,7 +55,7 @@ static inline int sum(int32_t arg1,int32_t arg2)
 static inline int product(int32_t arg1,int32_t arg2)
 {
 	coro_t co = get_current_coro();
-	wpacket_t wpk = wpacket_create(1,NULL,64,0);
+	wpacket_t wpk = wpacket_create(MUTIL_THREAD,NULL,64,0);
 	wpacket_write_uint32(wpk,(int32_t)co);
 	wpacket_write_string(wpk,"product");
 	wpacket_write_uint32(wpk,arg1);
@@ -190,7 +191,7 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 	{
 		
 		setNonblock(s);
-		c = connection_create(s,0,1,on_process_packet,on_channel_disconnect);
+		c = connection_create(s,0,MUTIL_THREAD,on_process_packet,on_channel_disconnect);
 		printf("connect successed\n");
 		Bind2Engine(*engine,s,RecvFinish,SendFinish);
 		//create channel and create logic thread

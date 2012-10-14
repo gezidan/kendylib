@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include "block_obj_allocator.h"
 #include <assert.h>
+#include "common_define.h"
 uint32_t packet_recv = 0;
 uint32_t packet_send = 0;
 uint32_t send_request = 0;
@@ -89,7 +90,7 @@ void on_process_packet(struct connection *c,rpacket_t r)
 void accept_callback(HANDLE s,void *ud)
 {
 	HANDLE *engine = (HANDLE*)ud;	
-	struct connection *c = connection_create(s,0,0,on_process_packet,remove_client);
+	struct connection *c = connection_create(s,0,SINGLE_THREAD,on_process_packet,remove_client);
 	add_client(c);
 	printf("cli fd:%d\n",s);
 	setNonblock(s);
@@ -134,7 +135,7 @@ int main(int argc,char **argv)
 		printf("Init error\n");
 		return 0;
 	}
-	wpacket_allocator = (allocator_t)create_block_obj_allocator(0,sizeof(struct wpacket));	
+	wpacket_allocator = (allocator_t)create_block_obj_allocator(SINGLE_THREAD,sizeof(struct wpacket));	
 
 	uint32_t i = 0;
 	init_clients();

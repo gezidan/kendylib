@@ -61,7 +61,7 @@ int32_t Bind2Engine(HANDLE e,HANDLE s,OnRead _OnRead,OnWrite _OnWrite)
 	return -1;
 }
 
-int32_t WSASend(HANDLE sock,st_io *io,int32_t now,uint32_t *err_code)
+int32_t WSASend(HANDLE sock,st_io *io,int32_t flag,uint32_t *err_code)
 {
 	assert(io);
 	socket_t s = GetSocketByHandle(sock);
@@ -70,7 +70,7 @@ int32_t WSASend(HANDLE sock,st_io *io,int32_t now,uint32_t *err_code)
 		*err_code = 0;
 		return -1;
 	}
-	if(!now)
+	if(flag == SEND_POST)
 	{
 		LINK_LIST_PUSH_BACK(s->pending_send,io);
 		if(s->engine && s->writeable && !s->isactived)
@@ -88,7 +88,7 @@ int32_t WSASend(HANDLE sock,st_io *io,int32_t now,uint32_t *err_code)
 	}
 }
 
-int32_t WSARecv(HANDLE sock,st_io *io,int32_t now,uint32_t *err_code)
+int32_t WSARecv(HANDLE sock,st_io *io,int32_t flag,uint32_t *err_code)
 {
 	assert(io);
 	socket_t s = GetSocketByHandle(sock);
@@ -97,7 +97,7 @@ int32_t WSARecv(HANDLE sock,st_io *io,int32_t now,uint32_t *err_code)
 		*err_code = 0;
 		return -1;
 	}
-	if(!now)
+	if(flag == RECV_POST)
 	{
 		LINK_LIST_PUSH_BACK(s->pending_recv,io);
 		if(s->engine && s->readable && !s->isactived)

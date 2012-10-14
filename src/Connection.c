@@ -153,7 +153,7 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 				c->recv_overlap.isUsed = 1;
 				c->recv_overlap.m_super.iovec_count = i;
 				c->recv_overlap.m_super.iovec = c->wrecvbuf;
-				bytestransfer = WSARecv(c->socket,&c->recv_overlap.m_super,1,&err_code);
+				bytestransfer = WSARecv(c->socket,&c->recv_overlap.m_super,RECV_NOW,&err_code);
 			}
 		}
 	}
@@ -254,7 +254,7 @@ int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish call
 		if(O)
 		{
 			c->send_overlap.isUsed = 1;	
-			return WSASend(c->socket,O,0,&err_code);
+			return WSASend(c->socket,NULL,SEND_POST,&err_code);
 		}
 	}
 	return -1;
@@ -307,7 +307,7 @@ void SendFinish(int32_t bytestransfer,st_io *io)
 					c->send_overlap.isUsed = 0;
 					return;
 				}
-				bytestransfer = WSASend(c->socket,io,1,&err_code);
+				bytestransfer = WSASend(c->socket,io,SEND_NOW,&err_code);
 			}
 		}
 	}
@@ -320,9 +320,9 @@ struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_
 	c->send_list = LINK_LIST_CREATE();
 	c->_process_packet = _process_packet;
 	c->_on_disconnect = _on_disconnect;
-	c->next_recv_buf = 0;
+	c->next_recv_buf = NULL;
 	c->next_recv_pos = 0;
-	c->unpack_buf = 0;
+	c->unpack_buf = NULL;
 	c->unpack_pos = 0;
 	c->unpack_size = 0;
 	c->recv_overlap.c = c;
@@ -344,7 +344,7 @@ int connection_destroy(struct connection** c)
 		buffer_release(&(*c)->unpack_buf);
 		buffer_release(&(*c)->next_recv_buf);
 		free(*c);
-		*c = 0;
+		*c = NULL;
 		return 0;
 	}
 	return -1;

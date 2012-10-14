@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include "block_obj_allocator.h"
 #include <assert.h>
+#include "common_define.h"
 allocator_t wpacket_allocator = NULL;
 
 void remove_client(struct connection *c,int32_t reason)
@@ -27,7 +28,7 @@ void on_process_packet(struct connection *c,rpacket_t r)
 	int32_t arg1 = rpacket_read_uint32(r);
 	int32_t arg2 = rpacket_read_uint32(r);
 	uint32_t i = 0;
-	wpacket_t w = wpacket_create(0,wpacket_allocator,64,0);
+	wpacket_t w = wpacket_create(SINGLE_THREAD,wpacket_allocator,64,0);
 	wpacket_write_uint32(w,coro_id);
 	if(strcmp(function_name,"sum") == 0)
 		wpacket_write_uint32(w,arg1+arg2);
@@ -41,7 +42,7 @@ void on_process_packet(struct connection *c,rpacket_t r)
 void accept_callback(HANDLE s,void *ud)
 {
 	HANDLE *engine = (HANDLE*)ud;	
-	struct connection *c = connection_create(s,0,0,on_process_packet,remove_client);
+	struct connection *c = connection_create(s,0,SINGLE_THREAD,on_process_packet,remove_client);
 	printf("cli fd:%d\n",s);
 	setNonblock(s);
 	//·¢³öµÚÒ»¸ö¶ÁÇëÇó
@@ -84,7 +85,7 @@ int main(int argc,char **argv)
 		printf("Init error\n");
 		return 0;
 	}
-	wpacket_allocator = (allocator_t)create_block_obj_allocator(0,sizeof(struct wpacket));	
+	wpacket_allocator = (allocator_t)create_block_obj_allocator(SINGLE_THREAD,sizeof(struct wpacket));	
 	engine = CreateEngine();
 	thread_run(_Listen,&engine);
 	while(1)

@@ -52,7 +52,15 @@ void     CloseEngine(HANDLE);
 int32_t  EngineRun(HANDLE,int32_t timeout);	
 int32_t  Bind2Engine(HANDLE,HANDLE,OnRead,OnWrite);
 
-int32_t WSASend(HANDLE,st_io*,int32_t now,uint32_t *err_code);
-int32_t WSARecv(HANDLE,st_io*,int32_t now,uint32_t *err_code);
+enum
+{
+	RECV_NOW = 1,
+	RECV_POST = 0,
+	SEND_NOW = 1,
+	SEND_POST = 0,
+};
+
+int32_t WSASend(HANDLE,st_io*,int32_t flag,uint32_t *err_code);
+int32_t WSARecv(HANDLE,st_io*,int32_t flag,uint32_t *err_code);
 
 #endif
