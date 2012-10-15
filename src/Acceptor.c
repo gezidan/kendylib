@@ -118,7 +118,7 @@ void acceptor_run(acceptor_t a,int32_t timeout)
 		int32_t nfds = TEMP_FAILURE_RETRY(epoll_wait(a->poller_fd,a->events,1024,ms));
 		if(nfds == 0)
 		{
-			::sleepms(ms);
+			sleepms(ms);
 		}
 		else
 		{
