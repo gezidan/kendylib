@@ -20,17 +20,8 @@
 
 typedef struct acceptor* acceptor_t;
 typedef void (*on_accept)(HANDLE,void*ud);
-//acceptor_t create_acceptor(const char *ip,uint32_t port,on_accept accept_callback,void*ud);
 
-/*struct listen_arg
-{
-	const char *ip;
-	uint32_t    port;
-	on_accept   accept_callback;
-	void       *ud; 
-};*/
-//use NULL to end the args
-acceptor_t create_acceptor(/*struct listen_arg **args*/);
+acceptor_t create_acceptor();
 
 HANDLE    add_listener(acceptor_t,const char *ip,uint32_t port,on_accept,void*);
 void      rem_listener(acceptor_t,HANDLE);
