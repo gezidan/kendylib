@@ -49,7 +49,7 @@ void destroy_acceptor(acceptor_t *a)
 	{
 		struct st_listen *tmp = (struct st_listen *)_st;
 		_st = _st->next;
-		CloseSocket(tmp->sock);
+		ReleaseSocket(tmp->sock);
 		free(tmp);
 	}
 	LINK_LIST_DESTROY(&((*a)->st_listens));		
@@ -79,7 +79,7 @@ HANDLE    add_listener(acceptor_t a,const char *ip,uint32_t port,on_accept call_
 		TEMP_FAILURE_RETRY(ret = epoll_ctl(a->poller_fd,EPOLL_CTL_ADD,_st->real_fd,&ev));
 		if(ret == -1)
 		{
-			CloseSocket(ListenSocket);
+			ReleaseSocket(ListenSocket);
 			printf("listen %s:%d error\n",ip,port);
 			return -1;
 		}
@@ -99,6 +99,8 @@ void rem_listener(acceptor_t a,HANDLE l)
 	{
 		struct epoll_event ev;int32_t ret;
 		TEMP_FAILURE_RETRY(ret = epoll_ctl(a->poller_fd,EPOLL_CTL_DEL,GetSocketByHandle(l)->fd,&ev));
+		if(ret == 0)
+			CloseSocket(l);
 	}
 }
 
