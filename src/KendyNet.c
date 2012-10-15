@@ -7,6 +7,7 @@
 #include "SocketWrapper.h"
 #include <assert.h>
 
+void init_buff_allocator();
 int32_t InitNetSystem()
 {
 	return InitHandleMgr();

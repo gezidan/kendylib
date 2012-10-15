@@ -21,17 +21,19 @@ struct st_listen
 	void *ud; 		
 };
 
+#define MAX_LISTENER 1024
+
 struct acceptor
 {
 	int32_t poller_fd;
-	struct epoll_event events[1024];
+	struct epoll_event events[MAX_LISTENER];
 	struct link_list *st_listens;
 };
 
 acceptor_t create_acceptor()
 {
 	acceptor_t a = (acceptor_t)calloc(1,sizeof(*a));
-	a->poller_fd = TEMP_FAILURE_RETRY(epoll_create(1024));
+	a->poller_fd = TEMP_FAILURE_RETRY(epoll_create(MAX_LISTENER));
 	if(a->poller_fd < 0)
 	{
 		free(a);
@@ -127,7 +129,7 @@ void acceptor_run(acceptor_t a,int32_t timeout)
 	int32_t nClientLength = sizeof(ClientAddress);
 	do{	
 		ms = _timeout - tick;
-		int32_t nfds = TEMP_FAILURE_RETRY(epoll_wait(a->poller_fd,a->events,1024,ms));
+		int32_t nfds = TEMP_FAILURE_RETRY(epoll_wait(a->poller_fd,a->events,MAX_LISTENER,ms));
 		if(nfds == 0)
 		{
 			sleepms(ms);

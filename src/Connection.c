@@ -254,7 +254,7 @@ int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish call
 		if(O)
 		{
 			c->send_overlap.isUsed = 1;	
-			return WSASend(c->socket,NULL,SEND_POST,&err_code);
+			return WSASend(c->socket,O,SEND_POST,&err_code);
 		}
 	}
 	return -1;

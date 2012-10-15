@@ -81,7 +81,7 @@ void remove_client(struct connection *c,int32_t reason)
 
 void on_process_packet(struct connection *c,rpacket_t r)
 {
-	//send2_all_client(r);
+	send2_all_client(r);
 	//++send_request;
 	rpacket_destroy(&r);
 	++packet_recv;	
@@ -106,16 +106,8 @@ uint32_t port;
 
 void *_Listen(void *arg)
 {
-	/*struct listen_arg* args[2];
-	args[0] = (struct listen_arg*)calloc(1,sizeof(*args[0]));
-	args[0]->ip = ip;
-	args[0]->port = port;
-	args[0]->accept_callback = &accept_callback;
-	args[0]->ud = arg;
-	args[1] = NULL;*/
 	acceptor_t a = create_acceptor();
 	add_listener(a,ip,port,accept_callback,arg);
-	//free(args[0]);
 	while(1)
 		acceptor_run(a,100);
 	return 0;
