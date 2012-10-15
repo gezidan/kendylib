@@ -100,7 +100,19 @@ void rem_listener(acceptor_t a,HANDLE l)
 		struct epoll_event ev;int32_t ret;
 		TEMP_FAILURE_RETRY(ret = epoll_ctl(a->poller_fd,EPOLL_CTL_DEL,GetSocketByHandle(l)->fd,&ev));
 		if(ret == 0)
-			CloseSocket(l);
+		{
+			struct st_listen *_st = LINK_LIST_POP(struct st_listen *,a->st_listens);
+			while(_st)
+			{
+				if(_st->sock == l)
+				{
+					ReleaseSocket(l);
+					free(_st);
+				}
+				else
+					LINK_LIST_PUSH_BACK(a->st_listens,_st);
+			};
+		}
 	}
 }
 
