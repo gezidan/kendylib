@@ -10,7 +10,7 @@ accept_connect:
 	gcc -g -o test_connect test_connector.c network.a -I./include -lpthread -lrt
 	gcc -g -o test_accept test_acceptor.c network.a -I./include -lpthread -lrt
 server:kendy.a testserver.c
-	gcc -O3 -g -o server testserver.c kendy.a -I./include -lpthread -lrt
+	gcc -O3 -g -o server testserver.c kendy.a -I./include -lpthread -lrt -ltcmalloc
 client:kendy.a testclient.c
 	gcc -O3 -g -o client testclient.c kendy.a -I./include -lpthread -lrt
 atomic:

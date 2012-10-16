@@ -133,7 +133,7 @@ int32_t main(int32_t argc,char **argv)
 	while(1)
 	{
 		connector_run(con,1);
-		EngineRun(engine,50);
+		EngineRun(engine,1);
 		now = GetSystemMs();
 		if(now - tick > 1000)
 		{
@@ -143,30 +143,30 @@ int32_t main(int32_t argc,char **argv)
 			send_request = 0;
 			ava_interval = 0;
 		}
-		if(ava_interval > 200)
+		/*if(ava_interval > 200)
 			send_interval = 200;
 		else
 			send_interval = 8;
 		if(now - send_tick > send_interval)
 		{
-			send_tick = now;
+			send_tick = now;*/
 				for(i = 0; i < client_count; ++i)
 				{
 					if(clients[i])
 					{
 						int j = 0;
-						//for( ; j < 10; ++j)
-						//{
+						for( ; j < 300; ++j)
+						{
 						wpk = wpacket_create(SINGLE_THREAD,wpacket_allocator,64,0);
 						wpacket_write_uint32(wpk,clients[i]->socket);
 						uint32_t sys_t = GetSystemMs();
 						wpacket_write_uint32(wpk,sys_t);
 						wpacket_write_string(wpk,"hello kenny");
 						connection_send(clients[i],wpk,NULL);
-						//}
+						}
 					}
 				}
-		}
+		//}
 	}
 	return 0;
 }

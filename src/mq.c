@@ -125,6 +125,20 @@ void mq_push(mq_t m,struct list_node *msg)
 		mq_sync_push(m,pts);		
 }
 
+void mq_push_now(mq_t m,struct list_node *msg)
+{
+	struct per_thread_struct *pts = (struct per_thread_struct*)pthread_getspecific(m->t_key);
+	if(!pts)
+	{
+		pts = per_thread_create();
+		LINK_LIST_PUSH_BACK(m->local_lists,pts);
+		pthread_setspecific(m->t_key,(void*)pts);
+	}
+	LINK_LIST_PUSH_BACK(pts->local_q,msg);
+	//if(link_list_size(pts->local_q) >= m->push_size)
+	mq_sync_push(m,pts);		
+}
+
 struct list_node* mq_pop(mq_t m,uint32_t timeout)
 {
 	struct per_thread_struct *pts = (struct per_thread_struct*)pthread_getspecific(m->t_key);
