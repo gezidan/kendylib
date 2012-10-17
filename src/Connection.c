@@ -120,14 +120,15 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 		}
 		else
 		{
+			int32_t total_size = 0;
+			int32_t flag = RECV_NOW;
 			while(bytestransfer > 0)
 			{
+				//total_size += bytestransfer;
 				update_next_recv_pos(c,bytestransfer);
 				c->unpack_size += bytestransfer;
+				total_size += bytestransfer;
 				unpack(c);
-				//while(r = unpack(c))
-				//	c->_process_packet(c,r);
-				//发起另一次读操作
 				buf = c->next_recv_buf;
 				pos = c->next_recv_pos;
 				recv_size = BUFFER_SIZE;
@@ -153,7 +154,10 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 				c->recv_overlap.isUsed = 1;
 				c->recv_overlap.m_super.iovec_count = i;
 				c->recv_overlap.m_super.iovec = c->wrecvbuf;
-				bytestransfer = WSARecv(c->socket,&c->recv_overlap.m_super,RECV_NOW,&err_code);
+								 
+				if(total_size > 65536)
+					flag = RECV_POST;
+				bytestransfer = WSARecv(c->socket,&c->recv_overlap.m_super,flag,&err_code);
 			}
 		}
 	}

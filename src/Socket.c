@@ -52,9 +52,11 @@ void on_write_active(socket_t s)
 
 int32_t  Process(socket_t s)
 {
-	int32_t re = _recv(s);
-	int32_t se = _send(s);
-	return re > 0 && se > 0;
+	_recv(s);
+	_send(s);
+	int32_t read_active = s->readable && !LINK_LIST_IS_EMPTY(s->pending_recv);
+	int32_t write_active = s->writeable && !LINK_LIST_IS_EMPTY(s->pending_send);
+	return read_active || write_active;
 }
 
 int32_t raw_recv(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_code)
@@ -81,7 +83,7 @@ int32_t raw_recv(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_
 }
 
 
-int32_t _recv(socket_t s)
+void _recv(socket_t s)
 {
 	assert(s);
 	int32_t ret = -1;
@@ -96,9 +98,6 @@ int32_t _recv(socket_t s)
 				s->OnRead(bytes_transfer,io_req);		
 		}
 	}
-	
-
-	return ret;
 }
 
 int32_t raw_send(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_code)
@@ -124,7 +123,7 @@ int32_t raw_send(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_
 	return ret;
 }
 
-int32_t _send(socket_t s)
+void _send(socket_t s)
 {
 	assert(s);
 	int32_t ret = -1;
@@ -138,8 +137,5 @@ int32_t _send(socket_t s)
 			if(ret >= 0 || io_req->err_code != EAGAIN)
 				s->OnWrite(bytes_transfer,io_req);
 		}
-	}
-	
-	
-    return ret;		
+	}	
 }
