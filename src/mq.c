@@ -169,7 +169,7 @@ void   mq_swap(mq_t m,struct link_list *l)
 }
 
 
-void mq_timeout(mq_t m)
+void mq_force_sync(mq_t m)
 {
 	struct per_thread_struct *pts = (struct per_thread_struct*)pthread_getspecific(m->t_key);
 	if(!pts)
