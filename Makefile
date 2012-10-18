@@ -28,4 +28,6 @@ log:kendy.a testlog.c
 systime:kendy.a testsystime.c
 	gcc -g -O3 -o systime testsystime.c kendy.a -I./include -lpthread -lrt -ltcmalloc
 hash:kendy.a testhash.c
-	gcc -g -O3 -o hash testhash.c kendy.a -I./include -lpthread -lrt -ltcmalloc					
+	gcc -g -O3 -o hash testhash.c kendy.a -I./include -lpthread -lrt -ltcmalloc
+testmq:kendy.a testmq.c
+	gcc -g -O3 -o testmq testmq.c kendy.a -I./include -lpthread -lrt -ltcmalloc							
