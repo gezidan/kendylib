@@ -7,33 +7,41 @@
 #include "SysTime.h"
 #include "mq.h"
 
-list_node *node_list1;
-list_node *node_list2;
+list_node *node_list1[5];
+list_node *node_list2[5];
 mq_t mq1;
 
 void *Routine1(void *arg)
 {
+	int j = 0;
 	for( ; ; )
 	{
 		int i = 0;
 		for(; i < 10000000; ++i)
 		{
-			mq_push(mq1,&node_list1[i]);
+			mq_push(mq1,&node_list1[j][i]);
 		}
-		sleep(1);
+		mq_force_sync(mq1);
+		j = (j + 1)%5; 
+		sleepms(100);
+		
 	}
 }
 
 void *Routine3(void *arg)
 {
+	int j = 0;
 	for( ; ; )
 	{
 		int i = 0;
 		for(; i < 10000000; ++i)
 		{
-			mq_push(mq1,&node_list2[i]);
+			mq_push(mq1,&node_list2[j][i]);
 		}
-		sleep(1);
+		mq_force_sync(mq1);
+		j = (j + 1)%5; 
+		sleepms(100);
+		
 	}
 }
 
@@ -45,7 +53,9 @@ void *Routine2(void *arg)
 	{
 		list_node *n = mq_pop(mq1,50);
 		if(n)
+		{
 			++count;
+		}
 		uint32_t now = GetCurrentMs();
 		if(now - tick > 1000)
 		{
@@ -59,8 +69,12 @@ void *Routine2(void *arg)
 
 int main()
 {
-	node_list1 = calloc(10000000,sizeof(list_node));
-	node_list2 = calloc(10000000,sizeof(list_node));
+	int i = 0;
+	for( ; i < 5; ++i)
+	{
+		node_list1[i] = calloc(10000000,sizeof(list_node));
+		node_list2[i] = calloc(10000000,sizeof(list_node));
+	}
 	mq1 = create_mq(4096);
 	init_system_time(10);
 	thread_t t1 = create_thread(0);
