@@ -124,7 +124,7 @@ void *logic_routine(void *arg)
 		uint32_t now = GetSystemMs();
 		if(now - tick > 1000)
 		{
-			printf("call_count:%u\n",call_count);
+			printf("call_count:%u\n",(call_count*1000)/(now-tick));
 			tick = now;
 			call_count = 0;
 		}
@@ -138,8 +138,8 @@ struct channel *channel_create(struct connection *con)
 {
 	struct channel *c = calloc(1,sizeof(*c));
 	c->c = con;
-	c->send_list = create_mq(4096);
-	c->msgQ = create_mq(4096);
+	c->send_list = create_mq(8192);
+	c->msgQ = create_mq(8192);
 	return c;
 }
 
@@ -152,7 +152,7 @@ static inline void push_msg(struct channel *c,rpacket_t r)
 
 static inline void process_send(struct channel *c)
 {
-	mq_swap(c->send_list,c->c->send_list);
+	mq_swap(c->send_list,c->c->send_list,0);
 	connection_send(c->c,NULL,NULL);
 }
 
