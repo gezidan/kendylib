@@ -17,12 +17,10 @@ uint32_t call_count = 0;
 mq_t msgQ1;
 mq_t msgQ2;
 
-
 static inline rpacket_t peek_msg(mq_t msgQ,uint32_t timeout)
 {
 	rpacket_t msg = NULL;
 	wpacket_t pk = (wpacket_t)mq_pop(msgQ,timeout);
-	//BLOCK_QUEUE_POP(msgQ,&pk,timeout);
 	if(pk)
 	{
 		msg = rpacket_create_by_wpacket(NULL,pk);
@@ -33,13 +31,11 @@ static inline rpacket_t peek_msg(mq_t msgQ,uint32_t timeout)
 
 static inline void push_msg(mq_t msgQ,wpacket_t w)
 {
-	//BLOCK_QUEUE_PUSH(msgQ,w);
 	mq_push(msgQ,(struct list_node*)w);
 }
 
 static inline int sum(int32_t arg1,int32_t arg2)
 {
-	//printf("sum\n");
 	coro_t co = get_current_coro();
 	
 	wpacket_t wpk = wpacket_create(MUTIL_THREAD,wpacket_allocator,64,0);
@@ -57,7 +53,6 @@ static inline int sum(int32_t arg1,int32_t arg2)
 
 static inline int product(int32_t arg1,int32_t arg2)
 {
-	//printf("product\n");
 	coro_t co = get_current_coro();
 	wpacket_t wpk = wpacket_create(MUTIL_THREAD,wpacket_allocator,64,0);
 	wpacket_write_uint32(wpk,(int32_t)co);
@@ -128,11 +123,11 @@ void *client_routine(void *arg)
 		uint32_t now = GetSystemMs();
 		if(now - tick > 1000)
 		{
-			printf("call_count:%u\n",call_count);
+			printf("call_count:%u\n",(call_count*1000)/(now-tick));
 			tick = now;
 			call_count = 0;
 		}		
-		sche_schedule(g_sche);	
+		sche_schedule(g_sche);
 	}
 }
 
@@ -140,10 +135,9 @@ void *server_routine(void *arg)
 {
 	while(1)
 	{
-		rpacket_t rpk = peek_msg(msgQ1,50);
+		rpacket_t rpk = peek_msg(msgQ1,1000);
 		if(rpk)
 		{
-			//printf("recv pk\n");
 			uint32_t coro_id = rpacket_read_uint32(rpk);
 			const  char *function_name = rpacket_read_string(rpk);
 			int32_t arg1 = rpacket_read_uint32(rpk);
@@ -166,12 +160,12 @@ int main()
 	
 	wpacket_allocator = (allocator_t)create_block_obj_allocator(MUTIL_THREAD,sizeof(struct wpacket));
 
-	msgQ1 = create_mq(4096);//BLOCK_QUEUE_CREATE();
-	msgQ2 = create_mq(4096);//BLOCK_QUEUE_CREATE();
+	msgQ1 = create_mq(4096);
+	msgQ2 = create_mq(4096);
 	g_sche = sche_create(250000,4096,sche_idel,NULL);
 			
 	int i = 0;
-	for(; i < 25000; ++i)
+	for(; i < 50000; ++i)
 	{		
 		if(i%2 == 0)
 			sche_spawn(g_sche,test_coro_fun1,NULL);

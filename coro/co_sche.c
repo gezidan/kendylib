@@ -2,7 +2,6 @@
 #include "SysTime.h"
 #include <stdlib.h>
 #include <assert.h>
-
 static coro_t current_coro = NULL;
 
 static inline int8_t _less(struct heapele*l,struct heapele*r)
@@ -78,7 +77,6 @@ static inline  __attribute__((always_inline)) void sche_next(sche_t s,coro_t co,
 	uint32_t tick = GetCurrentMs();
 	if(tick >= s->next_check_timeout)
 		check_time_out(s,tick);
-
 	_sche_next(s,co);
 }
 

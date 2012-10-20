@@ -243,7 +243,7 @@ struct list_node* mq_pop(mq_t m,uint32_t timeout)
 }
 
 
-void   mq_swap(mq_t m,struct link_list *l)
+void   mq_swap(mq_t m,struct link_list *l,uint32_t timeout)
 {
 	struct per_thread_struct *pts = (struct per_thread_struct*)pthread_getspecific(m->t_key);
 	if(!pts)
@@ -253,7 +253,7 @@ void   mq_swap(mq_t m,struct link_list *l)
 		pthread_setspecific(m->t_key,(void*)pts);
 	}
 	if(link_list_is_empty(pts->local_q))
-		mq_sync_pop(m,pts,0);
+		mq_sync_pop(m,pts,timeout);
 	link_list_swap(l,pts->local_q);
 }
 

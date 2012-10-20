@@ -27,7 +27,7 @@ void destroy_mq(mq_t*);
 void mq_push(mq_t,struct list_node*);
 void mq_push_now(mq_t,struct list_node*);
 struct list_node* mq_pop(mq_t,uint32_t timeout);
-void   mq_swap(mq_t,struct link_list *);
+void   mq_swap(mq_t,struct link_list *,uint32_t timeout);
 void mq_force_sync(mq_t);
 
 #endif
