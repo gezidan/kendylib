@@ -47,8 +47,8 @@ extern void   list_back(list_t,void*);
 extern int32_t    list_is_empty(list_t);
 
 #ifndef LIST_CREATE
-#define LIST_CREATE(TYPE,ALLOCATOR)\
-	list_create(sizeof(TYPE),ALLOCATOR)
+#define LIST_CREATE(TYPE)\
+	list_create(sizeof(TYPE))
 #endif
 
 #ifndef LIST_INSERT_BEFORE
