@@ -19,13 +19,13 @@ void *Routine1(void *arg)
 		int i = 0;
 		for(; i < 10000000; ++i)
 		{
-			list_node *n = calloc(1,sizeof(*n));
-			mq_push(mq1,n);
-			//mq_push(mq1,&node_list1[j][i]);
+			//list_node *n = calloc(1,sizeof(*n));
+			//mq_push(mq1,n);
+			mq_push_now(mq1,&node_list1[j][i]);
 		}
-		mq_force_sync(mq1);
+		//mq_force_sync(mq1);
 		j = (j + 1)%5; 
-		sleepms(500);
+		sleepms(100);
 		
 	}
 }
@@ -38,13 +38,13 @@ void *Routine3(void *arg)
 		int i = 0;
 		for(; i < 10000000; ++i)
 		{
-			list_node *n = calloc(1,sizeof(*n));
-			mq_push(mq1,n);
-			//mq_push(mq1,&node_list2[j][i]);
+			//list_node *n = calloc(1,sizeof(*n));
+			//mq_push(mq1,n);
+			mq_push_now(mq1,&node_list2[j][i]);
 		}
-		mq_force_sync(mq1);
+		//mq_force_sync(mq1);
 		j = (j + 1)%5; 
-		sleepms(500);
+		sleepms(100);
 		
 	}
 }
@@ -58,7 +58,7 @@ void *Routine2(void *arg)
 		list_node *n = mq_pop(mq1,50);
 		if(n)
 		{
-			free(n);
+			//free(n);
 			++count;
 		}
 		uint32_t now = GetCurrentMs();
@@ -74,12 +74,12 @@ void *Routine2(void *arg)
 
 int main()
 {
-	/*int i = 0;
+	int i = 0;
 	for( ; i < 5; ++i)
 	{
 		node_list1[i] = calloc(10000000,sizeof(list_node));
 		node_list2[i] = calloc(10000000,sizeof(list_node));
-	}*/
+	}
 	mq1 = create_mq(4096);
 	init_system_time(10);
 	thread_t t1 = create_thread(0);
