@@ -21,11 +21,11 @@ void *Routine1(void *arg)
 		{
 			//list_node *n = calloc(1,sizeof(*n));
 			//mq_push(mq1,n);
-			mq_push_now(mq1,&node_list1[j][i]);
+			mq_push(mq1,&node_list1[j][i]);
 		}
 		//mq_force_sync(mq1);
 		j = (j + 1)%5; 
-		sleepms(100);
+		
 		
 	}
 }
@@ -40,7 +40,7 @@ void *Routine3(void *arg)
 		{
 			//list_node *n = calloc(1,sizeof(*n));
 			//mq_push(mq1,n);
-			mq_push_now(mq1,&node_list2[j][i]);
+			mq_push(mq1,&node_list2[j][i]);
 		}
 		//mq_force_sync(mq1);
 		j = (j + 1)%5; 
@@ -80,13 +80,14 @@ int main()
 		node_list1[i] = calloc(10000000,sizeof(list_node));
 		node_list2[i] = calloc(10000000,sizeof(list_node));
 	}
+	init_mq_system(50);
 	mq1 = create_mq(4096);
 	init_system_time(10);
 	thread_t t1 = create_thread(0);
 	thread_start_run(t1,Routine1,NULL);
 	
-	thread_t t3 = create_thread(0);
-	thread_start_run(t3,Routine3,NULL);	
+	//thread_t t3 = create_thread(0);
+	//thread_start_run(t3,Routine3,NULL);	
 
 	thread_t t2 = create_thread(0);
 	thread_start_run(t2,Routine2,NULL);
