@@ -23,7 +23,7 @@ void *Routine1(void *arg)
 			//mq_push(mq1,n);
 			mq_push(mq1,&node_list1[j][i]);
 		}
-		mq_force_sync(mq1);
+		mq_flush();
 		j = (j + 1)%5; 
 		sleepms(300);
 		
@@ -42,7 +42,7 @@ void *Routine3(void *arg)
 			//mq_push(mq1,n);
 			mq_push(mq1,&node_list2[j][i]);
 		}
-		mq_force_sync(mq1);
+		mq_flush();
 		j = (j + 1)%5;
 		sleepms(300);
 	}
@@ -79,7 +79,7 @@ int main()
 		node_list1[i] = calloc(10000000,sizeof(list_node));
 		node_list2[i] = calloc(10000000,sizeof(list_node));
 	}
-	//init_mq_system(1000);
+	init_mq_system();
 	mq1 = create_mq(4096);
 	init_system_time(10);
 	thread_t t1 = create_thread(0);
