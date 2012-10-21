@@ -59,7 +59,7 @@ struct thread_mq_element
 /*线程mq管理结构，每线程一个,当线程第一次对一个mq执行mq_push时，会将这个mq添加到
 * mqs中.
 */
-struct thread_mq
+struct thread_associate_mqs
 {
 	list_node   next;
 	struct link_list *mqs;
@@ -242,10 +242,10 @@ void mq_push(mq_t m,struct list_node *msg)
 	}
 	if(0 == pts->is_associate)
 	{
-		struct thread_mq *tmq = (struct thread_mq*)pthread_getspecific(g_mq_system->t_key);
+		struct thread_associate_mqs *tmq = (struct thread_associate_mqs*)pthread_getspecific(g_mq_system->t_key);
 		if(!tmq)
 		{
-			tmq = (struct thread_mq*)calloc(1,sizeof(tmq));
+			tmq = (struct thread_associate_mqs*)calloc(1,sizeof(tmq));
 			tmq->mqs = LINK_LIST_CREATE();
 			mutex_lock(g_mq_system->mtx);
 			LINK_LIST_PUSH_BACK(g_mq_system->thread_mqs,tmq);
@@ -308,7 +308,7 @@ void mq_force_sync(mq_t m)
 
 static void signal_handler(int sig)
 {
-	struct thread_mq *tmq = (struct thread_mq*)pthread_getspecific(g_mq_system->t_key);
+	struct thread_associate_mqs *tmq = (struct thread_associate_mqs*)pthread_getspecific(g_mq_system->t_key);
 	if(tmq)
 	{
 		list_node *n = link_list_head(tmq->mqs);

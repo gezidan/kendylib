@@ -23,10 +23,8 @@ void *Routine1(void *arg)
 			//mq_push(mq1,n);
 			mq_push(mq1,&node_list1[j][i]);
 		}
-		//mq_force_sync(mq1);
 		j = (j + 1)%5; 
-		
-		
+		sleepms(100);
 	}
 }
 
@@ -42,7 +40,6 @@ void *Routine3(void *arg)
 			//mq_push(mq1,n);
 			mq_push(mq1,&node_list2[j][i]);
 		}
-		//mq_force_sync(mq1);
 		j = (j + 1)%5; 
 		sleepms(100);
 		
@@ -86,8 +83,8 @@ int main()
 	thread_t t1 = create_thread(0);
 	thread_start_run(t1,Routine1,NULL);
 	
-	//thread_t t3 = create_thread(0);
-	//thread_start_run(t3,Routine3,NULL);	
+	thread_t t3 = create_thread(0);
+	thread_start_run(t3,Routine3,NULL);	
 
 	thread_t t2 = create_thread(0);
 	thread_start_run(t2,Routine2,NULL);
