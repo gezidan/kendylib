@@ -25,6 +25,7 @@ void *Routine1(void *arg)
 		}
 		j = (j + 1)%5; 
 		sleepms(100);
+		
 	}
 }
 
@@ -40,9 +41,8 @@ void *Routine3(void *arg)
 			//mq_push(mq1,n);
 			mq_push(mq1,&node_list2[j][i]);
 		}
-		j = (j + 1)%5; 
-		sleepms(100);
-		
+		j = (j + 1)%5;
+		sleepms(100); 
 	}
 }
 

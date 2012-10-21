@@ -74,7 +74,6 @@ static inline void send_signal_to_all_threads(struct mq_system *_mq_system)
 	if(_mq_system)
 	{
 		mutex_lock(_mq_system->mtx);
-		
 		struct double_link_node *n = _mq_system->threads.head.next;
 		while(n != &_mq_system->threads.tail)
 		{
@@ -104,6 +103,7 @@ static inline void add_thread(struct mq_system *_mq_system,pthread_t threadid)
 				mutex_unlock(_mq_system->mtx);
 				return;
 			}
+			n = n->next;
 		}
 		struct mq_thread *_new = (struct mq_thread*)calloc(1,sizeof(*_new));
 		_new->thread_id = threadid;
