@@ -16,8 +16,6 @@ struct per_thread_struct
 	condition_t cond;
 	//标记是否已经被添加到thread_mq中，当一个线程第一次执行mq_push的时候，会将此mq添加到thread_mq中，并设置此标记
 	int8_t      is_associate;
-	int8_t      block_sig;
-	int8_t      recved;
 };
 
 struct mq
