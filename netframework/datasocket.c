@@ -8,7 +8,7 @@ static void on_destroy(void *ptr)
 	free(ptr);
 }
 
-datasocket_t create_datasocket(netservice_t service,struct connection *c,mq_t _mq)
+datasocket_t create_datasocket(struct engine_struct *e,struct connection *c,mq_t _mq)
 {
 	if(!c || !_mq)
 		return NULL;
@@ -20,7 +20,7 @@ datasocket_t create_datasocket(netservice_t service,struct connection *c,mq_t _m
 	s->_refbase.refcount = 1;
 	s->_refbase.destroyer = on_destroy;
 	c->custom_ptr = s;
-	s->service = service;
+	s->e = e;
 	return s;
 }
 

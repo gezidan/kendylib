@@ -22,13 +22,23 @@
 #include "thread.h"
 #include "KendyNet.h"
 #include "Acceptor.h"
-typedef struct netservice
+
+struct netservice;
+struct engine_struct
 {
 	mq_t     mq_in;
+	HANDLE   engine;
+	thread_t thread_engine;
+	struct netservice *service;
+};
+
+#define MAX_ENGINES 64
+typedef struct netservice
+{
+	struct engine_struct engines[MAX_ENGINES];
+	uint32_t engine_count;
 	mq_t     mq_out;
 	thread_t thread_listen;
-	thread_t thread_engine;
-	HANDLE   engine;
 	acceptor_t _acceptor;
 	volatile int8_t stop;
 }*netservice_t;

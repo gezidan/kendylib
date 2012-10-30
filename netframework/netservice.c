@@ -1,7 +1,7 @@
 #include "netservice.h"
 
 
-static void on_process_msg(netservice_t service,msg_t _msg)
+static void on_process_msg(struct engine_struct *e,msg_t _msg)
 {
 	switch(_msg->type)
 	{
@@ -29,7 +29,7 @@ static void on_process_packet(struct connection *c,rpacket_t r)
 {
 	datasocket_t s = c->custom_ptr;
 	r->ptr = s;
-	mq_push(s->service->mq_out,r);	
+	mq_push(s->e->service->mq_out,r);	
 }
 
 static void on_socket_disconnect(struct connection *c,int32_t reason)
@@ -39,19 +39,19 @@ static void on_socket_disconnect(struct connection *c,int32_t reason)
 	{
 		//通知上层，连接被动断开
 		msg_t _msg = create_msg(s,MSG_DISCONNECTED);
-		mq_push(s->service->mq_out,_msg);
+		mq_push(s->e->service->mq_out,_msg);
 	}
 	release_datasocket(&s);
 }
 
 static void *mainloop(void *arg)
-{
-	netservice_t service = (netservice_t)arg;
+{	
+	struct engine_struct *e = (struct engine_struct*)arg;
 	uint32_t last_sync = GetCurrentMs();
 	while(0 == service->stop)
 	{
 		msg_t _msg = NULL;
-		while(_msg = mq_pop(service->mq_in,0))
+		while(_msg = mq_pop(e->mq_in,0))
 		{
 			if(_msg->type == MSG_WPACKET)
 			{
@@ -63,7 +63,7 @@ static void *mainloop(void *arg)
 			else
 			{
 				//处理消息
-				on_process_msg(service,_msg);
+				on_process_msg(e,_msg);
 				destroy_msg(&_msg);
 			}
 		}
@@ -74,10 +74,10 @@ static void *mainloop(void *arg)
 		//冲刷mq
 		if(now - last_sync >= 50)
 		{
-			mq_force_sync(service->mq_out);
+			mq_force_sync(e->service->mq_out);
 			last_sync = now;
 		}
-		EngineRun(service->engine,50);
+		EngineRun(e->engine,50);
 	}
 }
 
@@ -86,12 +86,15 @@ static void accept_callback(HANDLE s,void *ud)
 	netservice_t service = (netservice_t)ud;
 	struct connection *c = connection_create(s,0,SINGLE_THREAD,on_process_packet,on_socket_disconnect);
 	setNonblock(s);
-	datasocket_t data_s = create_datasocket(service,c,service->mq_in);
+	//随机选择一个engine
+	int32_t index = rand()%service->engine_count;
+	struct engine_struct *e = &(service->engines[index]);
+	datasocket_t data_s = create_datasocket(e,c,service->mq_in);
 	//通知上层，一个新连接到来
 	msg_t _msg = create_msg(data_s,MSG_NEW_CONNECTION);
 	mq_push(service->mq_out,_msg);
 	connection_start_recv(c);
-	Bind2Engine(service->engine,s,RecvFinish,SendFinish);
+	Bind2Engine(e->engine,s,RecvFinish,SendFinish);
 }
 
 static void *_Listen(void *arg)
