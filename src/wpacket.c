@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include "rpacket.h"
+#include "common_define.h"
 
 //atomic_32_t wpacket_count = 0; 
 
@@ -54,6 +55,7 @@ wpacket_t wpacket_create(uint8_t mt,allocator_t _allo,uint32_t size,uint8_t is_r
 	w->begin_pos = 0;
 	w->next.next = NULL;
 	w->_packet_send_finish = NULL;
+	w->type = MSG_WPACKET;
 	if(is_raw)
 	{
 		w->wpos = 0;
@@ -88,6 +90,7 @@ wpacket_t wpacket_create_by_rpacket(allocator_t _allo,struct rpacket *r)
 	w->wpos = 0;
 	w->next.next = NULL;
 	w->_packet_send_finish = NULL;
+	w->type = MSG_WPACKET;
 	if(w->raw)
 		w->data_size = r->len;
 	else

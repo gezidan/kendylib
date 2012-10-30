@@ -7,4 +7,15 @@ enum
 	SINGLE_THREAD = 0,
 };
 
+//消息类型定义
+enum
+{
+	MSG_RPACKET = 0,
+	MSG_WPACKET,
+	MSG_NEW_CONNECTION,
+	MSG_DISCONNECTED,
+	MSG_ACTIVE_CLOSE,
+	MSG_END,
+};
+
 #endif

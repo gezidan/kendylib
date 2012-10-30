@@ -25,6 +25,7 @@
 typedef struct rpacket
 {
 	list_node next;
+	uint8_t  type;
 	uint32_t len;     //包长(去除包长度字段)
 	uint32_t rpos;    //读下标
 	uint32_t data_remain;

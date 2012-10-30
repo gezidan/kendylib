@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
+#include "common_define.h"
 
 rpacket_t rpacket_create(uint8_t mt,allocator_t _alloc,buffer_t b,uint32_t pos,uint32_t pk_len,uint8_t is_raw)
 {
@@ -18,6 +18,7 @@ rpacket_t rpacket_create(uint8_t mt,allocator_t _alloc,buffer_t b,uint32_t pos,u
 	r->data_remain = r->len;
 	r->begin_pos = pos;
 	r->next.next = NULL;
+	r->type = MSG_RPACKET;
 	if(is_raw)
 		r->rpos = pos;
 	else
@@ -37,7 +38,8 @@ rpacket_t rpacket_create_by_wpacket(allocator_t _alloc,struct wpacket *w)
 	r->readbuf = buffer_acquire(0,w->buf);
 	r->raw = w->raw;
 	r->begin_pos = w->begin_pos;
-	r->next.next = NULL;	
+	r->next.next = NULL;
+	r->type = MSG_RPACKET;	
 	if(r->raw)
 	{
 		r->len = w->data_size;

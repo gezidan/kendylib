@@ -28,6 +28,7 @@ typedef void (*packet_send_finish)(void*,struct wpacket*);
 typedef struct wpacket
 {
 	list_node next;
+	uint8_t   type;
 	uint32_t *len;      //包长字段(去除包长度字段以外实际数据的长度)在buf中的地址
 	buffer_t buf;            //所有数据组成的buf链
 	buffer_t writebuf;       //wpos所在的buf
