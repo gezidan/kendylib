@@ -20,16 +20,18 @@
 #include "Connection.h"
 #include "refbase.h"
 #include "mq.h"
+#include "netservice.h"
 
 typedef struct datasocket
 {
 	struct refbase _refbase;
 	struct connection *c;
 	mq_t           _mq;
+	netservice_t   service;
 	volatile int8_t is_close;
 }*datasocket_t;
 
-datasocket_t create_datasocket(struct connection*,mq_t _mq);
+datasocket_t create_datasocket(netservice_t service,struct connection*,mq_t _mq);
 void         close_datasocket(datasocket_t);    //active close datasocket connection
 void         release_datasocket(datasocket_t*);  //decrease ref count
 void	     acquire_datasocket(datasocket_t);  //increase ref count; 

@@ -3,10 +3,12 @@
 
 static void on_destroy(void *ptr)
 {
+	datasocket_t s = (datasocket_t)ptr;
+	connection_destroy(&(s->c));
 	free(ptr);
 }
 
-datasocket_t create_datasocket(struct connection *c,mq_t _mq)
+datasocket_t create_datasocket(netservice_t service,struct connection *c,mq_t _mq)
 {
 	if(!c || !_mq)
 		return NULL;
@@ -17,6 +19,8 @@ datasocket_t create_datasocket(struct connection *c,mq_t _mq)
 	s->_refbase.mt = 1;
 	s->_refbase.refcount = 1;
 	s->_refbase.destroyer = on_destroy;
+	c->custom_ptr = s;
+	s->service = service;
 	return s;
 }
 
@@ -51,6 +55,8 @@ int32_t data_send(datasocket_t s,wpacket_t w)
 {
 	if(s->is_close)
 		return -1;
+	ref_increase(&s->_refbase);	
+	w->ptr = s;
 	mq_push(s->_mq,w);
 	return 0;
 }
