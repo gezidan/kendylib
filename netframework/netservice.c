@@ -41,6 +41,7 @@ static void on_socket_disconnect(struct connection *c,int32_t reason)
 	if(reason == -1)
 	{
 		//通知上层，连接被动断开
+		s->close_reason = reason;
 		msg_t _msg = create_msg(s,MSG_DISCONNECTED);
 		mq_push(s->e->service->mq_out,(list_node*)_msg);
 	}

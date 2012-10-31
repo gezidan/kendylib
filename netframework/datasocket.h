@@ -30,6 +30,7 @@ typedef struct datasocket
 	struct connection *c;
 	mq_t           _mq;
 	struct engine_struct *e;
+	int32_t  close_reason;
 	volatile int8_t is_close;
 }*datasocket_t;
 
