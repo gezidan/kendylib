@@ -31,13 +31,13 @@ void close_datasocket(datasocket_t s)
 		msg_t m = create_msg(s,MSG_ACTIVE_CLOSE);
 		if(!m)
 			return;
-		mq_push(s->_mq,m);
+		mq_push(s->_mq,(list_node*)m);
 		s->is_close = 1;
-		release_datasocket(s);
+		release_datasocket(&s);
 	}
 }
 
-void release_datasocket(datasocket_t s)
+void release_datasocket(datasocket_t *s)
 {
 	if(*s)
 	{
@@ -57,6 +57,6 @@ int32_t data_send(datasocket_t s,wpacket_t w)
 		return -1;
 	ref_increase(&s->_refbase);	
 	w->ptr = s;
-	mq_push(s->_mq,w);
+	mq_push(s->_mq,(list_node*)w);
 	return 0;
 }

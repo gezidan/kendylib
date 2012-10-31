@@ -99,7 +99,7 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 	uint32_t err_code = io->err_code;
 	for(;;)
 	{
-		if(bytestransfer == 0 || bytestransfer < 0 && err_code != EAGAIN)
+		if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN))
 		{
 			c->recv_overlap.isUsed = 0;
 			if(!c->send_overlap.isUsed)
@@ -280,7 +280,7 @@ void SendFinish(int32_t bytestransfer,st_io *io)
 	uint32_t err_code = io->err_code;
 	for(;;)
 	{
-		if(bytestransfer == 0 || bytestransfer < 0 && err_code != EAGAIN)
+		if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN))
 		{
 			c->send_overlap.isUsed = 0;
 			if(!c->recv_overlap.isUsed)

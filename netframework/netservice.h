@@ -1,4 +1,4 @@
-/*	
+﻿/*	
     Copyright (C) <2012>  <huangweilook@21cn.com>
 
     This program is free software: you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 #include "thread.h"
 #include "KendyNet.h"
 #include "Acceptor.h"
+#include "msg.h"
 
 struct netservice;
 struct engine_struct
@@ -42,6 +43,19 @@ typedef struct netservice
 	acceptor_t _acceptor;
 	volatile int8_t stop;
 }*netservice_t;
+
+//创建一个网络服务对象,thread_count表示要创建多少个线程,每个线程运行一个engine
+netservice_t create_net_service(uint32_t thread_count);
+void         stop_net_service(netservice_t);
+void         destroy_net_service(netservice_t*);
+
+//从网络服务队列中获取到来的消息
+msg_t        net_peek_msg(netservice_t,uint32_t ms);
+
+//添加一个网络监听
+HANDLE       net_add_listener(netservice_t,const char *ip,uint32_t port);
+//关闭一个网络监听
+void         net_rem_listener(netservice_t,HANDLE);
 
 
 #endif
