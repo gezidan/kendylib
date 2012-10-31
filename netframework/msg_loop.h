@@ -34,14 +34,13 @@ typedef struct msg_loop
 	on_packet _on_packet;
 	on_new_connection _on_new_connection;
 	on_connection_disconnect _on_connection_disconnect;
-	volatile int8_t stop;
+	uint32_t last_sync_tick;
 }*msg_loop_t;
 
 
 
 msg_loop_t create_msg_loop(on_packet,on_new_connection,on_connection_disconnect);
-void start_msg_loop(msg_loop_t,netservice_t);
-void stop_msg_loop(msg_loop_t);
+void msg_loop_once(msg_loop_t,netservice_t,uint32_t ms);
 void destroy_msg_loop(msg_loop_t*);
 
 

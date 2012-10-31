@@ -7,6 +7,7 @@ msg_loop_t create_msg_loop(on_packet _on_packet,on_new_connection _on_new_connec
 	m->_on_packet = _on_packet;
 	m->_on_new_connection = _on_new_connection;
 	m->_on_connection_disconnect = _on_connection_disconnect;
+	m->last_sync_tick = GetCurrentMs();
 	return m;
 }
 
@@ -38,27 +39,25 @@ static inline void dispatch_msg(msg_loop_t m,msg_t _msg)
 	}
 }
 
-void start_msg_loop(msg_loop_t m,netservice_t s)
+void msg_loop_once(msg_loop_t m,netservice_t s,uint32_t ms)
 {
 	msg_t _msg = NULL;
-	uint32_t last_sync = GetCurrentMs();
-	while(0 == m->stop)
+	uint32_t tick_remain = ms;
+	do
 	{
-		_msg = net_peek_msg(s,10);
+		uint32_t use_tick = GetCurrentMs();
+		_msg = net_peek_msg(s,tick_remain);
 		if(_msg)
 			dispatch_msg(m,_msg);
-		uint32_t now_tick = GetCurrentMs();
-		if(now_tick - last_sync >= 50)
-		{
-			last_sync = now_tick;
-			mq_flush();
-		}
-	}
-}
-
-void stop_msg_loop(msg_loop_t m)
-{
-	m->stop = 1;	
+		use_tick = GetCurrentMs() - use_tick;
+		tick_remain = tick_remain > use_tick ? tick_remain-use_tick:0;
+	}while(tick_remain > 0);
+	uint32_t now_tick = GetCurrentMs();
+	if(now_tick - m->last_sync_tick >= 50)
+	{
+		m->last_sync_tick = now_tick;
+		mq_flush();
+	}	
 }
 
 void destroy_msg_loop(msg_loop_t *m)
