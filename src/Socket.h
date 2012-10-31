@@ -17,10 +17,10 @@
 #ifndef _SOCKETWRAPPER_H
 #define _SOCKETWRAPPER_H
 #include <stdint.h>
-
+#include "double_link.h"
 typedef struct socket_wrapper
 {
-	LIST_NODE;
+	struct double_link_node dnode;
 	volatile int32_t status;//0:未开启;1:正常;
 	struct engine  *engine;
 	volatile int32_t isactived;//当前是否处于actived列表中	

@@ -25,7 +25,7 @@ void *Routine1(void *arg)
 		}
 		mq_flush();
 		j = (j + 1)%5; 
-		sleepms(300);
+		sleepms(200);
 		
 	}
 }
@@ -44,7 +44,7 @@ void *Routine3(void *arg)
 		}
 		mq_flush();
 		j = (j + 1)%5;
-		sleepms(300);
+		sleepms(200);
 	}
 }
 
@@ -80,7 +80,7 @@ int main()
 		node_list2[i] = calloc(10000000,sizeof(list_node));
 	}
 	init_mq_system();
-	mq1 = create_mq(4096);
+	mq1 = create_mq(4096,NULL);
 	init_system_time(10);
 	thread_t t1 = create_thread(0);
 	thread_start_run(t1,Routine1,NULL);

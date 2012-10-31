@@ -6,7 +6,7 @@
 #include "HandleMgr.h"
 #include "SocketWrapper.h"
 #include <assert.h>
-
+#include "double_link.h"
 void init_buff_allocator();
 int32_t InitNetSystem()
 {
@@ -35,7 +35,7 @@ HANDLE CreateEngine()
 		else
 		{
 			memset(e->events,0,sizeof(e->events));
-			LINK_LIST_CLEAR(e->actived);
+			double_link_clear(e->actived);
 		}
 	}
 	return engine;
@@ -77,7 +77,8 @@ int32_t WSASend(HANDLE sock,st_io *io,int32_t flag,uint32_t *err_code)
 		if(s->engine && s->writeable && !s->isactived)
 		{
 			s->isactived = 1;
-			LINK_LIST_PUSH_BACK(s->engine->actived,s);
+			double_link_push(s->engine->actived,(struct double_link_node*)s);
+			//LINK_LIST_PUSH_BACK(s->engine->actived,s);
 		}
 		*err_code = EAGAIN;
 		return -1;
@@ -104,7 +105,7 @@ int32_t WSARecv(HANDLE sock,st_io *io,int32_t flag,uint32_t *err_code)
 		if(s->engine && s->readable && !s->isactived)
 		{
 			s->isactived = 1;
-			LINK_LIST_PUSH_BACK(s->engine->actived,s);	
+			double_link_push(s->engine->actived,(struct double_link_node*)s);	
 		}
 		*err_code = EAGAIN;
 		return -1;

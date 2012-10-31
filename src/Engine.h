@@ -3,6 +3,7 @@
 
 #include "sync.h"
 #include "link_list.h"
+#include "double_link.h"
 #include <stdint.h>
 struct socket_wrapper;
 typedef struct engine
@@ -14,7 +15,8 @@ typedef struct engine
 	volatile int32_t status; /*0:关闭状态,1:开启状态*/
 	int32_t poller_fd;
 	struct epoll_event events[MAX_SOCKET];
-	struct link_list *actived;//激活且有数据需要操作的套接口
+	struct double_link *actived;
+	//struct link_list *actived;//激活且有数据需要操作的套接口
 }*engine_t;
 
 engine_t create_engine();

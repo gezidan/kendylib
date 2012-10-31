@@ -12,7 +12,7 @@ static void InitSocket(HANDLE sock,int32_t fd)
 	s->readable = s->writeable = 0;
 	s->engine = 0;
 	s->isactived = 0;
-	s->node.next = 0;
+	s->dnode.pre = s->dnode.next = NULL;
 } 
 
 HANDLE OpenSocket(int32_t family,int32_t type,int32_t protocol)

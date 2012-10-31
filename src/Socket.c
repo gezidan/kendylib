@@ -36,7 +36,7 @@ void on_read_active(socket_t s)
 	if(!s->isactived && !LINK_LIST_IS_EMPTY(s->pending_recv))
 	{
 		s->isactived = 1;
-		LINK_LIST_PUSH_BACK(s->engine->actived,s);
+		double_link_push(s->engine->actived,(struct double_link_node*)s);
 	}
 }
 
@@ -46,7 +46,7 @@ void on_write_active(socket_t s)
 	if(!s->isactived && !LINK_LIST_IS_EMPTY(s->pending_send))
 	{
 		s->isactived = 1;
-		LINK_LIST_PUSH_BACK(s->engine->actived,s);
+		double_link_push(s->engine->actived,(struct double_link_node*)s);
 	}	
 }
 

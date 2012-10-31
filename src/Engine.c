@@ -15,7 +15,8 @@ engine_t create_engine()
 		e->Loop = epoll_loop;
 		e->Register = epoll_register;
 		e->UnRegister = epoll_unregister;
-		e->actived = LINK_LIST_CREATE();
+		e->actived = (struct double_link*)calloc(1,sizeof(*e->actived));
+		double_link_clear(e->actived);
 	}
 	return e;
 }
@@ -24,6 +25,7 @@ void   free_engine(engine_t *e)
 {
 	assert(e);
 	assert(*e);
+	free((*e)->actived);
 	free(*e);
 	*e = 0;
 }
