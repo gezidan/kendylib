@@ -26,6 +26,7 @@ struct mq
 	struct double_link blocks;
 	struct link_list  *share_list;
 	struct link_list  *local_lists;
+	item_destroyer _item_destroyer;
 };
 
 
@@ -81,7 +82,13 @@ static void per_thread_destroy(struct per_thread_struct **pts)
 }
 
 
-mq_t create_mq(uint32_t push_size)
+void default_mq_item_destroyer(void* item)
+{
+	free(item);
+}
+
+
+mq_t create_mq(uint32_t push_size,item_destroyer _item_destroyer)
 {
 	mq_t m = calloc(1,sizeof(*m));
 	m->mtx = mutex_create();
@@ -90,17 +97,30 @@ mq_t create_mq(uint32_t push_size)
 	m->local_lists = LINK_LIST_CREATE();
 	double_link_clear(&m->blocks);
 	m->push_size = push_size;
+	m->_item_destroyer = _item_destroyer;
 	return m; 	
+}
+
+
+static inline void destroy_q_item(struct link_list *l,item_destroyer _item_destroyer)
+{
+	if(_item_destroyer == NULL)
+		return;
+	list_node *n;//link_list_head((*m)->local_lists);
+	while(n = LINK_LIST_POP(list_node*,l))
+		_item_destroyer((void*)n);
 }
 
 void destroy_mq(mq_t *m)
 {
 	mutex_destroy(&(*m)->mtx);
+	destroy_q_item((*m)->share_list,(*m)->_item_destroyer);//销毁share_list中所有元素
 	LINK_LIST_DESTROY(&(*m)->share_list);
 	list_node *l = link_list_head((*m)->local_lists);
 	while(l)
 	{
 		struct per_thread_struct *pts = (struct per_thread_struct*)l;
+		destroy_q_item(pts->local_q,(*m)->_item_destroyer);
 		l = l->next;
 		per_thread_destroy(&pts);
 	}	

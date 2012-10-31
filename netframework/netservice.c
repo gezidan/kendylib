@@ -1,6 +1,8 @@
 #include "netservice.h"
 #include "msg.h"
 #include "datasocket.h"
+#include "wpacket.h"
+#include "rpacket.h"
 
 static void on_process_msg(struct engine_struct *e,msg_t _msg)
 {
@@ -106,6 +108,18 @@ static void *_Listen(void *arg)
 	return NULL;
 }
 
+
+static void mq_item_destroyer(void *ptr)
+{
+	msg_t _msg = (msg_t)ptr;
+	if(_msg->type == MSG_RPACKET)
+		rpacket_destroy((rpacket_t*)&_msg);
+	else if(_msg->type == MSG_WPACKET)
+		wpacket_destroy((wpacket_t*)&_msg);
+	else
+		destroy_msg(&_msg);
+}
+
 netservice_t create_net_service(uint32_t thread_count)
 {
 	if(thread_count == 0)
@@ -116,14 +130,14 @@ netservice_t create_net_service(uint32_t thread_count)
 	netservice_t s = (netservice_t)calloc(1,sizeof(*s));
 	
 	s->engine_count = thread_count;
-	s->mq_out = create_mq(4096);
+	s->mq_out = create_mq(4096,mq_item_destroyer);
 	s->thread_listen = create_thread(1);//joinable
 	s->_acceptor = create_acceptor();
 	
 	uint32_t i = 0;
 	for( ;i < thread_count; ++i)
 	{
-		s->engines[i].mq_in = create_mq(4096);
+		s->engines[i].mq_in = create_mq(4096,mq_item_destroyer);
 		s->engines[i].engine = CreateEngine();
 		s->engines[i].thread_engine = create_thread(1);//joinable
 		s->engines[i].service = s;
