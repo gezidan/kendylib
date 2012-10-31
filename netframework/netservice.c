@@ -1,4 +1,4 @@
-﻿#include "netservice.h"
+#include "netservice.h"
 #include "msg.h"
 #include "datasocket.h"
 
