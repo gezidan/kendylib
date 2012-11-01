@@ -6,7 +6,7 @@
 
 #define MAX_CLIENT 1000
 static datasocket_t clients[MAX_CLIENT];
-
+uint32_t send_count = 0;
 void init_clients()
 {
 	uint32_t i = 0;
@@ -37,6 +37,7 @@ void send2_all_client(rpacket_t r)
 		{
 			w = wpacket_create_by_rpacket(NULL,r);
 			data_send(clients[i],w);
+			send_count++;
 		}
 	}
 }
@@ -64,11 +65,12 @@ int32_t count = 0;
 
 uint32_t total_bytes_recv = 0;
 
+
 void server_process_packet(datasocket_t s,rpacket_t r)
 {
 	total_bytes_recv += rpacket_len(r);
-	//send2_all_client(r);
-	send2_client(s,r);	
+	send2_all_client(r);
+	//send2_client(s,r);	
 }
 
 void process_new_connection(datasocket_t s)
@@ -114,9 +116,10 @@ int main(int argc,char **argv)
 		now = GetSystemMs();
 		if(now - tick > 1000)
 		{
-			printf("total_recv:%u\n",total_bytes_recv/1024/1024);
+			printf("total send:%u,total_recv:%u\n",send_count,total_bytes_recv/1024/1024);
 			tick = now;
 			total_bytes_recv = 0;
+			send_count = 0;
 		}
 	}
 

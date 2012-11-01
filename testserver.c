@@ -81,9 +81,9 @@ void remove_client(struct connection *c,int32_t reason)
 
 void on_process_packet(struct connection *c,rpacket_t r)
 {
-	//send2_all_client(r);
-	wpacket_t w = wpacket_create_by_rpacket(wpacket_allocator,r);
-	connection_send(c,w,NULL);	
+	send2_all_client(r);
+	//wpacket_t w = wpacket_create_by_rpacket(wpacket_allocator,r);
+	//connection_send(c,w,NULL);	
 	//++send_request;
 	
 	total_bytes_recv += rpacket_len(r);

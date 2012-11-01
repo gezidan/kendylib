@@ -70,7 +70,7 @@ void on_process_packet(struct connection *c,rpacket_t r)
 	}
 	++packet_recv;
 	rpacket_destroy(&r);
-	
+/*	
 	wpacket_t wpk = wpacket_create(SINGLE_THREAD,wpacket_allocator,64,0);
 	wpacket_write_uint32(wpk,c->socket);
 	uint32_t sys_t = GetSystemMs();
@@ -78,7 +78,7 @@ void on_process_packet(struct connection *c,rpacket_t r)
 	wpacket_write_string(wpk,"hello kenny");
 	connection_send(c,wpk,NULL);
 	++send_request;
-	
+*/	
 }
 
 void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
@@ -153,19 +153,19 @@ int32_t main(int32_t argc,char **argv)
 			ava_interval = 0;
 		}
 		
-		//if(ava_interval > 200)
-		//	send_interval = 200;
-		//else
-		//	send_interval = 20;
-		//if(now - send_tick > send_interval)
-		//{
-		//	send_tick = now;
-		/*		for(i = 0; i < client_count; ++i)
-				{
+		if(ava_interval > 200)
+			send_interval = 200;
+		else
+			send_interval = 20;
+		if(now - send_tick > send_interval)
+		{
+			send_tick = now;
+			for(i = 0; i < client_count; ++i)
+			{
 					if(clients[i])
 					{
 						int j = 0;
-						for( ; j < 300; ++j)
+						for( ; j < 1; ++j)
 						{
 						wpk = wpacket_create(SINGLE_THREAD,wpacket_allocator,64,0);
 						wpacket_write_uint32(wpk,clients[i]->socket);
@@ -175,9 +175,9 @@ int32_t main(int32_t argc,char **argv)
 						connection_send(clients[i],wpk,NULL);
 						}
 					}
-				}
-		*/		
-		//}
+			}
+				
+		}
 	}
 	return 0;
 }
