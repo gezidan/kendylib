@@ -76,7 +76,7 @@ static void *mainloop(void *arg)
 		}
 		//执行超时检测
 		//////////
-		EngineRun(e->engine,1);
+		EngineRun(e->engine,0);
 		//冲刷mq
 		mq_flush();
 

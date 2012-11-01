@@ -71,14 +71,14 @@ void on_process_packet(struct connection *c,rpacket_t r)
 	++packet_recv;
 	rpacket_destroy(&r);
 	
-/*	wpacket_t wpk = wpacket_create(SINGLE_THREAD,wpacket_allocator,64,0);
+	wpacket_t wpk = wpacket_create(SINGLE_THREAD,wpacket_allocator,64,0);
 	wpacket_write_uint32(wpk,c->socket);
 	uint32_t sys_t = GetSystemMs();
 	wpacket_write_uint32(wpk,sys_t);
 	wpacket_write_string(wpk,"hello kenny");
 	connection_send(c,wpk,NULL);
 	++send_request;
-*/	
+	
 }
 
 void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
@@ -160,7 +160,7 @@ int32_t main(int32_t argc,char **argv)
 		//if(now - send_tick > send_interval)
 		//{
 		//	send_tick = now;
-				for(i = 0; i < client_count; ++i)
+		/*		for(i = 0; i < client_count; ++i)
 				{
 					if(clients[i])
 					{
@@ -176,7 +176,7 @@ int32_t main(int32_t argc,char **argv)
 						}
 					}
 				}
-				
+		*/		
 		//}
 	}
 	return 0;
