@@ -42,23 +42,20 @@ static inline void dispatch_msg(msg_loop_t m,msg_t _msg)
 void msg_loop_once(msg_loop_t m,netservice_t s,uint32_t ms)
 {
 	msg_t _msg = NULL;
-	uint32_t tick_remain = ms;
+	uint32_t timeout = GetCurrentMs() + ms;
+	uint32_t now_tick;
 	do
 	{
-		uint32_t use_tick = GetCurrentMs();
-		_msg = net_peek_msg(s,tick_remain);
+		_msg = net_peek_msg(s,5);
 		if(_msg)
 			dispatch_msg(m,_msg);
-		use_tick = GetCurrentMs() - use_tick;
-		tick_remain = tick_remain > use_tick ? tick_remain-use_tick:0;
-		uint32_t now_tick = GetCurrentMs();
+		now_tick = GetCurrentMs();
 		if(now_tick - m->last_sync_tick >= 10)
 		{
 			m->last_sync_tick = now_tick;
 			mq_flush();
-		}			
-	}while(tick_remain > 0);
-
+		}		
+	}while(now_tick < timeout);
 }
 
 void destroy_msg_loop(msg_loop_t *m)
