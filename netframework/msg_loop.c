@@ -50,11 +50,11 @@ void msg_loop_once(msg_loop_t m,netservice_t s,uint32_t ms)
 		if(_msg)
 			dispatch_msg(m,_msg);
 		now_tick = GetCurrentMs();
-		//if(now_tick - m->last_sync_tick >= 10)
-		//{
-		//	m->last_sync_tick = now_tick;
+		if(now_tick - m->last_sync_tick >= 10)
+		{
+			m->last_sync_tick = now_tick;
 			mq_flush();
-		//}		
+		}		
 	}while(now_tick < timeout);
 }
 
