@@ -153,13 +153,13 @@ int32_t main(int32_t argc,char **argv)
 			ava_interval = 0;
 		}
 		
-		/*if(ava_interval > 200)
-			send_interval = 200;
-		else
-			send_interval = 20;
-		if(now - send_tick > send_interval)
-		{
-			send_tick = now;*/
+		//if(ava_interval > 200)
+		//	send_interval = 200;
+		//else
+		//	send_interval = 20;
+		//if(now - send_tick > send_interval)
+		//{
+		//	send_tick = now;
 				for(i = 0; i < client_count; ++i)
 				{
 					if(clients[i])

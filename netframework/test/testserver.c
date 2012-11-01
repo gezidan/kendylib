@@ -41,6 +41,12 @@ void send2_all_client(rpacket_t r)
 	}
 }
 
+void send2_client(datasocket_t c,rpacket_t r)
+{
+	wpacket_t w = wpacket_create_by_rpacket(NULL,r);
+	data_send(c,w);
+}
+
 void remove_client(datasocket_t c)
 {
 	uint32_t i = 0;
@@ -61,7 +67,8 @@ uint32_t total_bytes_recv = 0;
 void server_process_packet(datasocket_t s,rpacket_t r)
 {
 	total_bytes_recv += rpacket_len(r);
-	//send2_all_client(r);	
+	//send2_all_client(r);
+	//send2_client(s,r);	
 }
 
 void process_new_connection(datasocket_t s)
