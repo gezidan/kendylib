@@ -51,13 +51,14 @@ void msg_loop_once(msg_loop_t m,netservice_t s,uint32_t ms)
 			dispatch_msg(m,_msg);
 		use_tick = GetCurrentMs() - use_tick;
 		tick_remain = tick_remain > use_tick ? tick_remain-use_tick:0;
+		uint32_t now_tick = GetCurrentMs();
+		if(now_tick - m->last_sync_tick >= 10)
+		{
+			m->last_sync_tick = now_tick;
+			mq_flush();
+		}			
 	}while(tick_remain > 0);
-	uint32_t now_tick = GetCurrentMs();
-	if(now_tick - m->last_sync_tick >= 50)
-	{
-		m->last_sync_tick = now_tick;
-		mq_flush();
-	}	
+
 }
 
 void destroy_msg_loop(msg_loop_t *m)

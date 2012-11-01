@@ -39,7 +39,7 @@ int32_t epoll_loop(engine_t n,int32_t ms)
 {
 	assert(n);	
 	uint32_t sleep_ms;
-	uint32_t timeout = GetCurrentMs() + ms;
+	uint32_t timeout = GetSystemMs() + ms;
 	uint32_t current_tick;
 	do{		
 		while(!double_link_empty(n->actived))
@@ -51,11 +51,11 @@ int32_t epoll_loop(engine_t n,int32_t ms)
 				s->isactived = 1;
 				double_link_push(n->actived,(struct double_link_node*)s);
 			}
-			if(GetCurrentMs() >= timeout)
-				break;
+			//if(GetCurrentMs() >= timeout)
+			//	break;
 		}
 		
-		current_tick = GetCurrentMs();
+		current_tick = GetSystemMs();
 		sleep_ms = timeout > current_tick ? timeout - current_tick:0;	
 		int32_t nfds = TEMP_FAILURE_RETRY(epoll_wait(n->poller_fd,n->events,MAX_SOCKET,sleep_ms));
 		if(nfds < 0)
@@ -74,7 +74,7 @@ int32_t epoll_loop(engine_t n,int32_t ms)
 					on_read_active(sock);
 			}
 		}	
-		current_tick = GetCurrentMs();
+		current_tick = GetSystemMs();
 	}while(timeout > current_tick);
 	return 0;
 }

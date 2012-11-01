@@ -2,12 +2,14 @@ all:
 	gcc -g -O3 -c *.c -I../include 
 	ar -rc kendy.a *.o
 	cp kendy.a ../../luanet
+	cp kendy.a ../netframework/test
 	mv kendy.a ../
 	rm -f *.o
 debug:
 	gcc -g -c *.c -I../include -D _DEBUG
 	ar -rc kendy.a *.o
 	cp kendy.a ../../luanet
+	cp kendy.a ../netframework/test
 	mv kendy.a ../
 	rm -f *.o	
 all-mt:

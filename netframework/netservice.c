@@ -3,6 +3,8 @@
 #include "datasocket.h"
 #include "wpacket.h"
 #include "rpacket.h"
+#include "mq.h"
+#include "SysTime.h"
 
 static void on_process_msg(struct engine_struct *e,msg_t _msg)
 {
@@ -42,10 +44,11 @@ static void on_socket_disconnect(struct connection *c,int32_t reason)
 	{
 		//通知上层，连接被动断开
 		s->close_reason = reason;
+		s->is_close = 1;
 		msg_t _msg = create_msg(s,MSG_DISCONNECTED);
 		mq_push(s->e->service->mq_out,(list_node*)_msg);
 	}
-	release_datasocket(&s);
+	//release_datasocket(&s);
 }
 
 static void *mainloop(void *arg)
@@ -73,22 +76,17 @@ static void *mainloop(void *arg)
 		}
 		//执行超时检测
 		//////////
-		
-		uint32_t now = GetCurrentMs();
+		EngineRun(e->engine,1);
 		//冲刷mq
-		if(now - last_sync >= 50)
-		{
-			mq_force_sync(e->service->mq_out);
-			last_sync = now;
-		}
-		EngineRun(e->engine,50);
+		mq_flush();
+
 	}
 }
 
 static void accept_callback(HANDLE s,void *ud)
 {
 	netservice_t service = (netservice_t)ud;
-	struct connection *c = connection_create(s,0,SINGLE_THREAD,on_process_packet,on_socket_disconnect);
+	struct connection *c = connection_create(s,0,MUTIL_THREAD,on_process_packet,on_socket_disconnect);
 	setNonblock(s);
 	//随机选择一个engine
 	int32_t index = rand()%service->engine_count;
@@ -97,6 +95,7 @@ static void accept_callback(HANDLE s,void *ud)
 	//通知上层，一个新连接到来
 	msg_t _msg = create_msg(data_s,MSG_NEW_CONNECTION);
 	mq_push(service->mq_out,(list_node*)_msg);
+	mq_flush();
 	connection_start_recv(c);
 	Bind2Engine(e->engine,s,RecvFinish,SendFinish);
 }
@@ -131,14 +130,14 @@ netservice_t create_net_service(uint32_t thread_count)
 	netservice_t s = (netservice_t)calloc(1,sizeof(*s));
 	
 	s->engine_count = thread_count;
-	s->mq_out = create_mq(4096,mq_item_destroyer);
+	s->mq_out = create_mq(512,mq_item_destroyer);
 	s->thread_listen = create_thread(1);//joinable
 	s->_acceptor = create_acceptor();
 	
 	uint32_t i = 0;
 	for( ;i < thread_count; ++i)
 	{
-		s->engines[i].mq_in = create_mq(4096,mq_item_destroyer);
+		s->engines[i].mq_in = create_mq(512,mq_item_destroyer);
 		s->engines[i].engine = CreateEngine();
 		s->engines[i].thread_engine = create_thread(1);//joinable
 		s->engines[i].service = s;

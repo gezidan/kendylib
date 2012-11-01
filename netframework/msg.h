@@ -27,7 +27,7 @@ typedef struct msg
 }*msg_t;
 
 
-inline msg_t create_msg(void *ptr,uint8_t type)
+static inline msg_t create_msg(void *ptr,uint8_t type)
 {
 	if(type <= MSG_WPACKET || type >= MSG_END)
 		return NULL;
@@ -37,7 +37,7 @@ inline msg_t create_msg(void *ptr,uint8_t type)
 	return m;	
 }
 
-inline void  destroy_msg(msg_t *m)
+static inline void  destroy_msg(msg_t *m)
 {
 	free(*m);
 	*m = NULL;

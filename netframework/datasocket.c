@@ -4,7 +4,9 @@
 static void on_destroy(void *ptr)
 {
 	datasocket_t s = (datasocket_t)ptr;
+	HANDLE sock = s->c->socket;
 	connection_destroy(&(s->c));
+	ReleaseSocketWrapper(sock);
 	free(ptr);
 }
 
