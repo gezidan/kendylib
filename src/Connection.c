@@ -251,6 +251,7 @@ int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish call
 	int32_t ret = 1;
 	if(w)
 	{
+		w->send_tick = GetSystemMs();
 		w->_packet_send_finish = callback;
 		LINK_LIST_PUSH_BACK(c->send_list,w);
 	}

@@ -99,13 +99,13 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 		printf("%d,连接到:%s,%d,成功\n",s,ip,port);
 		add_client(c);
 		Bind2Engine(*engine,s,RecvFinish,SendFinish);
-		/*wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
+		wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
 		wpacket_write_uint32(wpk,(uint32_t)s);
 		uint32_t sys_t = GetSystemMs();
 		wpacket_write_uint32(wpk,sys_t);
 		wpacket_write_string(wpk,"hello kenny");
 		connection_send(c,wpk,NULL);
-		connection_start_recv(c);*/
+		connection_start_recv(c);
 	}
 }
 
@@ -152,7 +152,7 @@ int32_t main(int32_t argc,char **argv)
 			send_request = 0;
 			ava_interval = 0;
 		}
-	/*	
+		
 		if(ava_interval > 200)
 			send_interval = 200;
 		else
@@ -177,7 +177,7 @@ int32_t main(int32_t argc,char **argv)
 					}
 			}
 				
-		}*/
+		}
 		
 	}
 	return 0;

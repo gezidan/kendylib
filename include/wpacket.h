@@ -41,6 +41,7 @@ typedef struct wpacket
 	void     *ptr;
 	packet_send_finish _packet_send_finish;
 	allocator_t allocator;
+	uint32_t send_tick;//进入发送队列的时间
 }*wpacket_t;
 struct rpacket;
 

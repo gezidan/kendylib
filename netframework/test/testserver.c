@@ -88,6 +88,12 @@ void process_connection_disconnect(datasocket_t s,int32_t reason)
 	printf("%d\n",count);	
 }
 
+void process_send_block(datasocket_t s)
+{
+	//发送阻塞,直接关闭
+	close_datasocket(s);
+}
+
 const char *ip;
 uint32_t port;
 int main(int argc,char **argv)
@@ -106,7 +112,7 @@ int main(int argc,char **argv)
 	
 	netservice_t n = create_net_service(1);
 	net_add_listener(n,ip,port);
-	msg_loop_t m = create_msg_loop(server_process_packet,process_new_connection,process_connection_disconnect);
+	msg_loop_t m = create_msg_loop(server_process_packet,process_new_connection,process_connection_disconnect,process_send_block);
 	
 	uint32_t now;
 	uint32_t tick = GetSystemMs();

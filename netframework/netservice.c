@@ -55,6 +55,7 @@ static void on_socket_disconnect(struct connection *c,int32_t reason)
 	datasocket_t s = c->custom_ptr;
 	if(reason == -1)
 	{
+		UnRegisterTimer(s->e->timingwheel,c->wheelitem);
 		//通知上层，连接被动断开
 		s->close_reason = reason;
 		s->is_close = 1;
@@ -62,6 +63,8 @@ static void on_socket_disconnect(struct connection *c,int32_t reason)
 		mq_push(s->e->service->mq_out,(list_node*)_msg);
 	}
 }
+
+#define SEND_BLOCK_TIME 15*1000
 
 static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 {
@@ -83,6 +86,18 @@ static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 	}else
 	{
 		RegisterTimer(t,s->c->wheelitem,500);
+	}
+	
+	//检测是否有发送阻塞
+	wpacket_t w = (wpacket_t)link_list_head(s->c->send_list);
+	if(w)
+	{
+		if(now > w->send_tick && now - w->send_tick >= SEND_BLOCK_TIME)
+		{
+			//发送队列队首包超过了15秒任然没有发出去,通知上层,发送阻塞
+			msg_t _msg = create_msg(s,MSG_SEND_BLOCK);
+			mq_push(s->e->service->mq_out,(list_node*)_msg);
+		}
 	}
 }
 
