@@ -1,6 +1,7 @@
 #include "Connection.h"
 #include "link_list.h"
 #include <assert.h>
+#include "SysTime.h"
 
 #define BUFFER_SIZE 65536
 
@@ -124,6 +125,7 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 			int32_t flag = RECV_NOW;
 			while(bytestransfer > 0)
 			{
+				c->last_recv = GetSystemMs();
 				//total_size += bytestransfer;
 				update_next_recv_pos(c,bytestransfer);
 				c->unpack_size += bytestransfer;

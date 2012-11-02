@@ -5,6 +5,10 @@
 #include "rpacket.h"
 #include "mq.h"
 #include "SysTime.h"
+#include "double_link.h"
+
+extern struct socket_wrapper* GetSocketByHandle(HANDLE);
+extern int32_t      ReleaseSocketWrapper(HANDLE);
 
 static void on_process_msg(struct engine_struct *e,msg_t _msg)
 {
@@ -13,7 +17,16 @@ static void on_process_msg(struct engine_struct *e,msg_t _msg)
 		case MSG_ACTIVE_CLOSE:
 			{
 				datasocket_t s = (datasocket_t)_msg->ptr;
+				UnRegisterTimer(e->timingwheel,s->c->wheelitem);
 				connection_active_close(s->c);
+			}
+			break;
+		case MSG_NEW_CONNECTION:
+			{
+				datasocket_t s = (datasocket_t)_msg->ptr;
+				RegisterTimer(e->timingwheel,s->c->wheelitem,500);
+				Bind2Engine(e->engine,s->c->socket,RecvFinish,SendFinish);
+				connection_start_recv(s->c);
 			}
 			break;
 		default:
@@ -48,7 +61,29 @@ static void on_socket_disconnect(struct connection *c,int32_t reason)
 		msg_t _msg = create_msg(s,MSG_DISCONNECTED);
 		mq_push(s->e->service->mq_out,(list_node*)_msg);
 	}
-	//release_datasocket(&s);
+}
+
+static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
+{
+	datasocket_t s = (datasocket_t)arg;
+	if(now > s->c->last_recv && now - s->c->last_recv >= s->c->timeout)
+	{
+		//超时了,关闭套接口
+		struct socket_wrapper *sw = GetSocketByHandle(s->c->socket);
+		if(sw)
+		{
+			double_link_remove((struct double_link_node*)sw);
+			ReleaseSocketWrapper(s->c->socket);	
+			//通知上层，连接超时关闭
+			s->close_reason = -3;
+			s->is_close = 1;
+			msg_t _msg = create_msg(s,MSG_DISCONNECTED);
+			mq_push(s->e->service->mq_out,(list_node*)_msg);
+		}
+	}else
+	{
+		RegisterTimer(t,s->c->wheelitem,500);
+	}
 }
 
 static void *mainloop(void *arg)
@@ -75,6 +110,7 @@ static void *mainloop(void *arg)
 			}
 		}
 		//执行超时检测
+		UpdateWheel(e->timingwheel,GetCurrentMs());
 		//////////
 		EngineRun(e->engine,1);
 		//冲刷mq
@@ -92,12 +128,16 @@ static void accept_callback(HANDLE s,void *ud)
 	int32_t index = rand()%service->engine_count;
 	struct engine_struct *e = &(service->engines[index]);
 	datasocket_t data_s = create_datasocket(e,c,e->mq_in);
+	c->last_recv = GetSystemMs();
+	c->timeout = 1*60*1000;
+	c->wheelitem = CreateWheelItem((void*)data_s,timeout_check);
 	//通知上层，一个新连接到来
 	msg_t _msg = create_msg(data_s,MSG_NEW_CONNECTION);
 	mq_push(service->mq_out,(list_node*)_msg);
+	//通知engine新连接到来
+	_msg = create_msg(data_s,MSG_NEW_CONNECTION);
+	mq_push(e->mq_in,(list_node*)_msg);	
 	mq_flush();
-	connection_start_recv(c);
-	Bind2Engine(e->engine,s,RecvFinish,SendFinish);
 }
 
 static void *_Listen(void *arg)
@@ -141,6 +181,7 @@ netservice_t create_net_service(uint32_t thread_count)
 		s->engines[i].engine = CreateEngine();
 		s->engines[i].thread_engine = create_thread(1);//joinable
 		s->engines[i].service = s;
+		s->engines[i].timingwheel = CreateTimingWheel(500,30*1000);
 		thread_run(mainloop,&s->engines[i]);//启动线程
 	}
 	thread_run(_Listen,s);//启动listener线程
@@ -169,6 +210,7 @@ void destroy_net_service(netservice_t *s)
 	uint32_t i = 0;
 	for( ;i < _s->engine_count; ++i)
 	{
+		DestroyTimingWheel(&_s->engines[i].timingwheel);
 		destroy_thread(&_s->engines[i].thread_engine);
 		CloseEngine(_s->engines[i].engine);
 		destroy_mq(&_s->engines[i].mq_in);

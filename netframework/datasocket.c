@@ -8,6 +8,7 @@ static void on_destroy(void *ptr)
 	connection_destroy(&(s->c));
 	ReleaseSocketWrapper(sock);
 	free(ptr);
+	printf("destroy datasocket\n");
 }
 
 datasocket_t create_datasocket(struct engine_struct *e,struct connection *c,mq_t _mq)

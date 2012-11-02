@@ -12,7 +12,7 @@ accept_connect:
 server:kendy.a testserver.c
 	gcc -g -o server testserver.c kendy.a -I./include -lpthread -lrt -ltcmalloc
 client:kendy.a testclient.c
-	gcc -O3 -g -o client testclient.c kendy.a -I./include -lpthread -lrt -ltcmalloc
+	gcc -g -o client testclient.c kendy.a -I./include -lpthread -lrt
 atomic:
 	gcc -g -o atomic testatomic.c kendy.a ../clib/clib.a -I./include -I../ -lpthread -lrt
 objpool:kendy.a

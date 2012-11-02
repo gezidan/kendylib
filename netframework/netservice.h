@@ -23,6 +23,7 @@
 #include "KendyNet.h"
 #include "Acceptor.h"
 #include "msg.h"
+#include "timing_wheel.h"
 
 struct netservice;
 struct engine_struct
@@ -31,6 +32,7 @@ struct engine_struct
 	HANDLE   engine;
 	thread_t thread_engine;
 	struct netservice *service;
+	TimingWheel_t timingwheel;
 };
 
 #define MAX_ENGINES 64

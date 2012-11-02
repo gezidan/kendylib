@@ -5,6 +5,7 @@
 #include "rpacket.h"
 #include "SocketWrapper.h"
 #include <stdint.h>
+#include "timing_wheel.h"
 struct connection;
 struct OVERLAPCONTEXT
 {
@@ -45,6 +46,10 @@ struct connection
 	uint8_t raw;
 	uint16_t is_close;
 	void    *custom_ptr;
+	uint32_t last_recv;
+	uint32_t timeout;
+	WheelItem_t wheelitem;
+	
 };
 
 struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_packet,on_disconnect);

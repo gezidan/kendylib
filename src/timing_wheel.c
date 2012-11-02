@@ -62,7 +62,7 @@ void DestroyTimingWheel(TimingWheel_t *t)
 
 inline static void Add(TimingWheel_t t,uint32_t slot,WheelItem_t item)
 {
-	printf("add :%d\n",slot);
+	//printf("add :%d\n",slot);
 	if(t->slot[slot])
 	{
 		t->slot[slot]->pre = item;
@@ -88,7 +88,7 @@ int  RegisterTimer(TimingWheel_t t,WheelItem_t item,uint32_t timeout)
 }
 
 //激活slot中的所有事件
-static void Active(TimingWheel_t t,uint32_t slot)
+static void Active(TimingWheel_t t,uint32_t slot,uint32_t now)
 {
    WheelItem_t head = t->slot[slot];
    t->slot[slot] = 0;
@@ -99,7 +99,7 @@ static void Active(TimingWheel_t t,uint32_t slot)
 		cur->slot = 0;
 		cur->pre = cur->next = 0;
 		if(cur->callback)
-			cur->callback(cur->ud);
+			cur->callback(t,cur->ud,now);
 		
    }
 }
@@ -113,7 +113,7 @@ int UpdateWheel(TimingWheel_t t,uint32_t now)
 	uint32_t i = 0;
 	for( ; i < interval && i < t->slot_size; ++i)
 	{
-		Active(t,(t->current+i)%t->slot_size);
+		Active(t,(t->current+i)%t->slot_size,now);
 	}
 	t->current = (t->current+i)%t->slot_size;
 	t->last_update = now;//+= (interval*t->precision);

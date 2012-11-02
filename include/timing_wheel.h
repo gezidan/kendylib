@@ -20,7 +20,7 @@
 //简单时间轮
 typedef struct WheelItem   *WheelItem_t;
 typedef struct TimingWheel *TimingWheel_t;
-typedef void   (*TimingWheel_callback)(void*);
+typedef void   (*TimingWheel_callback)(TimingWheel_t,void*,uint32_t);
 
 /*
 * precision:最小精度,以毫秒为单位
