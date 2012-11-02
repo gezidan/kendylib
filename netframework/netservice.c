@@ -9,6 +9,7 @@
 extern struct socket_wrapper* GetSocketByHandle(HANDLE);
 extern int32_t      ReleaseSocketWrapper(HANDLE);
 
+
 static int8_t is_init = 0;
 static allocator_t rpacket_allocator = NULL;
 static allocator_t wpacket_allocator = NULL;
@@ -35,6 +36,7 @@ wpacket_t    get_wpacket_by_rpacket(rpacket_t r)
 {
 	return wpacket_create_by_rpacket(wpacket_allocator,r);
 }
+
 
 static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 {

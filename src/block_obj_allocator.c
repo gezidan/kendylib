@@ -32,6 +32,7 @@ struct block_obj_allocator
 	IMPLEMEMT(allocator);
 	pthread_key_t t_key;
 	struct link_list *_free_list;
+	struct link_list *_recover;
 	spinlock_t mtx;
 	struct link_list *_thread_allocators;
 	uint32_t obj_size;
@@ -65,6 +66,7 @@ static inline void free_list_put(struct free_list *f,void *ptr)
 
 static struct free_list *creat_new_freelist(uint32_t size)
 {
+	printf("creat_new_freelist\n");
 	uint32_t init_size = DEFAULT_BLOCK_SIZE/size;
 	struct free_list *f = (struct free_list*)calloc(1,sizeof(*f));
 	assert(f);
@@ -82,17 +84,19 @@ static struct free_list *creat_new_freelist(uint32_t size)
 }
 
 
-static struct free_list *creat_empty_freelist()
+static struct free_list *creat_empty_freelist(uint32_t size)
 {
+	printf("creat_empty_freelist\n");
+	uint32_t init_size = DEFAULT_BLOCK_SIZE/size;
 	struct free_list *f = (struct free_list*)calloc(1,sizeof(*f));
 	f->size = 0;
 	f->mem = NULL;
+	f->init_size = init_size;
 	return f;	
 }
 
 static inline struct free_list *central_get_freelist(block_obj_allocator_t central)
 {
-	//printf("central_get_freelist\n");
 	struct free_list *f;
 	if(central->mtx)
 	{
@@ -104,8 +108,25 @@ static inline struct free_list *central_get_freelist(block_obj_allocator_t centr
 		f = (struct free_list*)link_list_pop(central->_free_list);
 	if(!f)
 	{
-		//printf("creat_new_freelist\n");
  	    f = creat_new_freelist(central->obj_size);			
+	}
+	return f;
+}
+
+static inline struct free_list *central_get_empty_freelist(block_obj_allocator_t central)
+{
+	struct free_list *f;
+	if(central->mtx)
+	{
+		spin_lock(central->mtx);
+		f = (struct free_list*)link_list_pop(central->_recover);
+		spin_unlock(central->mtx);
+	}
+	else
+		f = (struct free_list*)link_list_pop(central->_recover);
+	if(!f)
+	{
+ 	    f = creat_empty_freelist(central->obj_size);			
 	}
 	return f;
 }
@@ -121,6 +142,19 @@ static inline void give_back_to_central(block_obj_allocator_t central,struct fre
 	}
 	else
 		LINK_LIST_PUSH_BACK(central->_free_list,f);
+}
+
+static inline void push_empty_freelist_to_central(block_obj_allocator_t central,struct free_list *f)
+{
+	//printf("give_back_to_central\n");
+	if(central->mtx)
+	{
+		spin_lock(central->mtx);
+		LINK_LIST_PUSH_BACK(central->_recover,f);
+		spin_unlock(central->mtx);
+	}
+	else
+		LINK_LIST_PUSH_BACK(central->_recover,f);
 }
 
 static inline void *thread_allocator_alloc(struct thread_allocator *a)
@@ -150,7 +184,8 @@ static inline void *thread_allocator_alloc(struct thread_allocator *a)
 	if(!f->size)
 	{
 		link_list_pop(a->_free_list);
-		link_list_push_back(a->_recover,(list_node*)f);
+		push_empty_freelist_to_central(a->central_allocator,f);
+		//link_list_push_back(a->_recover,(list_node*)f);
 	}
 	return ptr;
 }
@@ -158,36 +193,26 @@ static inline void *thread_allocator_alloc(struct thread_allocator *a)
 static inline void thread_allocator_dealloc(struct thread_allocator *a,void *ptr)
 {
 	struct free_list *f = (struct free_list*)link_list_head(a->_recover);
-	if(f)
+	if(!f)
 	{
-		free_list_put(f,ptr);
-		++a->free_size;
-		if(f->size == f->init_size)
-		{
-			link_list_pop(a->_recover);	
-			//printf("==init_size\n");
-			//一个free_list回收满了,要么放到free_list中，要么归还central
-			if(a->free_size >= a->collect_factor)
-			{
-				//将f归还给central_allocator;	
-				give_back_to_central(a->central_allocator,f);
-				a->free_size -= f->size;
-			}
-			else
-				link_list_push_back(a->_free_list,(list_node*)f);
-		}
+		f = central_get_empty_freelist(a->central_allocator);
+		LINK_LIST_PUSH_BACK(a->_recover,f);
 	}
-	else
+	free_list_put(f,ptr);
+	++a->free_size;
+	if(f->size == f->init_size)
 	{
-		f = (struct free_list*)link_list_head(a->_free_list);
-		if(!f)
+		link_list_pop(a->_recover);
+		//一个free_list回收满了,要么放到free_list中，要么归还central
+		if(a->free_size >= a->collect_factor)
 		{
-			f = creat_empty_freelist();
-			link_list_push_back(a->_free_list,(list_node*)f);
+			//将f归还给central_allocator;	
+			//printf("归还central\n");
+			give_back_to_central(a->central_allocator,f);
+			a->free_size -= f->size;
 		}
-		//assert(f);
-		free_list_put(f,ptr);
-		++a->free_size;
+		else
+			link_list_push_back(a->_free_list,(list_node*)f);
 	}
 }
 
@@ -201,7 +226,6 @@ static void release_freelist(struct link_list *flist)
 		if(f->mem)
 			free(f->mem);
 		free(f);
-		//printf("destroy_freelist\n");
 	}	
 }
 
@@ -285,6 +309,8 @@ static void destroy_block_obj_al(struct allocator **a)
 	}
 	release_freelist(ba->_free_list);
 	LINK_LIST_DESTROY(&ba->_free_list);
+	release_freelist(ba->_recover);
+	LINK_LIST_DESTROY(&ba->_recover);	
 	if(ba->mtx)
 	{
 		spin_destroy(&(ba->mtx));
@@ -309,6 +335,7 @@ block_obj_allocator_t create_block_obj_allocator(uint8_t mt,uint32_t obj_size)
 	}
 	ba->_thread_allocators = LINK_LIST_CREATE();
 	ba->_free_list = LINK_LIST_CREATE();
+	ba->_recover = LINK_LIST_CREATE();
 	ba->obj_size = obj_size;
 	ba->super_class.Alloc = block_obj_al_alloc;
 	ba->super_class.DeAlloc = block_obj_al_dealloc;

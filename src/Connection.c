@@ -125,7 +125,7 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 			int32_t flag = RECV_NOW;
 			while(bytestransfer > 0)
 			{
-				c->last_recv = GetSystemMs();
+				c->last_recv = GetCurrentMs();
 				//total_size += bytestransfer;
 				update_next_recv_pos(c,bytestransfer);
 				c->unpack_size += bytestransfer;
@@ -251,7 +251,7 @@ int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish call
 	int32_t ret = 1;
 	if(w)
 	{
-		w->send_tick = GetSystemMs();
+		w->send_tick = GetCurrentMs();
 		w->_packet_send_finish = callback;
 		LINK_LIST_PUSH_BACK(c->send_list,w);
 	}
