@@ -1,16 +1,17 @@
 #include "msg_loop.h"
 #include "SysTime.h"
 
-msg_loop_t create_msg_loop(on_packet _on_packet,on_new_connection _on_new_connection,
-	on_connection_disconnect _on_connection_disconnect,on_send_block _on_send_block)
+msg_loop_t create_msg_loop()
 {
 	msg_loop_t m = (msg_loop_t)calloc(1,sizeof(*m));
-	m->_on_packet = _on_packet;
-	m->_on_new_connection = _on_new_connection;
-	m->_on_connection_disconnect = _on_connection_disconnect;
-	m->_on_send_block = _on_send_block;
 	m->last_sync_tick = GetCurrentMs();
 	return m;
+}
+
+void msg_loop_register_callback(msg_loop_t m ,uint16_t type,msg_callback callback)
+{
+	if(type < MSG_END)
+		m->callbacks[type] = callback;
 }
 
 
@@ -21,27 +22,27 @@ static inline void dispatch_msg(msg_loop_t m,msg_t _msg)
 		case MSG_RPACKET:
 			{
 				rpacket_t r = (rpacket_t)_msg;
-				m->_on_packet((datasocket_t)r->ptr,r);
+				m->callbacks[MSG_RPACKET]((datasocket_t)r->ptr,(void*)r);
 				rpacket_destroy(&r);
 			}
 			break;
 		case MSG_NEW_CONNECTION:
 			{
-				m->_on_new_connection((datasocket_t)_msg->ptr);
+				m->callbacks[MSG_RPACKET]((datasocket_t)_msg->ptr,NULL);
 				destroy_msg(&_msg);
 			}
 			break;
 		case MSG_DISCONNECTED:
 			{
 				datasocket_t s = (datasocket_t)_msg->ptr;
-				m->_on_connection_disconnect(s,s->close_reason);
+				m->callbacks[MSG_RPACKET](s,(void*)s->close_reason);
 				destroy_msg(&_msg);
 			}
 			break;
 		case MSG_SEND_BLOCK:
 			{
 				datasocket_t s = (datasocket_t)_msg->ptr;
-				m->_on_send_block(s);
+				m->callbacks[MSG_RPACKET](s,NULL);
 				destroy_msg(&_msg);			
 			}
 			break;

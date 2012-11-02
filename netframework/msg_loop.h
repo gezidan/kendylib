@@ -22,26 +22,32 @@
 #include "rpacket.h"
 #include "thread.h"
 #include "netservice.h"
+#include "common_define.h"
 
 //主消息循环，用于处理从网络层过来的消息
 
-typedef void (*on_packet)(datasocket_t,rpacket_t);//网络包回调
-typedef void (*on_new_connection)(datasocket_t);  //处理新到达的连接
-typedef void (*on_connection_disconnect)(datasocket_t,int32_t reason);//处理连接关闭
-typedef void (*on_send_block)(datasocket_t);//发送阻塞
+//typedef void (*on_packet)(datasocket_t,rpacket_t);//网络包回调
+//typedef void (*on_new_connection)(datasocket_t);  //处理新到达的连接
+//typedef void (*on_connection_disconnect)(datasocket_t,int32_t reason);//处理连接关闭
+//typedef void (*on_send_block)(datasocket_t);//发送阻塞
+
+typedef void (*msg_callback)(datasocket_t,void *);
+
 
 typedef struct msg_loop
 {
-	on_packet _on_packet;
-	on_new_connection _on_new_connection;
-	on_connection_disconnect _on_connection_disconnect;
-	on_send_block _on_send_block;
+	//on_packet _on_packet;
+	//on_new_connection _on_new_connection;
+	//on_connection_disconnect _on_connection_disconnect;
+	//on_send_block _on_send_block;
+	msg_callback callbacks[MSG_END];
 	uint32_t last_sync_tick;
 }*msg_loop_t;
 
 
 
-msg_loop_t create_msg_loop(on_packet,on_new_connection,on_connection_disconnect,on_send_block);
+msg_loop_t create_msg_loop();
+void msg_loop_register_callback(msg_loop_t,uint16_t,msg_callback);
 void msg_loop_once(msg_loop_t,netservice_t,uint32_t ms);
 void destroy_msg_loop(msg_loop_t*);
 

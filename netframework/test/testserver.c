@@ -66,29 +66,31 @@ int32_t count = 0;
 uint32_t total_bytes_recv = 0;
 
 
-void server_process_packet(datasocket_t s,rpacket_t r)
+void server_process_packet(datasocket_t s,void *ptr)
 {
+	rpacket_t r = (rpacket_t)ptr;
 	total_bytes_recv += rpacket_len(r);
 	send2_all_client(r);
 	//send2_client(s,r);	
 }
 
-void process_new_connection(datasocket_t s)
+void process_new_connection(datasocket_t s,void *ptr)
 {
 	add_client(s);
 	++count;
 	printf("%d\n",count);
 }
 
-void process_connection_disconnect(datasocket_t s,int32_t reason)
+void process_connection_disconnect(datasocket_t s,void *ptr)
 {
+	int32_t reason = (int32_t)ptr;
 	remove_client(s);
 	release_datasocket(&s);
 	--count;
 	printf("%d\n",count);	
 }
 
-void process_send_block(datasocket_t s)
+void process_send_block(datasocket_t s,void *ptr)
 {
 	//发送阻塞,直接关闭
 	close_datasocket(s);
@@ -112,8 +114,11 @@ int main(int argc,char **argv)
 	
 	netservice_t n = create_net_service(1);
 	net_add_listener(n,ip,port);
-	msg_loop_t m = create_msg_loop(server_process_packet,process_new_connection,process_connection_disconnect,process_send_block);
-	
+	msg_loop_t m = create_msg_loop();
+	msg_loop_register_callback(m,MSG_RPACKET,server_process_packet);
+	msg_loop_register_callback(m,MSG_NEW_CONNECTION,server_process_packet);
+	msg_loop_register_callback(m,MSG_DISCONNECTED,process_connection_disconnect);
+	msg_loop_register_callback(m,MSG_SEND_BLOCK,process_send_block);	
 	uint32_t now;
 	uint32_t tick = GetSystemMs();
 	while(1)
