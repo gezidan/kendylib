@@ -124,6 +124,8 @@ int UpdateWheel(TimingWheel_t t,uint32_t now)
 
 void UnRegisterTimer(TimingWheel_t t,WheelItem_t wit)
 {
+	if(!t || !wit)
+		return;
 	if(wit->slot < 0 || wit->slot >= t->slot_size)
 		return;
 	WheelItem_t next = wit->next;

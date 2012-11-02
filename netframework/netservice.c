@@ -10,6 +10,41 @@
 extern struct socket_wrapper* GetSocketByHandle(HANDLE);
 extern int32_t      ReleaseSocketWrapper(HANDLE);
 
+static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
+{
+	datasocket_t s = (datasocket_t)arg;
+	if(now > s->c->last_recv && now - s->c->last_recv >= s->c->recv_timeout)
+	{
+		//超时了,关闭套接口
+		struct socket_wrapper *sw = GetSocketByHandle(s->c->socket);
+		if(sw)
+		{
+			double_link_remove((struct double_link_node*)sw);
+			ReleaseSocketWrapper(s->c->socket);	
+			//通知上层，连接超时关闭
+			s->close_reason = -3;
+			s->is_close = 1;
+			msg_t _msg = create_msg(s,MSG_DISCONNECTED);
+			mq_push(s->e->service->mq_out,(list_node*)_msg);
+		}
+	}else
+	{
+		RegisterTimer(t,s->c->wheelitem,500);
+	}
+	
+	//检测是否有发送阻塞
+	wpacket_t w = (wpacket_t)link_list_head(s->c->send_list);
+	if(w)
+	{
+		if(now > w->send_tick && now - w->send_tick >= s->c->send_timeout)
+		{
+			//发送队列队首包超过了15秒任然没有发出去,通知上层,发送阻塞
+			msg_t _msg = create_msg(s,MSG_SEND_BLOCK);
+			mq_push(s->e->service->mq_out,(list_node*)_msg);
+		}
+	}
+}
+
 static void on_process_msg(struct engine_struct *e,msg_t _msg)
 {
 	switch(_msg->type)
@@ -24,9 +59,20 @@ static void on_process_msg(struct engine_struct *e,msg_t _msg)
 		case MSG_NEW_CONNECTION:
 			{
 				datasocket_t s = (datasocket_t)_msg->ptr;
-				RegisterTimer(e->timingwheel,s->c->wheelitem,500);
 				Bind2Engine(e->engine,s->c->socket,RecvFinish,SendFinish);
+				s->c->last_recv = GetSystemMs();
 				connection_start_recv(s->c);
+			}
+			break;
+		case MSG_SET_RECV_TIMEOUT:
+		case MSG_SET_SEND_TIMEOUT:
+			{
+				datasocket_t s = (datasocket_t)_msg->ptr;
+				if(!s->c->wheelitem)
+				{
+					s->c->wheelitem = CreateWheelItem((void*)s,timeout_check);
+					RegisterTimer(e->timingwheel,s->c->wheelitem,500);
+				}
 			}
 			break;
 		default:
@@ -64,42 +110,7 @@ static void on_socket_disconnect(struct connection *c,int32_t reason)
 	}
 }
 
-#define SEND_BLOCK_TIME 15*1000
 
-static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
-{
-	datasocket_t s = (datasocket_t)arg;
-	if(now > s->c->last_recv && now - s->c->last_recv >= s->c->timeout)
-	{
-		//超时了,关闭套接口
-		struct socket_wrapper *sw = GetSocketByHandle(s->c->socket);
-		if(sw)
-		{
-			double_link_remove((struct double_link_node*)sw);
-			ReleaseSocketWrapper(s->c->socket);	
-			//通知上层，连接超时关闭
-			s->close_reason = -3;
-			s->is_close = 1;
-			msg_t _msg = create_msg(s,MSG_DISCONNECTED);
-			mq_push(s->e->service->mq_out,(list_node*)_msg);
-		}
-	}else
-	{
-		RegisterTimer(t,s->c->wheelitem,500);
-	}
-	
-	//检测是否有发送阻塞
-	wpacket_t w = (wpacket_t)link_list_head(s->c->send_list);
-	if(w)
-	{
-		if(now > w->send_tick && now - w->send_tick >= SEND_BLOCK_TIME)
-		{
-			//发送队列队首包超过了15秒任然没有发出去,通知上层,发送阻塞
-			msg_t _msg = create_msg(s,MSG_SEND_BLOCK);
-			mq_push(s->e->service->mq_out,(list_node*)_msg);
-		}
-	}
-}
 
 static void *mainloop(void *arg)
 {	
@@ -143,9 +154,9 @@ static void accept_callback(HANDLE s,void *ud)
 	int32_t index = rand()%service->engine_count;
 	struct engine_struct *e = &(service->engines[index]);
 	datasocket_t data_s = create_datasocket(e,c,e->mq_in);
-	c->last_recv = GetSystemMs();
-	c->timeout = 1*60*1000;
-	c->wheelitem = CreateWheelItem((void*)data_s,timeout_check);
+	//c->last_recv = GetSystemMs();
+	//c->timeout = 1*60*1000;
+	//c->wheelitem = CreateWheelItem((void*)data_s,timeout_check);
 	//通知上层，一个新连接到来
 	msg_t _msg = create_msg(data_s,MSG_NEW_CONNECTION);
 	mq_push(service->mq_out,(list_node*)_msg);

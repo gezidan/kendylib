@@ -350,6 +350,8 @@ int connection_destroy(struct connection** c)
 		LINK_LIST_DESTROY(&(*c)->send_list);
 		buffer_release(&(*c)->unpack_buf);
 		buffer_release(&(*c)->next_recv_buf);
+		if((*c)->wheelitem)
+			DestroyWheelItem(&((*c)->wheelitem));
 		free(*c);
 		*c = NULL;
 		return 0;

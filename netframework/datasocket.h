@@ -39,5 +39,7 @@ void         close_datasocket(datasocket_t);    //active close datasocket connec
 void         release_datasocket(datasocket_t*);  //decrease ref count
 void	     acquire_datasocket(datasocket_t);  //increase ref count; 
 int32_t      data_send(datasocket_t,wpacket_t);
+int32_t      set_recv_timeout(datasocket_t,uint32_t ms);
+int32_t      set_send_timeout(datasocket_t,uint32_t ms);
 
 #endif

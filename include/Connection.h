@@ -47,7 +47,8 @@ struct connection
 	uint16_t is_close;
 	void    *custom_ptr;
 	uint32_t last_recv;
-	uint32_t timeout;
+	uint32_t recv_timeout;
+	uint32_t send_timeout;
 	WheelItem_t wheelitem;
 	
 };

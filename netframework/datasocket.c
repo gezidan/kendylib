@@ -63,3 +63,31 @@ int32_t data_send(datasocket_t s,wpacket_t w)
 	mq_push(s->_mq,(list_node*)w);
 	return 0;
 }
+
+int32_t set_recv_timeout(datasocket_t s,uint32_t ms)
+{
+	if(s->c->recv_timeout > 0)
+		return -1;
+	msg_t m = create_msg(s,MSG_SET_RECV_TIMEOUT);
+	if(!m)
+		return -1;
+	ref_increase(&s->_refbase);	
+	s->c->recv_timeout = ms;
+	mq_push(s->_mq,(list_node*)m);
+	mq_flush();
+	return 0;	
+}
+
+int32_t set_send_timeout(datasocket_t s,uint32_t ms)
+{
+	if(s->c->send_timeout > 0)
+		return -1;
+	msg_t m = create_msg(s,MSG_SET_SEND_TIMEOUT);
+	if(!m)
+		return -1;
+	ref_increase(&s->_refbase);
+	s->c->send_timeout = ms;		
+	mq_push(s->_mq,(list_node*)m);
+	mq_flush();
+	return 0;
+}
