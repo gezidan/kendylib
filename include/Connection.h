@@ -6,6 +6,7 @@
 #include "SocketWrapper.h"
 #include <stdint.h>
 #include "timing_wheel.h"
+#include "allocator.h"
 struct connection;
 struct OVERLAPCONTEXT
 {
@@ -50,6 +51,7 @@ struct connection
 	uint32_t recv_timeout;
 	uint32_t send_timeout;
 	WheelItem_t wheelitem;
+	allocator_t rpacket_allocator;
 	
 };
 

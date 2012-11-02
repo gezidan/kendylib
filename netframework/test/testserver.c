@@ -35,7 +35,7 @@ void send2_all_client(rpacket_t r)
 	{
 		if(clients[i])
 		{
-			w = wpacket_create_by_rpacket(NULL,r);
+			w = get_wpacket_by_rpacket(r);
 			data_send(clients[i],w);
 			send_count++;
 		}
@@ -44,7 +44,7 @@ void send2_all_client(rpacket_t r)
 
 void send2_client(datasocket_t c,rpacket_t r)
 {
-	wpacket_t w = wpacket_create_by_rpacket(NULL,r);
+	wpacket_t w = get_wpacket_by_rpacket(r);
 	data_send(c,w);
 }
 
@@ -77,6 +77,8 @@ void server_process_packet(datasocket_t s,void *ptr)
 void process_new_connection(datasocket_t s,void *ptr)
 {
 	add_client(s);
+	set_recv_timeout(s,60*1000);
+	set_send_timeout(s,60*1000);
 	++count;
 	printf("%d\n",count);
 }

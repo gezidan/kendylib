@@ -42,7 +42,7 @@ static inline void unpack(struct connection *c)
 			pk_total_size = pk_len+sizeof(pk_len);
 			if(pk_total_size > c->unpack_size)
 				break;//return 0;
-			r = rpacket_create(c->mt,NULL,c->unpack_buf,c->unpack_pos,pk_len,c->raw);
+			r = rpacket_create(c->mt,c->rpacket_allocator,c->unpack_buf,c->unpack_pos,pk_len,c->raw);
 			//µ÷Õûunpack_bufºÍunpack_pos
 			while(pk_total_size)
 			{

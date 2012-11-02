@@ -1,14 +1,40 @@
 #include "netservice.h"
 #include "msg.h"
 #include "datasocket.h"
-#include "wpacket.h"
-#include "rpacket.h"
 #include "mq.h"
 #include "SysTime.h"
 #include "double_link.h"
+#include "block_obj_allocator.h"
 
 extern struct socket_wrapper* GetSocketByHandle(HANDLE);
 extern int32_t      ReleaseSocketWrapper(HANDLE);
+
+static int8_t is_init = 0;
+static allocator_t rpacket_allocator = NULL;
+static allocator_t wpacket_allocator = NULL;
+
+
+int32_t init_net_service()
+{
+	if(0 == is_init)
+	{
+		is_init = 1;
+		rpacket_allocator = (allocator_t)create_block_obj_allocator(MUTIL_THREAD,sizeof(struct rpacket));
+		wpacket_allocator = (allocator_t)create_block_obj_allocator(MUTIL_THREAD,sizeof(struct wpacket));
+		return 0;
+	}
+	return -1;
+}
+
+wpacket_t    get_wpacket(uint32_t size)
+{
+	return wpacket_create(MUTIL_THREAD,wpacket_allocator,size,0);
+}
+
+wpacket_t    get_wpacket_by_rpacket(rpacket_t r)
+{
+	return wpacket_create_by_rpacket(wpacket_allocator,r);
+}
 
 static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 {
@@ -73,6 +99,7 @@ static void on_process_msg(struct engine_struct *e,msg_t _msg)
 					s->c->wheelitem = CreateWheelItem((void*)s,timeout_check);
 					RegisterTimer(e->timingwheel,s->c->wheelitem,500);
 				}
+				ref_decrease(&s->_refbase);
 			}
 			break;
 		default:
@@ -149,6 +176,7 @@ static void accept_callback(HANDLE s,void *ud)
 {
 	netservice_t service = (netservice_t)ud;
 	struct connection *c = connection_create(s,0,MUTIL_THREAD,on_process_packet,on_socket_disconnect);
+	c->rpacket_allocator = rpacket_allocator;
 	setNonblock(s);
 	//随机选择一个engine
 	int32_t index = rand()%service->engine_count;
@@ -262,4 +290,5 @@ void net_rem_listener(netservice_t s,HANDLE h)
 {
 	rem_listener(s->_acceptor,h);
 }
+
 
