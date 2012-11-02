@@ -116,7 +116,7 @@ int main(int argc,char **argv)
 	net_add_listener(n,ip,port);
 	msg_loop_t m = create_msg_loop();
 	msg_loop_register_callback(m,MSG_RPACKET,server_process_packet);
-	msg_loop_register_callback(m,MSG_NEW_CONNECTION,server_process_packet);
+	msg_loop_register_callback(m,MSG_NEW_CONNECTION,process_new_connection);
 	msg_loop_register_callback(m,MSG_DISCONNECTED,process_connection_disconnect);
 	msg_loop_register_callback(m,MSG_SEND_BLOCK,process_send_block);	
 	uint32_t now;

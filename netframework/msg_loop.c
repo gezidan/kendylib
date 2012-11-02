@@ -28,21 +28,21 @@ static inline void dispatch_msg(msg_loop_t m,msg_t _msg)
 			break;
 		case MSG_NEW_CONNECTION:
 			{
-				m->callbacks[MSG_RPACKET]((datasocket_t)_msg->ptr,NULL);
+				m->callbacks[MSG_NEW_CONNECTION]((datasocket_t)_msg->ptr,NULL);
 				destroy_msg(&_msg);
 			}
 			break;
 		case MSG_DISCONNECTED:
 			{
 				datasocket_t s = (datasocket_t)_msg->ptr;
-				m->callbacks[MSG_RPACKET](s,(void*)s->close_reason);
+				m->callbacks[MSG_DISCONNECTED](s,(void*)s->close_reason);
 				destroy_msg(&_msg);
 			}
 			break;
 		case MSG_SEND_BLOCK:
 			{
 				datasocket_t s = (datasocket_t)_msg->ptr;
-				m->callbacks[MSG_RPACKET](s,NULL);
+				m->callbacks[MSG_SEND_BLOCK](s,NULL);
 				destroy_msg(&_msg);			
 			}
 			break;
