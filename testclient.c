@@ -146,7 +146,7 @@ int32_t main(int32_t argc,char **argv)
 		now = GetSystemMs();
 		if(now - tick > 1000)
 		{
-			printf("recv:%u,s_req:%u,ava_interval:%u\n",packet_recv,send_request,ava_interval);
+			printf("recv:%u,s_req:%u,ava_interval:%u\n",(packet_recv*1000)/(now-tick),send_request,ava_interval);
 			tick = now;
 			packet_recv = 0;
 			send_request = 0;

@@ -354,6 +354,7 @@ int connection_destroy(struct connection** c)
 			DestroyWheelItem(&((*c)->wheelitem));
 		free(*c);
 		*c = NULL;
+		printf("connection_destroy\n");
 		return 0;
 	}
 	return -1;

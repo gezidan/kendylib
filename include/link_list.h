@@ -57,7 +57,11 @@ static inline void link_list_clear(struct link_list *l)
 static inline void link_list_push_back(struct link_list *l,struct list_node *n)
 {
 	if(n->next)
+	{
+		printf("push error\n");
+		exit(0);
 		return;
+	}
 	n->next = NULL;
 	if(0 == l->size)
 		l->head = l->tail = n;
@@ -72,7 +76,11 @@ static inline void link_list_push_back(struct link_list *l,struct list_node *n)
 static inline void link_list_push_front(struct link_list *l,struct list_node *n)
 {
 	if(n->next)
+	{
+		printf("push error\n");
+		exit(0);
 		return;
+	}
 	n->next = NULL;
 	if(0 == l->size)
 		l->head = l->tail = n;

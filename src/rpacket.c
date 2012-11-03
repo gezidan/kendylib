@@ -4,9 +4,13 @@
 #include <string.h>
 #include <stdio.h>
 #include "common_define.h"
+#include "atomic.h"
+
+extern atomic_32_t rpacket_count;
 
 rpacket_t rpacket_create(uint8_t mt,allocator_t _alloc,buffer_t b,uint32_t pos,uint32_t pk_len,uint8_t is_raw)
 {
+	ATOMIC_INCREASE(&rpacket_count);
 	rpacket_t r = (rpacket_t)ALLOC(_alloc,sizeof(*r));	
 	r->allocator = _alloc;
 	r->mt = mt;
@@ -29,6 +33,7 @@ rpacket_t rpacket_create(uint8_t mt,allocator_t _alloc,buffer_t b,uint32_t pos,u
 
 rpacket_t rpacket_create_by_wpacket(allocator_t _alloc,struct wpacket *w)
 {
+	ATOMIC_INCREASE(&rpacket_count);
 	rpacket_t r = (rpacket_t)ALLOC(_alloc,sizeof(*r));	
 	r->allocator = _alloc;
 	r->binbuf = 0;
@@ -64,7 +69,7 @@ rpacket_t rpacket_create_by_wpacket(allocator_t _alloc,struct wpacket *w)
 void      rpacket_destroy(rpacket_t *r)
 {
 	//释放所有对buffer_t的引用
-	
+	ATOMIC_DECREASE(&rpacket_count);
 	buffer_release(&(*r)->buf);
 	buffer_release(&(*r)->readbuf);
 	buffer_release(&(*r)->binbuf);

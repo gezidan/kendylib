@@ -3,6 +3,9 @@
 #include "datasocket.h"
 #include "SysTime.h"
 
+atomic_32_t wpacket_count = 0;
+atomic_32_t rpacket_count = 0;
+atomic_32_t buf_count = 0;
 
 #define MAX_CLIENT 1000
 static datasocket_t clients[MAX_CLIENT];
@@ -101,7 +104,7 @@ const char *ip;
 uint32_t port;
 int main(int argc,char **argv)
 {
-	init_net_service();
+	//init_net_service();
 	init_system_time(10);
 	ip = argv[1];
 	port = atoi(argv[2]);
@@ -125,7 +128,8 @@ int main(int argc,char **argv)
 		now = GetSystemMs();
 		if(now - tick > 1000)
 		{
-			printf("total send:%u,total_recv:%u\n",send_count,total_bytes_recv/1024/1024);
+			//printf("total send:%u,total_recv:%u\n",(send_count*1000)/(now-tick),total_bytes_recv/1024/1024);
+			printf("w:%d,r:%d,b:%d\n",wpacket_count,rpacket_count,buf_count);
 			tick = now;
 			total_bytes_recv = 0;
 			send_count = 0;

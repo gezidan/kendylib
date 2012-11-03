@@ -4,8 +4,11 @@
 #include "buffer.h"
 #include "allocator.h"
 
+extern atomic_32_t buf_count;
+
 static inline void buffer_destroy(void *b)
 {
+	ATOMIC_DECREASE(&buf_count);
 	buffer_t _b = (buffer_t)b;
 	if(_b->next)
 		buffer_release(&(_b)->next);
@@ -15,6 +18,7 @@ static inline void buffer_destroy(void *b)
 
 static inline buffer_t buffer_create(uint8_t mt,uint32_t capacity)
 {
+	ATOMIC_INCREASE(&buf_count);
 	uint32_t size = sizeof(struct buffer) + capacity;
 	buffer_t b = (buffer_t)ALLOC(NULL,size);		
 	if(b)
