@@ -19,6 +19,9 @@ int32_t init_net_service()
 {
 	if(0 == is_init)
 	{
+		
+		if(InitNetSystem() != 0)
+			return -1;
 		is_init = 1;
 		init_system_time(10);
 		signal(SIGPIPE,SIG_IGN);
