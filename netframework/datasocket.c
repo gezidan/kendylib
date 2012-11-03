@@ -57,7 +57,10 @@ void acquire_datasocket(datasocket_t s)
 int32_t data_send(datasocket_t s,wpacket_t w)
 {
 	if(s->is_close)
+	{
+		wpacket_destroy(&w);
 		return -1;
+	}
 	ref_increase(&s->_refbase);	
 	w->ptr = s;
 	mq_push(s->_mq,(list_node*)w);

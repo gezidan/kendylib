@@ -20,6 +20,9 @@ int32_t init_net_service()
 	if(0 == is_init)
 	{
 		is_init = 1;
+		init_system_time(10);
+		signal(SIGPIPE,SIG_IGN);
+		init_mq_system();		
 		rpacket_allocator = (allocator_t)create_block_obj_allocator(MUTIL_THREAD,sizeof(struct rpacket));
 		wpacket_allocator = (allocator_t)create_block_obj_allocator(MUTIL_THREAD,sizeof(struct wpacket));
 		return 0;

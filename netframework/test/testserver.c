@@ -104,12 +104,9 @@ const char *ip;
 uint32_t port;
 int main(int argc,char **argv)
 {
-	//init_net_service();
-	init_system_time(10);
+	init_net_service();
 	ip = argv[1];
 	port = atoi(argv[2]);
-	signal(SIGPIPE,SIG_IGN);
-	init_mq_system();
 	init_clients();
 	if(InitNetSystem() != 0)
 	{
