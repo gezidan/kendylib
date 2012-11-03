@@ -23,7 +23,11 @@ typedef struct thread *thread_t;
 
 typedef void *(*thread_routine)(void*);
 
-
+enum
+{
+	THREAD_DETACH = 0,
+	THREAD_JOINABLE = 1,
+};
 
 thread_t create_thread(int32_t);
 void destroy_thread(thread_t*);

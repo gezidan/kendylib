@@ -37,7 +37,8 @@ struct engine_struct
 	TimingWheel_t timingwheel;
 };
 
-#define MAX_IO_THREADS 64
+#define MAX_IO_THREADS 64               //最大IO线程数量
+#define MAX_WHEEL_TIME 10*60*1000*1000  //时间轮一个循环的总时间(单位ms)
 typedef struct netservice
 {
 	struct engine_struct engines[MAX_IO_THREADS];

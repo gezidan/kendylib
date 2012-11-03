@@ -69,6 +69,8 @@ int32_t data_send(datasocket_t s,wpacket_t w)
 
 int32_t set_recv_timeout(datasocket_t s,uint32_t ms)
 {
+	if(ms > MAX_WHEEL_TIME)
+		ms = MAX_WHEEL_TIME;
 	if(s->c->recv_timeout > 0)
 		return -1;
 	s->c->recv_timeout = ms;
@@ -85,6 +87,8 @@ int32_t set_recv_timeout(datasocket_t s,uint32_t ms)
 
 int32_t set_send_timeout(datasocket_t s,uint32_t ms)
 {
+	if(ms > MAX_WHEEL_TIME)
+		ms = MAX_WHEEL_TIME;	
 	if(s->c->send_timeout > 0)
 		return -1;
 	s->c->send_timeout = ms;

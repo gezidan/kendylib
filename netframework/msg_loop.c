@@ -1,6 +1,9 @@
 #include "msg_loop.h"
 #include "SysTime.h"
 
+#define MQ_FLUSH_TICK 10 //冲刷消息队列的时间间隔
+#define PEEK_WAIT_TIME 5 //如果消息队列为空，最长的等待时间
+
 msg_loop_t create_msg_loop(on_packet _on_packet,on_new_connection _on_new_connection,
 	on_connection_disconnect _on_connection_disconnect,on_send_block _on_send_block)
 {
@@ -55,11 +58,11 @@ void msg_loop_once(msg_loop_t m,netservice_t s,uint32_t ms)
 	uint32_t now_tick;
 	do
 	{
-		_msg = net_peek_msg(s,5);
+		_msg = net_peek_msg(s,PEEK_WAIT_TIME);
 		if(_msg)
 			dispatch_msg(m,_msg);
 		now_tick = GetCurrentMs();
-		if(now_tick - m->last_sync_tick >= 10)
+		if(now_tick - m->last_sync_tick >= MQ_FLUSH_TICK)
 		{
 			m->last_sync_tick = now_tick;
 			mq_flush();

@@ -14,6 +14,11 @@ static int8_t is_init = 0;
 static allocator_t rpacket_allocator = NULL;
 static allocator_t wpacket_allocator = NULL;
 
+#define MQ_SYNC_SIZE 64                 //消息队列冲刷的阀值
+#define SYS_TICKER 5                    //系统时间更新的间隔(单位ms)
+#define ENGINE_RUN_TIME 1               //网络循环的运行时间(单位ms)
+#define WHEEL_TICK 1000                 //时间轮的时间间隔(单位ms)
+
 
 int32_t init_net_service()
 {
@@ -23,7 +28,7 @@ int32_t init_net_service()
 		if(InitNetSystem() != 0)
 			return -1;
 		is_init = 1;
-		init_system_time(10);
+		init_system_time(SYS_TICKER);
 		signal(SIGPIPE,SIG_IGN);
 		init_mq_system();		
 		rpacket_allocator = (allocator_t)create_block_obj_allocator(MUTIL_THREAD,sizeof(struct rpacket));
@@ -63,7 +68,7 @@ static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 		}
 	}else
 	{
-		RegisterTimer(t,s->c->wheelitem,500);
+		RegisterTimer(t,s->c->wheelitem,WHEEL_TICK);
 	}
 	
 	//检测是否有发送阻塞
@@ -105,7 +110,7 @@ static void on_process_msg(struct engine_struct *e,msg_t _msg)
 				if(!s->c->wheelitem)
 				{
 					s->c->wheelitem = CreateWheelItem((void*)s,timeout_check);
-					RegisterTimer(e->timingwheel,s->c->wheelitem,500);
+					RegisterTimer(e->timingwheel,s->c->wheelitem,WHEEL_TICK);
 				}
 				ref_decrease(&s->_refbase);
 			}
@@ -174,7 +179,7 @@ static void *mainloop(void *arg)
 		//执行超时检测
 		UpdateWheel(e->timingwheel,GetCurrentMs());
 		//////////
-		EngineRun(e->engine,1);
+		EngineRun(e->engine,ENGINE_RUN_TIME);
 		//冲刷mq
 		mq_flush();
 
@@ -191,9 +196,6 @@ static void accept_callback(HANDLE s,void *ud)
 	int32_t index = rand()%service->engine_count;
 	struct engine_struct *e = &(service->engines[index]);
 	datasocket_t data_s = create_datasocket(e,c,e->mq_in);
-	//c->last_recv = GetSystemMs();
-	//c->timeout = 1*60*1000;
-	//c->wheelitem = CreateWheelItem((void*)data_s,timeout_check);
 	//通知上层，一个新连接到来
 	msg_t _msg = create_msg(data_s,MSG_NEW_CONNECTION);
 	mq_push(service->mq_out,(list_node*)_msg);
@@ -233,18 +235,18 @@ netservice_t create_net_service(uint32_t thread_count)
 	netservice_t s = (netservice_t)calloc(1,sizeof(*s));
 	
 	s->engine_count = thread_count;
-	s->mq_out = create_mq(512,mq_item_destroyer);
-	s->thread_listen = create_thread(1);//joinable
+	s->mq_out = create_mq(MQ_SYNC_SIZE,mq_item_destroyer);
+	s->thread_listen = create_thread(THREAD_JOINABLE);//joinable
 	s->_acceptor = create_acceptor();
 	
 	uint32_t i = 0;
 	for( ;i < thread_count; ++i)
 	{
-		s->engines[i].mq_in = create_mq(512,mq_item_destroyer);
+		s->engines[i].mq_in = create_mq(MQ_SYNC_SIZE,mq_item_destroyer);
 		s->engines[i].engine = CreateEngine();
-		s->engines[i].thread_engine = create_thread(1);//joinable
+		s->engines[i].thread_engine = create_thread(THREAD_JOINABLE);//joinable
 		s->engines[i].service = s;
-		s->engines[i].timingwheel = CreateTimingWheel(500,30*1000);
+		s->engines[i].timingwheel = CreateTimingWheel(WHEEL_TICK,MAX_WHEEL_TIME);
 		thread_run(mainloop,&s->engines[i]);//启动线程
 	}
 	thread_run(_Listen,s);//启动listener线程
