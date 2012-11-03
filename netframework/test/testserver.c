@@ -114,7 +114,7 @@ int main(int argc,char **argv)
 		return 0;
 	}
 	
-	netservice_t n = create_net_service(1);
+	netservice_t n = create_net_service(3);
 	net_add_listener(n,ip,port);
 	msg_loop_t m = create_msg_loop(server_process_packet,process_new_connection,process_connection_disconnect,process_send_block);
 	uint32_t now;
@@ -125,8 +125,8 @@ int main(int argc,char **argv)
 		now = GetSystemMs();
 		if(now - tick > 1000)
 		{
-			//printf("total send:%u,total_recv:%u\n",(send_count*1000)/(now-tick),total_bytes_recv/1024/1024);
-			printf("w:%d,r:%d,b:%d\n",wpacket_count,rpacket_count,buf_count);
+			printf("total send:%u,total_recv:%u\n",(send_count*1000)/(now-tick),total_bytes_recv/1024/1024);
+			//printf("w:%d,r:%d,b:%d\n",wpacket_count,rpacket_count,buf_count);
 			tick = now;
 			total_bytes_recv = 0;
 			send_count = 0;

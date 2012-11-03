@@ -25,7 +25,7 @@ typedef struct list_node
 #define LIST_NODE list_node node;
 
 //定义系统支持的最大套接字和engine的数量
-#define MAX_ENGINE 1
+#define MAX_ENGINE 64
 #define MAX_SOCKET 4096
 
 /*IO请求和完成队列使用的结构*/

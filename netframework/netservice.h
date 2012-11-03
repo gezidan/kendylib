@@ -37,10 +37,10 @@ struct engine_struct
 	TimingWheel_t timingwheel;
 };
 
-#define MAX_ENGINES 64
+#define MAX_IO_THREADS 64
 typedef struct netservice
 {
-	struct engine_struct engines[MAX_ENGINES];
+	struct engine_struct engines[MAX_IO_THREADS];
 	uint32_t engine_count;
 	mq_t     mq_out;
 	thread_t thread_listen;

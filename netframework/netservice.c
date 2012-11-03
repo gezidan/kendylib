@@ -146,6 +146,7 @@ static void on_socket_disconnect(struct connection *c,int32_t reason)
 
 static void *mainloop(void *arg)
 {	
+	printf("start io thread\n");
 	struct engine_struct *e = (struct engine_struct*)arg;
 	uint32_t last_sync = GetCurrentMs();
 	while(0 == e->service->stop)
@@ -223,8 +224,8 @@ netservice_t create_net_service(uint32_t thread_count)
 {
 	if(thread_count == 0)
 		thread_count = 1;
-	if(thread_count > MAX_ENGINES)
-		thread_count = MAX_ENGINES;
+	if(thread_count > MAX_IO_THREADS)
+		thread_count = MAX_IO_THREADS;
 	
 	netservice_t s = (netservice_t)calloc(1,sizeof(*s));
 	
