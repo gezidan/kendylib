@@ -222,6 +222,7 @@ int32_t main(int32_t argc,char **argv)
 {	
 	HANDLE engine;
 	init_system_time(10);
+	init_mq_system();
 	const char *ip = argv[1];
 	uint32_t port = atoi(argv[2]);
 	signal(SIGPIPE,SIG_IGN);

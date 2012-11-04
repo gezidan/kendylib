@@ -83,6 +83,7 @@ int main(int argc,char **argv)
 	ip = argv[1];
 	port = atoi(argv[2]);
 	signal(SIGPIPE,SIG_IGN);
+	init_system_time(10);
 	if(InitNetSystem() != 0)
 	{
 		printf("Init error\n");
