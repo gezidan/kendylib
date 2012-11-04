@@ -219,8 +219,8 @@ static inline void update_send_list(struct connection *c,int32_t bytestransfer)
 			bytestransfer -= w->data_size;
 			if(w->_packet_send_finish)
 				w->_packet_send_finish(c,w);
-			else	
-				wpacket_destroy(&w);
+				
+			wpacket_destroy(&w);
 		}
 		else
 		{
