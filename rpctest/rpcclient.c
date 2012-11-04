@@ -22,6 +22,9 @@ thread_t logic_thread;
 sche_t g_sche = NULL;
 uint32_t call_count = 0;
 allocator_t wpacket_allocator = NULL;
+atomic_32_t wpacket_count = 0;
+atomic_32_t rpacket_count = 0;
+atomic_32_t buf_count = 0;
 
 //function for logic thread
 static inline int32_t send_packet(struct channel *c,wpacket_t w)
@@ -138,8 +141,8 @@ struct channel *channel_create(struct connection *con)
 {
 	struct channel *c = calloc(1,sizeof(*c));
 	c->c = con;
-	c->send_list = create_mq(8192);
-	c->msgQ = create_mq(8192);
+	c->send_list = create_mq(8192,MQ_DEFAULT_ITEM_DESTROYER);
+	c->msgQ = create_mq(8192,MQ_DEFAULT_ITEM_DESTROYER);
 	return c;
 }
 

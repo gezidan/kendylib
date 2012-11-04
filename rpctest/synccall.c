@@ -16,6 +16,9 @@ thread_t server;
 uint32_t call_count = 0;
 mq_t msgQ1;
 mq_t msgQ2;
+atomic_32_t wpacket_count = 0;
+atomic_32_t rpacket_count = 0;
+atomic_32_t buf_count = 0;
 
 static inline rpacket_t peek_msg(mq_t msgQ,uint32_t timeout)
 {
@@ -160,8 +163,8 @@ int main()
 	
 	wpacket_allocator = (allocator_t)create_block_obj_allocator(MUTIL_THREAD,sizeof(struct wpacket));
 
-	msgQ1 = create_mq(4096);
-	msgQ2 = create_mq(4096);
+	msgQ1 = create_mq(4096,MQ_DEFAULT_ITEM_DESTROYER);
+	msgQ2 = create_mq(4096,MQ_DEFAULT_ITEM_DESTROYER);
 	g_sche = sche_create(250000,4096,sche_idel,NULL);
 			
 	int i = 0;

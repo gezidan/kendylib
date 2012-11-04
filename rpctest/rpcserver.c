@@ -10,6 +10,9 @@
 #include "block_obj_allocator.h"
 #include <assert.h>
 #include "common_define.h"
+atomic_32_t wpacket_count = 0;
+atomic_32_t rpacket_count = 0;
+atomic_32_t buf_count = 0;
 allocator_t wpacket_allocator = NULL;
 
 void remove_client(struct connection *c,int32_t reason)

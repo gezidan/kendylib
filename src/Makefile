@@ -3,6 +3,7 @@ all:
 	ar -rc kendy.a *.o
 	cp kendy.a ../../luanet
 	cp kendy.a ../netframework/test
+	cp kendy.a ../rpctest
 	mv kendy.a ../test
 	rm -f *.o
 debug:
@@ -10,6 +11,7 @@ debug:
 	ar -rc kendy.a *.o
 	cp kendy.a ../../luanet
 	cp kendy.a ../netframework/test
+	cp kendy.a ../rpctest		
 	mv kendy.a ../test
 	rm -f *.o	
 all-mt:
