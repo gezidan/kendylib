@@ -3,14 +3,14 @@ all:
 	ar -rc kendy.a *.o
 	cp kendy.a ../../luanet
 	cp kendy.a ../netframework/test
-	mv kendy.a ../
+	mv kendy.a ../test
 	rm -f *.o
 debug:
 	gcc -g -c *.c -I../include -D _DEBUG
 	ar -rc kendy.a *.o
 	cp kendy.a ../../luanet
 	cp kendy.a ../netframework/test
-	mv kendy.a ../
+	mv kendy.a ../test
 	rm -f *.o	
 all-mt:
 	gcc -g -c *.c -I../include -I../../ -D MT
