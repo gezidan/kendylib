@@ -83,8 +83,7 @@ void *test_coro_fun1(void *arg)
 		{
 			printf("rpc error\n");
 			exit(0);
-		}
-		coro_block(co);		
+		}	
 		++call_count;
 	}
 }
