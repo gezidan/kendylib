@@ -21,6 +21,13 @@
 #include "refbase.h"
 #include "dbtype.h"
 #include "link_list.h"
+
+/*
+ * 存储核心支持的两种数据结构，定长array和变长list.
+ * array中每个元素必须是dbtype.h中定义的7中基本类型之一.
+ * list的元素必须是array
+ */
+
 enum
 {
 	DB_LIST = 1,

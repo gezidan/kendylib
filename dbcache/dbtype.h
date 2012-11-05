@@ -18,7 +18,7 @@
 #ifndef _DBTYPE_H
 #define _DBTYPE_H
 #include <stdint.h>
-
+//基本存储类型的定义
 enum
 {
 	INT8 = 0,

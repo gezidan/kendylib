@@ -23,7 +23,7 @@
 #include "thread.h"
 #include "netservice.h"
 
-//主消息循环，用于处理从网络层过来的消息
+//主消息循环，用于提取并处理从网络层过来的消息
 
 typedef void (*on_packet)(datasocket_t,rpacket_t);//网络包回调
 typedef void (*on_new_connection)(datasocket_t);  //处理新到达的连接

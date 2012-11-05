@@ -22,6 +22,8 @@
 #include "common_hash_function.h"
 #include <string.h>
 
+//全局hash表，通过一个字符串作为key索引，表中的元素要么是array要么是list
+
 typedef struct global_table *global_table_t;
 
 global_table_t global_table_create(int32_t initsize);
