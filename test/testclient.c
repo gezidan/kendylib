@@ -130,7 +130,7 @@ int32_t main(int32_t argc,char **argv)
 	
 	int32_t ret;
 	int32_t i = 0;
-	uint32_t send_interval = 8;
+	uint32_t send_interval = 350;
 	uint32_t send_tick = 0;
 	wpacket_t wpk;
 
@@ -156,10 +156,6 @@ int32_t main(int32_t argc,char **argv)
 			ava_interval = 0;
 		}
 		
-		if(ava_interval > 200)
-			send_interval = 200;
-		else
-			send_interval = 20;
 		if(now - send_tick > send_interval)
 		{
 			send_tick = now;
