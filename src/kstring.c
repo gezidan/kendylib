@@ -6,11 +6,11 @@
 #include "kstring.h"
 #include "allocator.h"
 
-typedef struct string
+struct string
 {
 	uint32_t buf_size;
 	char *str;
-}* string_t;
+};
 
 
 string_t string_create(const char*str)
