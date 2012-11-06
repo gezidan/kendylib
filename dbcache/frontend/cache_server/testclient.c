@@ -37,7 +37,7 @@ void on_process_packet(struct connection *c,rpacket_t r)
 		wpacket_write_string(wpk,"kenny");
 		connection_send(c,wpk,NULL);		
 	}
-	else
+	else if(stage == 2)
 	{
 		uint8_t type = rpacket_read_uint8(r);
 		if(type != DB_INT32)
@@ -46,6 +46,11 @@ void on_process_packet(struct connection *c,rpacket_t r)
 			return;
 		}
 		printf("%d\n",rpacket_read_uint32(r));
+		//发出del请求
+		wpacket_t wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
+		wpacket_write_uint8(wpk,CACHE_DEL);//设置
+		wpacket_write_string(wpk,"kenny");
+		connection_send(c,wpk,NULL);		
 	}
 }
 
