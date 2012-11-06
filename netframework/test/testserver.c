@@ -107,8 +107,9 @@ int main(int argc,char **argv)
 	init_net_service();
 	ip = argv[1];
 	port = atoi(argv[2]);
+	uint32_t thread_count = atoi(argv[3]);
 	init_clients();	
-	netservice_t n = create_net_service(2);
+	netservice_t n = create_net_service(thread_count);
 	net_add_listener(n,ip,port);
 	msg_loop_t m = create_msg_loop(server_process_packet,process_new_connection,process_connection_disconnect,process_send_block);
 	uint32_t now;

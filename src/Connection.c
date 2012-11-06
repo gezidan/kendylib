@@ -306,7 +306,6 @@ void SendFinish(int32_t bytestransfer,st_io *io)
 		{
 			while(bytestransfer > 0)
 			{
-				printf("send size:%d\n",bytestransfer);
 				update_send_list(c,bytestransfer);
 				io = prepare_send(c);
 				if(!io)
