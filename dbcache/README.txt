@@ -1,1 +1,1 @@
-内存数据库核心存储组件（big hash table实现）,可实现定长数组与变长list的数据存储
+内存数据库核心存储组件（big hash table实现）,key类型为字符串,value可存放7种基本类型和array,list两种容器类型
