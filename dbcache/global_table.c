@@ -171,6 +171,11 @@ basetype_t global_table_insert(global_table_t gt,const char *key,basetype_t a,ui
 	if(!item)
 		return NULL;
 	basetype_acquire(NULL,item->val);//添加引用计数
+	if(a->type == DB_LIST)
+	{
+		if(gt->last_shrink_node == &gt->tail)
+			gt->last_shrink_node = item;
+	}
 	return item->val;		
 }
 
@@ -191,8 +196,8 @@ static inline void _remove(global_table_t gt,struct tb_item *item)
 {
 	string_destroy(&(item->key));		
 	gt->size--;
-	//if(gt->last_shrink_node == item)
-	//	gt->last_shrink_node = item->next;		
+	if(gt->last_shrink_node == item)
+		gt->last_shrink_node = item->next;		
 	item->pre->next = item->next;
 	item->next->pre = item->pre;
 	item->next = item->pre = NULL;
@@ -233,7 +238,6 @@ void global_table_destroy(global_table_t *gt)
 
 void global_table_shrink(global_table_t gt,uint32_t maxtime)
 {
-/*
 	if(maxtime == 0)
 		return;
 	uint32_t tick =GetCurrentMs();
@@ -250,7 +254,6 @@ void global_table_shrink(global_table_t gt,uint32_t maxtime)
 	} 
 	if(finish == 1 && gt->last_shrink_node == &gt->tail)
 		gt->last_shrink_node == gt->head.next;
-*/
 }
 
 int64_t global_table_size(global_table_t gt)

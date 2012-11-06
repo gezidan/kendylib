@@ -112,28 +112,25 @@ int32_t   db_list_size(db_list_t l)
 
 int8_t   db_list_shrink(db_list_t l,uint32_t maxtime)
 {
-	/*
 	if(maxtime == 0)
 		return 1;
 	uint32_t tick =GetCurrentMs();
 	uint32_t end_tick = tick + maxtime;	
-	int32_t s = link_list_size(l->l);
+	int32_t s = link_list_size(((basetype_t)l)->l);
 	int32_t i = 0;
 	for(; i < s; ++i)
 	{
-		struct db_node *cur = (struct db_node *)link_list_pop(l->l);
-		if(cur->array->data == NULL)
+		struct db_node *cur = (struct db_node *)link_list_pop(((basetype_t)l)->l);
+		if(cur->element->type == DB_ARRAY && cur->element->array_data == NULL)
 		{
-			db_array_release(&(cur->array));
+			basetype_release(&(cur->element));
 			free(cur);
-		}else
-		{
-			LINK_LIST_PUSH_BACK(l->l,cur);
 		}
+		else
+			LINK_LIST_PUSH_BACK(((basetype_t)l)->l,cur);
 		tick = GetCurrentMs();
 		if(tick >= end_tick)
 			break;
 	}
-	*/
 	return 1;
 }
