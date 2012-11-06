@@ -2,46 +2,57 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "common_define.h"
+
+static void basetype_destroy(void *arg)
+{
+	basetype_t b = (basetype_t)arg;
+	free(b->data);
+	free(b);
+	//printf("basetype destroy\n");
+} 
 
 #define BASE_TYPE_CREATE(TYPE,INIT)\
-({basetype_t b = calloc(1,sizeof(*b));\
-  b->data = calloc(1,sizeof(TYPE));\
+({basetype_t b = (basetype_t)calloc(1,sizeof(*b));\
+  b->data = (void*)calloc(1,sizeof(TYPE));\
   *(TYPE*)b->data = INIT;\
+  b->ref.destroyer = basetype_destroy;\
+  b->ref.mt = SINGLE_THREAD;\
+  b->ref.refcount = 1;\
   b;})
-
-
+  
 basetype_t basetype_create_int8(int8_t init)
 {
 	basetype_t b = BASE_TYPE_CREATE(int8_t,init);
-	b->type = INT8;
+	b->type = DB_INT8;
 	return b;		
 }
 
 basetype_t basetype_create_int16(int16_t init)
 {
 	basetype_t b = BASE_TYPE_CREATE(int16_t,init);
-	b->type = INT16;
+	b->type = DB_INT16;
 	return b;		
 }
 
 basetype_t basetype_create_int32(int32_t init)
 {
 	basetype_t b = BASE_TYPE_CREATE(int32_t,init);
-	b->type = INT32;
+	b->type = DB_INT32;
 	return b;		
 }
 
 basetype_t basetype_create_int64(int64_t init)
 {
 	basetype_t b = BASE_TYPE_CREATE(int64_t,init);
-	b->type = INT64;
+	b->type = DB_INT64;
 	return b;			
 }
 
 basetype_t basetype_create_double(double init)
 {
 	basetype_t b = BASE_TYPE_CREATE(double,init);
-	b->type = DOUBLE;
+	b->type = DB_DOUBLE;
 	return b;			
 }
 
@@ -108,14 +119,14 @@ double      basetype_get_double(basetype_t b)
 
 const char *basetype_get_str(basetype_t b)
 {
-	if(b == NULL || b->type != STRING)
+	if(b == NULL || b->type != DB_STRING)
 		return NULL;
 	return BASE_TYPE_GET(const char*,b);	
 }
 
 void*      basetype_get_bin(basetype_t b,int32_t *size)
 {
-	if(b == NULL || b->type != BINARY)
+	if(b == NULL || b->type != DB_BINARY)
 		return NULL;
 	*size = ((struct db_type_binary*)b)->size; 
 	return BASE_TYPE_GET(void*,b);
@@ -154,7 +165,7 @@ void basetype_set_double(basetype_t b,double v)
 
 void basetype_set_str(basetype_t b,const char *str)
 {
-	if(!b || !str || !b->type == STRING)
+	if(!b || !str || !b->type == DB_STRING)
 		return;
 	struct db_type_string *_b = (struct db_type_string*)b;
 	int32_t len = strlen(str) + 1;
@@ -170,7 +181,7 @@ void basetype_set_str(basetype_t b,const char *str)
 
 void basetype_set_bin(basetype_t b,void *ptr,int32_t size)
 {
-	if(!b || !ptr || !b->type == BINARY || size <= 0)
+	if(!b || !ptr || !b->type == DB_BINARY || size <= 0)
 		return;
 	struct db_type_binary *_b = (struct db_type_binary*)b;
 	if(_b->size >= size)
@@ -184,10 +195,20 @@ void basetype_set_bin(basetype_t b,void *ptr,int32_t size)
 	
 }
 
-void basetype_destroy(basetype_t *b)
+basetype_t  basetype_acquire(basetype_t b1,basetype_t b2)
 {
-	free((*b)->data);
-	free(*b);
+	if(b1 == b2)
+		return b1;	
+	if(b2)
+		ref_increase((struct refbase*)b2);
+	if(b1)
+		basetype_release(&b1);
+	return b2;
+}
+
+void basetype_release(basetype_t *b)
+{
+	ref_decrease((struct refbase*)*b);
 	*b = NULL;
 }
 

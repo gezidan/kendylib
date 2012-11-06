@@ -18,23 +18,34 @@
 #ifndef _DBTYPE_H
 #define _DBTYPE_H
 #include <stdint.h>
-//åŸºæœ¬å­˜å‚¨ç±»å‹çš„å®šä¹‰
+#include "link_list.h"
+#include "refbase.h"
+/*
+* ¶¨ÒåÄÚ´æÊı¾İ¿âvalueÖ§³ÖµÄÀàĞÍ
+*/
 enum
 {
-	INT8 = 0,
-	INT16,
-	INT32,
-	INT64,
-	DOUBLE,
-	STRING,
-	BINARY,
+	DB_INT8 = 0,
+	DB_INT16,
+	DB_INT32,
+	DB_INT64,
+	DB_DOUBLE,
+	DB_STRING,
+	DB_BINARY,
+	DB_LIST,
+	DB_ARRAY,	
 };
-
+struct basetype;
 typedef struct basetype
 {
-	int8_t type;//the real type
-	void  *data;
-}*basetype_t;
+	struct refbase ref;
+	int8_t type;
+	union{
+		void  *data;
+		struct link_list *l;
+		struct basetype **array_data;
+	};
+}basetype,*basetype_t;
 
 struct db_type_string
 {
@@ -48,13 +59,13 @@ struct db_type_binary
 	int32_t size;
 };
 
-basetype_t basetype_create_int8(int8_t init);
-basetype_t basetype_create_int16(int16_t init);
-basetype_t basetype_create_int32(int32_t init);
-basetype_t basetype_create_int64(int64_t init);
-basetype_t basetype_create_double(double init);
-basetype_t basetype_create_str(const char *init);
-basetype_t basetype_create_bin(void *init,int32_t size);
+basetype_t  basetype_create_int8(int8_t init);
+basetype_t  basetype_create_int16(int16_t init);
+basetype_t  basetype_create_int32(int32_t init);
+basetype_t  basetype_create_int64(int64_t init);
+basetype_t  basetype_create_double(double init);
+basetype_t  basetype_create_str(const char *init);
+basetype_t  basetype_create_bin(void *init,int32_t size);
 
 int8_t      basetype_get_int8(basetype_t);
 int16_t     basetype_get_int16(basetype_t);
@@ -72,6 +83,7 @@ void        basetype_set_double(basetype_t,double);
 void        basetype_set_str(basetype_t,const char*);
 void        basetype_set_bin(basetype_t,void *,int32_t);
 
-void basetype_destroy(basetype_t*);
+basetype_t  basetype_acquire(basetype_t,basetype_t);
+void        basetype_release(basetype_t*);
 
 #endif

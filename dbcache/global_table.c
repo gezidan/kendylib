@@ -14,7 +14,7 @@ struct tb_item
 {
 	uint64_t hash_code;
 	string_t key;
-	db_element_t val;
+	basetype_t val;
 	struct tb_item *next;
 	struct tb_item *pre;
 	int8_t flag;
@@ -36,6 +36,7 @@ static inline int32_t _hash_key_eq_(string_t l,string_t r)
 	return string_compare(l,r);
 }
 
+
 global_table_t global_table_create(int32_t initsize)
 {
 	if(initsize > 0)
@@ -56,15 +57,15 @@ static inline int8_t isempty(struct tb_item *item)
 {
 	if(item->flag == _EMPTY || item->flag == _DELETE)
 		return 1;
-	if(item->val->type == DB_ARRAY && ((db_array_t)item->val)->data == NULL)
+	if(item->val->type == DB_ARRAY && ((basetype_t)item->val)->data == NULL)
 	{
-		db_array_release((db_array_t*)&(item->val));
+		basetype_release((basetype_t*)&(item->val));
 		return 1;
 	}
 	return 0;
 }
 
-static inline struct tb_item* _hash_map_insert(global_table_t h,string_t key,db_element_t val,uint64_t hash_code)
+static inline struct tb_item* _hash_map_insert(global_table_t h,string_t key,basetype_t val,uint64_t hash_code)
 {
 	int64_t slot = hash_code % h->slot_size;
 	int64_t check_count = 0;
@@ -146,7 +147,7 @@ static inline struct tb_item* _hash_map_find(global_table_t h,string_t key,uint6
 	return NULL;
 }
 
-static inline struct tb_item * check_space_and_insert(global_table_t gt,const char *key,db_element_t e,uint64_t hash_code)
+static inline struct tb_item * check_space_and_insert(global_table_t gt,const char *key,basetype_t e,uint64_t hash_code)
 {
 	//if not enough space,expand first
 	if(gt->slot_size < 0x80000000 && gt->size >= gt->expand_size)
@@ -164,39 +165,25 @@ static inline struct tb_item * check_space_and_insert(global_table_t gt,const ch
 	return item;	
 }
 
-db_array_t global_table_add_array(global_table_t gt,const char *key,db_array_t a,uint64_t hash_code)
+basetype_t global_table_insert(global_table_t gt,const char *key,basetype_t a,uint64_t hash_code)
 {
-	struct tb_item *item = check_space_and_insert(gt,key,(db_element_t)a,hash_code);
+	struct tb_item *item = check_space_and_insert(gt,key,a,hash_code);
 	if(!item)
 		return NULL;
-	if(item->val != (db_element_t)a)
-	{
-		if(item->val->type == DB_ARRAY)
-			return NULL;
-		db_list_append((db_list_t)item->val,a);
-		return a;
-	}
-	else
-		return db_array_acquire(NULL,a);					
+	basetype_acquire(NULL,item->val);//添加引用计数
+	return item->val;		
 }
 
-db_list_t global_table_add_list(global_table_t gt,const char *key,db_list_t l,uint64_t hash_code)
-{
-	struct tb_item *item = check_space_and_insert(gt,key,(db_element_t)l,hash_code);
-	if(!item || item->val != (db_element_t)l)
-		return NULL;
-	if(gt->last_shrink_node == &gt->tail)
-		gt->last_shrink_node == item;
-	return db_list_acquire(NULL,l);
-}
-
-db_element_t global_table_find(global_table_t gt,const char *key,uint64_t hash_code)
+basetype_t global_table_find(global_table_t gt,const char *key,uint64_t hash_code)
 {
 	string_t _key = string_create(key);
 	struct tb_item *item = _hash_map_find(gt,_key,hash_code);
 	string_destroy(&_key);
 	if(item)
+	{
+		basetype_acquire(NULL,item->val);//添加引用计数
 		return item->val;
+	}
 	return NULL;
 }
 
@@ -204,24 +191,22 @@ static inline void _remove(global_table_t gt,struct tb_item *item)
 {
 	string_destroy(&(item->key));		
 	gt->size--;
-	if(gt->last_shrink_node == item)
-		gt->last_shrink_node = item->next;		
+	//if(gt->last_shrink_node == item)
+	//	gt->last_shrink_node = item->next;		
 	item->pre->next = item->next;
 	item->next->pre = item->pre;
 	item->next = item->pre = NULL;
-	item->val = NULL;
 	item->flag = _DELETE;
 }
 
-db_element_t global_table_remove(global_table_t gt,const char *key,uint64_t hash_code)
+basetype_t     global_table_remove(global_table_t gt,const char *key,uint64_t hash_code)
 {
-	
 	string_t _key = string_create(key);
 	struct tb_item *item = _hash_map_find(gt,_key,hash_code);
 	string_destroy(&_key);
 	if(item)
 	{
-		db_element_t ret = item->val;
+		basetype_t ret = item->val;
 		_remove(gt,item);
 		return ret;		
 	}
@@ -236,8 +221,10 @@ void global_table_destroy(global_table_t *gt)
 	for( ; i < size; ++i)
 	{
 		struct tb_item *tmp = item;
+		basetype_t b = item->val;
 		item = item->next;
 		_remove(*gt,tmp);
+		basetype_release(&b);
 	}
 	free((*gt)->data);
 	free(*gt);
@@ -246,6 +233,7 @@ void global_table_destroy(global_table_t *gt)
 
 void global_table_shrink(global_table_t gt,uint32_t maxtime)
 {
+/*
 	if(maxtime == 0)
 		return;
 	uint32_t tick =GetCurrentMs();
@@ -262,6 +250,7 @@ void global_table_shrink(global_table_t gt,uint32_t maxtime)
 	} 
 	if(finish == 1 && gt->last_shrink_node == &gt->tail)
 		gt->last_shrink_node == gt->head.next;
+*/
 }
 
 int64_t global_table_size(global_table_t gt)

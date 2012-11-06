@@ -1,10 +1,10 @@
 all:
-	gcc -g -c data_struct.c dbtype.c global_table.c -I../include
+	gcc -O3 -g -c *.c -I../include
 	ar -rc dbcache.a *.o
+	mv dbcache.a ./frontend
 	rm -f *.o
-dblist:../kendy.a dbcache.a testdblist.c
-	gcc -g -o dblist testdblist.c dbcache.a ../kendy.a -I../include -lpthread -lrt -ltcmalloc
-	rm -f *.o
-gtb:../kendy.a dbcache.a gtb.c
-	gcc -g -o gtb gtb.c dbcache.a ../kendy.a -I../include -lpthread -lrt -ltcmalloc
-	rm -f *.o
+debug:
+	gcc -g -c *.c -I../include
+	ar -rc dbcache.a *.o
+	mv dbcache.a ./frontend
+	rm -f *.o	

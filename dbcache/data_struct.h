@@ -23,66 +23,39 @@
 #include "link_list.h"
 
 /*
- * 存储核心支持的两种数据结构，定长array和变长list.
- * array中每个元素必须是dbtype.h中定义的7中基本类型之一.
- * list的元素必须是array
- */
+* �ڴ����ݿ�value֧�ֵ�������������
+*/
 
-enum
-{
-	DB_LIST = 1,
-	DB_ARRAY,
-};
-
-typedef struct db_element
-{
-	struct refbase ref;
-	int8_t type;
-}*db_element_t;
-
-db_element_t db_element_acquire(db_element_t,db_element_t);
-void db_element_release(db_element_t*);
-
-
-//represent a db row
 typedef struct db_array
 {
-	struct db_element base;
-	int32_t     size;
-	basetype_t* data; 
+	basetype base;
+	int32_t size;
 }*db_array_t;
 
 
-db_array_t db_array_create(int32_t size);
-db_array_t db_array_acquire(db_array_t,db_array_t);
+basetype_t db_array_create(int32_t size);
 void       db_array_clear(db_array_t);//clear the data
-void       db_array_release(db_array_t*);
 
 
-//get/set one element of the db row
 basetype_t db_array_get(db_array_t,int32_t index);
 void       db_array_set(db_array_t,int32_t index,basetype_t);
 
 struct db_node
 {
 	list_node  next;
-	db_array_t array;
+	basetype_t element;
 };
 
-//represent db row set
 typedef struct db_list
 {
-	struct db_element base;
-	struct link_list *l;
-	
+	basetype base;
+	int32_t size;
 }*db_list_t;
 
-db_list_t db_list_create();
-db_list_t db_list_acquire(db_list_t,db_list_t);
-void      db_list_release(db_list_t*);
-int32_t   db_list_append(db_list_t,db_array_t);
-int32_t   db_list_size(db_list_t);
-int8_t    db_list_shrink(db_list_t,uint32_t maxtime);
-
+basetype_t db_list_create();
+int32_t    db_list_append(db_list_t,basetype_t);
+basetype_t db_list_pop(db_list_t);
+int32_t    db_list_size(db_list_t);
+int8_t     db_list_shrink(db_list_t,uint32_t maxtime);
 
 #endif	
