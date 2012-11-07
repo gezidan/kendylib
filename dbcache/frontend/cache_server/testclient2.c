@@ -20,38 +20,53 @@ connector_t con = NULL;
 
 int8_t stage = 0;
 
+int32_t setcount = 0;
+int32_t getcount = 0;
+
+uint32_t select_tick = 0;
+
 void on_process_packet(struct connection *c,rpacket_t r)
 {
 	int8_t ret = rpacket_read_uint8(r);
 	if(ret != 0)
 	{
-		printf("db op error\n");
+		printf("db op error:%d\n",stage);
 		return;
 	}
-	++stage;
-	if(stage == 1)
+	
+	if(stage == 0)
 	{
-		//发出get请求
-		wpacket_t wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
-		wpacket_write_uint8(wpk,CACHE_GET);//设置
-		wpacket_write_string(wpk,"kenny");
-		connection_send(c,wpk,NULL);		
-	}
-	else if(stage == 2)
-	{
-		uint8_t type = rpacket_read_uint8(r);
-		if(type != DB_INT32)
+		setcount++;
+		if(setcount == 10000)
 		{
-			printf("get error\n");
-			return;
+			printf("insert finish begin select----------\n");
+			getcount = 0;
+			select_tick = GetSystemMs();
+			//发出100W条查询
+			char key[64];
+			int32_t i = 0;
+			for( ; i < 10000; ++i)
+			{
+				snprintf(key,64,"test%d",i);		
+				wpacket_t wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
+				wpacket_write_uint8(wpk,CACHE_GET);//设置
+				wpacket_write_string(wpk,key);
+				connection_send(c,wpk,NULL);	
+			}			
+			stage++;
 		}
-		printf("%d\n",rpacket_read_uint32(r));
-		//发出del请求
-		wpacket_t wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
-		wpacket_write_uint8(wpk,CACHE_DEL);//设置
-		wpacket_write_string(wpk,"kenny");
-		connection_send(c,wpk,NULL);		
 	}
+	else
+	{
+		getcount++;
+		if(getcount == 10000)
+		{
+			select_tick = GetSystemMs() - select_tick;
+			printf("select 100W finish:%u\n",select_tick);
+			exit(0);
+		}
+	}
+	
 }
 
 void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
@@ -70,12 +85,19 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 		c = connection_create(s,0,SINGLE_THREAD,on_process_packet,NULL);
 		printf("%d,连接到:%s,%d,成功\n",s,ip,port);
 		Bind2Engine(*engine,s,RecvFinish,SendFinish);
-		wpacket_t wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
-		wpacket_write_uint8(wpk,CACHE_SET);//设置
-		wpacket_write_string(wpk,"kenny");
-		wpacket_write_uint8(wpk,DB_INT32);//数据类型
-		wpacket_write_uint32(wpk,100);
-		connection_send(c,wpk,NULL);
+		//插入100W条数据
+		char key[64];
+		int32_t i = 0;
+		for( ; i < 10000; ++i)
+		{
+			snprintf(key,64,"test%d",i);		
+			wpacket_t wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
+			wpacket_write_uint8(wpk,CACHE_SET);//设置
+			wpacket_write_string(wpk,key);
+			wpacket_write_uint8(wpk,DB_INT32);//数据类型
+			wpacket_write_uint32(wpk,i);
+			connection_send(c,wpk,NULL);	
+		}
 		connection_start_recv(c);
 	}
 }
