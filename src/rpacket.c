@@ -14,7 +14,7 @@ rpacket_t rpacket_create(uint8_t mt,allocator_t _alloc,buffer_t b,uint32_t pos,u
 	rpacket_t r = (rpacket_t)ALLOC(_alloc,sizeof(*r));	
 	r->allocator = _alloc;
 	r->mt = mt;
-	r->binbuf = 0;
+	r->binbuf = NULL;
 	r->binbufpos = 0;
 	r->buf = buffer_acquire(NULL,b);
 	r->readbuf = buffer_acquire(NULL,b);
@@ -23,10 +23,14 @@ rpacket_t rpacket_create(uint8_t mt,allocator_t _alloc,buffer_t b,uint32_t pos,u
 	r->begin_pos = pos;
 	r->next.next = NULL;
 	r->type = MSG_RPACKET;
+	
 	if(is_raw)
 		r->rpos = pos;
 	else
-		r->rpos = pos + sizeof(r->len);
+		r->rpos = (pos + sizeof(r->len))%r->buf->capacity;
+	if(r->rpos < r->begin_pos)
+		r->readbuf = buffer_acquire(r->readbuf,r->readbuf->next);
+		
 	r->raw = is_raw;
 	return r;
 }
@@ -36,11 +40,11 @@ rpacket_t rpacket_create_by_wpacket(allocator_t _alloc,struct wpacket *w)
 	ATOMIC_INCREASE(&rpacket_count);
 	rpacket_t r = (rpacket_t)ALLOC(_alloc,sizeof(*r));	
 	r->allocator = _alloc;
-	r->binbuf = 0;
+	r->binbuf = NULL;
 	r->mt = w->mt;
 	r->binbufpos = 0;
-	r->buf = buffer_acquire(0,w->buf);
-	r->readbuf = buffer_acquire(0,w->buf);
+	r->buf = buffer_acquire(NULL,w->buf);
+	r->readbuf = buffer_acquire(NULL,w->buf);
 	r->raw = w->raw;
 	r->begin_pos = w->begin_pos;
 	r->next.next = NULL;
@@ -54,13 +58,9 @@ rpacket_t rpacket_create_by_wpacket(allocator_t _alloc,struct wpacket *w)
 	{
 		//这里的len只记录构造时wpacket的len,之后wpacket的写入不会影响到rpacket的len
 		r->len = w->data_size - sizeof(r->len);
-		if(r->readbuf->size - r->begin_pos > sizeof(r->len))
-			r->rpos = w->begin_pos + sizeof(r->len);
-		else
-		{
+		r->rpos = (r->begin_pos + sizeof(r->len))%r->buf->capacity;
+		if(r->rpos < r->begin_pos)
 			r->readbuf = buffer_acquire(r->readbuf,r->readbuf->next);
-			r->rpos = 0 + sizeof(r->len);
-		}
 	}
 	r->data_remain = r->len;
 	return r;

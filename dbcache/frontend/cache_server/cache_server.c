@@ -8,12 +8,9 @@ atomic_32_t wpacket_count = 0;
 atomic_32_t rpacket_count = 0;
 atomic_32_t buf_count = 0;
 
-extern int32_t count;
 global_table_t gtb;
 void server_process_packet(datasocket_t s,rpacket_t r)
 {
-	if(count == 5747)
-		printf("%d\n",count);
 	//执行操作并返回结果
 	cache_protocal_t p;
 	uint8_t type = rpacket_read_uint8(r);
@@ -37,11 +34,13 @@ void server_process_packet(datasocket_t s,rpacket_t r)
 
 void process_new_connection(datasocket_t s)
 {
+	printf("w:%u,r:%u,b:%u\n",wpacket_count,rpacket_count,buf_count);
 }
 
 void process_connection_disconnect(datasocket_t s,int32_t reason)
 {
 	release_datasocket(&s);
+	printf("w:%u,r:%u,b:%u\n",wpacket_count,rpacket_count,buf_count);
 }
 
 void process_send_block(datasocket_t s)

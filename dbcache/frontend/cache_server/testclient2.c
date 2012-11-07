@@ -37,7 +37,7 @@ void on_process_packet(struct connection *c,rpacket_t r)
 	if(stage == 0)
 	{
 		setcount++;
-		if(setcount == 10000)
+		if(setcount == 1000000)
 		{
 			printf("insert finish begin select----------\n");
 			getcount = 0;
@@ -45,7 +45,7 @@ void on_process_packet(struct connection *c,rpacket_t r)
 			//发出100W条查询
 			char key[64];
 			int32_t i = 0;
-			for( ; i < 10000; ++i)
+			for( ; i < 1000000; ++i)
 			{
 				snprintf(key,64,"test%d",i);		
 				wpacket_t wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
@@ -59,7 +59,7 @@ void on_process_packet(struct connection *c,rpacket_t r)
 	else
 	{
 		getcount++;
-		if(getcount == 10000)
+		if(getcount == 1000000)
 		{
 			select_tick = GetSystemMs() - select_tick;
 			printf("select 100W finish:%u\n",select_tick);
@@ -88,7 +88,7 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 		//插入100W条数据
 		char key[64];
 		int32_t i = 0;
-		for( ; i < 10000; ++i)
+		for( ; i < 1000000; ++i)
 		{
 			snprintf(key,64,"test%d",i);		
 			wpacket_t wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
