@@ -44,6 +44,7 @@ struct wpacket;
 
 rpacket_t rpacket_create(uint8_t mt,allocator_t _allo,buffer_t,uint32_t pos,uint32_t pk_len,uint8_t is_raw);
 rpacket_t rpacket_create_by_wpacket(allocator_t _allo,struct wpacket*);//通过wpacket构造
+rpacket_t rpacket_create_by_rpacket(rpacket_t);
 void      rpacket_destroy(rpacket_t*);
 
 //数据读取接口

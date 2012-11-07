@@ -62,6 +62,8 @@ HANDLE       net_add_listener(netservice_t,const char *ip,uint32_t port);
 //关闭一个网络监听
 void         net_rem_listener(netservice_t,HANDLE);
 
+int32_t      net_connect(netservice_t,const char *ip,uint32_t port);
+
 int32_t      init_net_service();
 
 wpacket_t    get_wpacket(uint32_t bufsize);

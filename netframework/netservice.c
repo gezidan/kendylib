@@ -5,6 +5,7 @@
 #include "SysTime.h"
 #include "double_link.h"
 #include "block_obj_allocator.h"
+#include "Connector.h"
 
 extern struct socket_wrapper* GetSocketByHandle(HANDLE);
 extern int32_t      ReleaseSocketWrapper(HANDLE);
@@ -186,9 +187,9 @@ static void *mainloop(void *arg)
 	}
 }
 
-static void accept_callback(HANDLE s,void *ud)
+
+static void new_connection(netservice_t service,HANDLE s)
 {
-	netservice_t service = (netservice_t)ud;
 	struct connection *c = connection_create(s,0,MUTIL_THREAD,on_process_packet,on_socket_disconnect);
 	c->rpacket_allocator = rpacket_allocator;
 	setNonblock(s);
@@ -203,6 +204,12 @@ static void accept_callback(HANDLE s,void *ud)
 	_msg = create_msg(data_s,MSG_NEW_CONNECTION);
 	mq_push(e->mq_in,(list_node*)_msg);	
 	mq_flush();
+}
+
+static void accept_callback(HANDLE s,void *ud)
+{
+	netservice_t service = (netservice_t)ud;
+	new_connection(service,s);
 }
 
 static void *_Listen(void *arg)
@@ -302,4 +309,17 @@ void net_rem_listener(netservice_t s,HANDLE h)
 	rem_listener(s->_acceptor,h);
 }
 
+static void connect_callback(HANDLE s,const char *ip,int32_t port,void*ud)
+{
+	netservice_t service = (netservice_t)ud;
+	new_connection(service,s);	
+}
 
+int32_t net_connect(netservice_t s,const char *ip,uint32_t port)
+{
+	int32_t ret;
+	connector_t con = connector_create();
+	ret = connector_connect(con,ip,port,connect_callback,(void*)s,0);
+	connector_destroy(&con);
+	return ret;	
+}

@@ -35,6 +35,26 @@ rpacket_t rpacket_create(uint8_t mt,allocator_t _alloc,buffer_t b,uint32_t pos,u
 	return r;
 }
 
+rpacket_t rpacket_create_by_rpacket(rpacket_t other)
+{
+	ATOMIC_INCREASE(&rpacket_count);
+	rpacket_t r = (rpacket_t)ALLOC(other->allocator,sizeof(*r));
+	r->allocator = other->allocator;
+	r->mt = other->mt;
+	r->binbuf = NULL;
+	r->binbufpos = 0;
+	r->buf = buffer_acquire(NULL,other->buf);
+	r->readbuf = buffer_acquire(NULL,other->readbuf);
+	r->len = other->len;
+	r->data_remain = other->len;
+	r->begin_pos = other->begin_pos;
+	r->next.next = NULL;
+	r->type = MSG_RPACKET;
+	r->raw = other->raw;
+	r->rpos = other->rpos;	
+	return r;	
+}
+
 rpacket_t rpacket_create_by_wpacket(allocator_t _alloc,struct wpacket *w)
 {
 	ATOMIC_INCREASE(&rpacket_count);
