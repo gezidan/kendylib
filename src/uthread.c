@@ -229,7 +229,10 @@ uthread_t uthread_create(uthread_t parent,void*stack,uint32_t stack_size,void*(*
 	return u;
 }
 
-void uthread_destroy(uthread_t);
+void uthread_destroy(uthread_t *u)
+{
+	
+}
 
 void*uthread_switch(uthread_t from,uthread_t to,void *para)
 {

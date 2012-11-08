@@ -19,7 +19,7 @@ atomic_32_t rpacket_count = 0;
 atomic_32_t buf_count = 0;
 datasocket_t db_s;
 
-int8_t test_select(const char *key)
+int8_t test_select(const char *key,int32_t i)
 {
 	coro_t co = get_current_coro();
 	wpacket_t wpk = get_wpacket(64);
@@ -29,7 +29,13 @@ int8_t test_select(const char *key)
 	data_send(db_s,wpk);
 	coro_block(co);
 	int8_t ret = rpacket_read_uint8(co->rpc_response);
+	rpacket_read_uint8(co->rpc_response);
+	int32_t val = rpacket_read_uint32(co->rpc_response);
+	if(val != i)
+		printf("error\n");
+	//printf("begin\n");
 	rpacket_destroy(&co->rpc_response);
+	//printf("end\n");
 	return ret;
 }
 
@@ -39,8 +45,9 @@ void *test_coro_fun2(void *arg)
 	while(1)
 	{
 		char key[64];
-		snprintf(key,64,"test%d",rand()%1000000);		
-		if(0 == test_select(key))
+		int32_t i = rand()%1000000;
+		snprintf(key,64,"test%d",100);		
+		if(0 == test_select(key,100))
 			++call_count;
 	}
 }
@@ -57,9 +64,9 @@ void process_new_connection(datasocket_t s)
 {
 	printf("connect server\n");
 	db_s = s;
-	g_sche = sche_create(250000,4096,NULL,NULL);
+	g_sche = sche_create(20000,65536,NULL,NULL);
 	int i = 0;
-	for(; i < 250000; ++i)
+	for(; i < 20000; ++i)
 	{
 		sche_spawn(g_sche,test_coro_fun2,NULL);
 	}
