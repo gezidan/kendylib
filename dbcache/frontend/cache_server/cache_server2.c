@@ -1,4 +1,3 @@
-
 #include "KendyNet.h"
 #include "Connection.h"
 #include <stdio.h>
@@ -21,66 +20,6 @@ atomic_32_t rpacket_count = 0;
 atomic_32_t buf_count = 0; 
 
 global_table_t gtb; 
-
-/*
-#define MAX_CLIENT 1000
-static struct connection *clients[MAX_CLIENT];
-
-void init_clients()
-{
-	uint32_t i = 0;
-	for(; i < MAX_CLIENT;++i)
-		clients[i] = 0;
-}
-
-void add_client(struct connection *c)
-{
-	uint32_t i = 0;
-	for(; i < MAX_CLIENT; ++i)
-	{
-		if(clients[i] == 0)
-		{
-			clients[i] = c;
-			break;
-		}
-	}
-}
-
-void send2_all_client(rpacket_t r)
-{
-	uint32_t i = 0;
-	wpacket_t w;
-	for(; i < MAX_CLIENT; ++i)
-	{
-		if(clients[i])
-		{
-			w = wpacket_create_by_rpacket(wpacket_allocator,r);
-			assert(w);
-			++send_request;
-			connection_send(clients[i],w,NULL);
-			//connection_push_packet(clients[i],w,NULL);
-		}
-	}
-}
-
-void remove_client(struct connection *c,int32_t reason)
-{
-	uint32_t i = 0;
-	for(; i < MAX_CLIENT; ++i)
-	{
-		if(clients[i] == c)
-		{
-			clients[i] = 0;
-			break;
-		}
-	}	
-	HANDLE sock = c->socket;
-	if(0 == connection_destroy(&c))
-	{
-		ReleaseSocketWrapper(sock);
-	}
-}
-*/
 
 void on_client_disconnect(struct connection *c,int32_t reason)
 {
