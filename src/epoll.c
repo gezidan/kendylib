@@ -32,6 +32,7 @@ inline int32_t epoll_unregister(engine_t e,socket_t s)
 	TEMP_FAILURE_RETRY(ret = epoll_ctl(e->poller_fd,EPOLL_CTL_DEL,s->fd,&ev));
 	s->readable = s->writeable = 0;
 	double_link_remove((struct double_link_node*)s);
+	s->engine = NULL;
 	return ret;
 }
 

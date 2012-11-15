@@ -54,11 +54,11 @@ int32_t Bind2Engine(HANDLE e,HANDLE s,OnRead _OnRead,OnWrite _OnWrite)
 		return -1;
 	sock->OnRead = _OnRead;
 	sock->OnWrite = _OnWrite;
+	sock->engine = engine;
 	if(engine->Register(engine,sock) == 0)
-	{
-		sock->engine = engine;
 		return 0;
-	}
+	else
+		sock->engine = NULL;
 	return -1;
 }
 
