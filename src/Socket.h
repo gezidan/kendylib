@@ -41,8 +41,6 @@ int32_t  Process(socket_t);
 socket_t create_socket();
 void free_socket(socket_t*);
 
-void _recv(socket_t);
-void _send(socket_t);
 int32_t raw_send(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_code);
 int32_t raw_recv(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_code);
 

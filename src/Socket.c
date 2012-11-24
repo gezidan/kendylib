@@ -50,14 +50,6 @@ void on_write_active(socket_t s)
 	}	
 }
 
-int32_t  Process(socket_t s)
-{
-	_recv(s);
-	_send(s);
-	int32_t read_active = s->readable && !LINK_LIST_IS_EMPTY(s->pending_recv);
-	int32_t write_active = s->writeable && !LINK_LIST_IS_EMPTY(s->pending_send);
-	return (read_active || write_active) && s->isactived == 0;
-}
 
 int32_t raw_recv(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_code)
 {
@@ -83,7 +75,7 @@ int32_t raw_recv(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_
 }
 
 
-void _recv(socket_t s)
+static inline void _recv(socket_t s)
 {
 	assert(s);
 	int32_t ret = -1;
@@ -123,7 +115,7 @@ int32_t raw_send(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_
 	return ret;
 }
 
-void _send(socket_t s)
+static inline void _send(socket_t s)
 {
 	assert(s);
 	int32_t ret = -1;
@@ -138,4 +130,13 @@ void _send(socket_t s)
 				s->OnWrite(bytes_transfer,io_req);
 		}
 	}	
+}
+
+int32_t  Process(socket_t s)
+{
+	_recv(s);
+	_send(s);
+	int32_t read_active = s->readable && !LINK_LIST_IS_EMPTY(s->pending_recv);
+	int32_t write_active = s->writeable && !LINK_LIST_IS_EMPTY(s->pending_send);
+	return (read_active || write_active) && s->isactived == 0;
 }

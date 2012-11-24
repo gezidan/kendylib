@@ -194,7 +194,8 @@ static inline st_io *prepare_send(struct connection *c)
 			b = b->next;
 			pos = 0;
 		}
-		w = (wpacket_t)w->next.next;
+		if(send_size_remain > 0)
+			w = (wpacket_t)w->next.next;
 	}
 	if(i)
 	{

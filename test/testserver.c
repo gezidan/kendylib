@@ -20,11 +20,8 @@ uint32_t clientcount = 0;
 uint32_t last_send_tick = 0;
 allocator_t wpacket_allocator = NULL;
 uint32_t total_bytes_recv = 0;
-atomic_32_t wpacket_count = 0;
-atomic_32_t rpacket_count = 0; 
-atomic_32_t buf_count = 0;  
 
-#define MAX_CLIENT 1000
+#define MAX_CLIENT 500
 static struct connection *clients[MAX_CLIENT];
 
 void init_clients()
@@ -148,26 +145,23 @@ int main(int argc,char **argv)
 		now = GetSystemMs();
 		if(now - tick > 1000)
 		{
-			/*
 			printf("recv:%u,send:%u,s_req:%u,total_recv:%u\n",packet_recv,packet_send,send_request,total_bytes_recv/1024/1024);
 			tick = now;
 			packet_recv = 0;
 			packet_send = 0;
 			send_request = 0;
 			iocp_count = 0;
-			total_bytes_recv = 0;*/
-			printf("w:%d,r:%d,b:%d\n",wpacket_count,rpacket_count,buf_count);
+			total_bytes_recv = 0;
+			//printf("w:%d,r:%d,b:%d\n",wpacket_count,rpacket_count,buf_count);
 		}
 		/*
-		if(now - last_send_tick > 50)
+		if(now - last_send_tick > 10)
 		{
-			//心跳,每50ms集中发一次包
 			last_send_tick = now;
 			for(i=0; i < MAX_CLIENT; ++i)
 			{
 				if(clients[i])
 				{
-					//++send_request;
 					connection_send(clients[i],NULL,NULL);
 				}
 			}

@@ -16,9 +16,6 @@ uint32_t now = 0;
 static struct connection *clients[MAX_CLIENT];
 uint32_t last_recv = 0;
 uint32_t ava_interval = 0;
-atomic_32_t wpacket_count = 0;
-atomic_32_t rpacket_count = 0; 
-atomic_32_t buf_count = 0;  
 void init_clients()
 {
 	int32_t i = 0;

@@ -7,7 +7,6 @@
 #include "common_define.h"
 #include "atomic.h"
 
-extern atomic_32_t wpacket_count; 
 
 inline int32_t is_pow_of_2(uint32_t size)
 {
@@ -45,7 +44,6 @@ inline uint32_t GetSize_of_pow2(uint32_t size)
 
 wpacket_t wpacket_create(uint8_t mt,allocator_t _allo,uint32_t size,uint8_t is_raw)
 {
-	ATOMIC_INCREASE(&wpacket_count);
 	size = GetSize_of_pow2(size);
 	wpacket_t w = (wpacket_t)ALLOC(_allo,sizeof(*w));	
 	w->allocator = _allo;
@@ -79,7 +77,6 @@ wpacket_t wpacket_create(uint8_t mt,allocator_t _allo,uint32_t size,uint8_t is_r
 
 wpacket_t wpacket_create_by_rpacket(allocator_t _allo,struct rpacket *r)
 {
-	ATOMIC_INCREASE(&wpacket_count);
 	wpacket_t w = (wpacket_t)ALLOC(_allo,sizeof(*w));	
 	w->allocator = _allo;	
 	w->raw = r->raw;
@@ -108,7 +105,6 @@ write_pos wpacket_get_writepos(wpacket_t w)
 
 void wpacket_destroy(wpacket_t *w)
 {
-	ATOMIC_DECREASE(&wpacket_count);
 	buffer_release(&(*w)->buf);
 	buffer_release(&(*w)->writebuf);
 	FREE((*w)->allocator,*w);
