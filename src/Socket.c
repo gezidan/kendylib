@@ -56,7 +56,7 @@ int32_t  Process(socket_t s)
 	_send(s);
 	int32_t read_active = s->readable && !LINK_LIST_IS_EMPTY(s->pending_recv);
 	int32_t write_active = s->writeable && !LINK_LIST_IS_EMPTY(s->pending_send);
-	return read_active || write_active;
+	return (read_active || write_active) && s->isactived == 0;
 }
 
 int32_t raw_recv(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_code)

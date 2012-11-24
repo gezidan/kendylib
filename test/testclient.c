@@ -130,7 +130,7 @@ int32_t main(int32_t argc,char **argv)
 	
 	int32_t ret;
 	int32_t i = 0;
-	uint32_t send_interval = 350;
+	uint32_t send_interval = 100;
 	uint32_t send_tick = 0;
 	wpacket_t wpk;
 
@@ -145,7 +145,7 @@ int32_t main(int32_t argc,char **argv)
 	while(1)
 	{
 		connector_run(con,1);
-		EngineRun(engine,1);
+		EngineRun(engine,20);
 		now = GetSystemMs();
 		if(now - tick > 1000)
 		{

@@ -47,7 +47,7 @@ int32_t epoll_loop(engine_t n,int32_t ms)
 		{
 			socket_t s = (socket_t)double_link_pop(n->actived);
 			s->isactived = 0;
-			if(Process(s) && s->isactived == 0)
+			if(Process(s))
 			{
 				s->isactived = 1;
 				double_link_push(n->actived,(struct double_link_node*)s);
