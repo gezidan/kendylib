@@ -1,4 +1,4 @@
-﻿#include "co_sche.h"
+#include "co_sche.h"
 #include "SysTime.h"
 #include <stdlib.h>
 #include <assert.h>
