@@ -33,6 +33,14 @@ void coronet_init_coro(coronet_t coron,int32_t max_coro,int32_t stack_size,void 
 	coron->coro_sche = sche_create(max_coro,stack_size,idel,idel_arg);
 }
 
+void coronet_run(coronet_t coron)
+{
+	while(1)
+	{
+		sche_schedule(coron->coro_sche);
+	}
+}
+
 void coronet_destroy(coronet_t *_coron)
 {
 	coronet_t coron = *_coron;

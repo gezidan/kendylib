@@ -34,6 +34,7 @@ struct coronet_timer
 coronet_t coronet_create();
 void      coronet_init_net(coronet_t,on_packet,on_new_connection,on_connection_disconnect,on_send_block);
 void      coronet_init_coro(int32_t max_coro,int32_t stack_size,void (*)(void*),void*);
+void      coronet_run(coronet_t coron);
 
 int32_t coronet_add_timer(coronet_t,coronet_timer_callback,void *ud,uint32_t timeout);
 
