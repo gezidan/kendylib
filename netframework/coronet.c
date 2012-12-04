@@ -1,4 +1,4 @@
-﻿#include "coronet.h"
+#include "coronet.h"
 #include "msg.h"
 
 coronet_t coronet_create()
