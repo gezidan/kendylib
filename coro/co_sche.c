@@ -1,4 +1,4 @@
-#include "co_sche.h"
+﻿#include "co_sche.h"
 #include "SysTime.h"
 #include <stdlib.h>
 #include <assert.h>
@@ -18,7 +18,7 @@ void* coro_fun(void *arg)
 {
 	//printf("a coro start\n");
 	coro_t co = (coro_t)arg;
-	LINK_LIST_PUSH_BACK(co->_sche->active_list,co);
+	LINK_LIST_PUSH_BACK(co->_sche->active_list_2,co);
 	co->status = CORO_ACTIVE;
 	uthread_switch(co->ut,co->_sche->co->ut,co);
 	void *ret = co->fun(co->arg);
@@ -28,7 +28,7 @@ void* coro_fun(void *arg)
 }
 
 
-static inline  __attribute__((always_inline)) void check_time_out(sche_t s,uint32_t now)
+void check_time_out(sche_t s,uint32_t now)
 {
 	coro_t co;
 	for( ; ;)
@@ -43,7 +43,7 @@ static inline  __attribute__((always_inline)) void check_time_out(sche_t s,uint3
 		if(co->status != CORO_ACTIVE)
 		{
 			co->status = CORO_ACTIVE;
-			LINK_LIST_PUSH_BACK(s->active_list,co);
+			LINK_LIST_PUSH_BACK(s->active_list_1,co);
 		}else if(co->status == CORO_DIE)
 		{
 			coro_destroy(&co);
@@ -56,17 +56,65 @@ static inline  __attribute__((always_inline)) void check_time_out(sche_t s,uint3
 }
 
 
+/*
+*  next选择方案,如果有goback优先选择goback作为下一个被运行的coro,
+*  否则取active_list_1首元素作为下一个被运行的coro,如果active_list_1
+*  为空则直接返回.
+*/
+coro_t _sche_next_1(sche_t s,coro_t co)
+{
+
+	coro_t next = NULL;
+	coro_t coro_goback = co->_goback;
+	if(NULL == coro_goback)
+	{	
+		coro_t next = LINK_LIST_POP(coro_t,s->active_list_1);
+		if(!next)
+			return NULL;
+	}
+	else
+	{
+		next = coro_goback;
+		co->_goback = NULL;
+	}
+	LINK_LIST_PUSH_BACK(s->active_list_2,co);
+	assert(co != next);	
+	set_current_coro(next);
+	return (coro_t)uthread_switch(co->ut,next->ut,co);	
+}
+
+/*
+*  next选择方案,如果有goback优先选择goback作为下一个被运行的coro,
+*  否则取active_list_1首元素作为下一个被运行的coro,如果active_list_1
+*  为空,取active_list_2首元素作为下一个被运行的coro.如果active_list_2
+*  也为空,返回到主调度器所在的coro中
+*/
+
 static inline  __attribute__((always_inline))  coro_t _sche_next(sche_t s,coro_t co)
 {
-	coro_t next = LINK_LIST_POP(coro_t,s->active_list);
-	if(!next)
-		next = s->co;
+
+	coro_t next = NULL;
+	coro_t coro_goback = co->_goback;
+	if(NULL == coro_goback)
+	{
+		next = LINK_LIST_POP(coro_t,s->active_list_1);
+		if(!next)
+			next = LINK_LIST_POP(coro_t,s->active_list_2);
+		if(!next)	
+			next = s->co;
+	}
+	else
+	{
+		next = coro_goback;
+		co->_goback = NULL;
+	}
+	
 	if(co->status == CORO_YIELD)
 	{
 		co->status = CORO_ACTIVE;
-		LINK_LIST_PUSH_BACK(s->active_list,co);
+		LINK_LIST_PUSH_BACK(s->active_list_2,co);
 	}
-	assert(co != next);	
+	assert(co != next);
 	set_current_coro(next);
 	return (coro_t)uthread_switch(co->ut,next->ut,co);
 }
@@ -74,6 +122,7 @@ static inline  __attribute__((always_inline))  coro_t _sche_next(sche_t s,coro_t
 static inline  __attribute__((always_inline)) void sche_next(sche_t s,coro_t co,uint8_t status)
 {
 	co->status = status;
+
 	uint32_t tick = GetCurrentMs();
 	if(tick >= s->next_check_timeout)
 		check_time_out(s,tick);
@@ -94,7 +143,7 @@ void sche_schedule(sche_t s)
 	if(now >= s->next_check_timeout)
 		check_time_out(s,now);
 
-	if(link_list_is_empty(s->active_list))
+	if(link_list_is_empty(s->active_list_1) && link_list_is_empty(s->active_list_2))
 	{
 		if(s->idel)
 			s->idel(s->idel_arg);
@@ -118,7 +167,8 @@ sche_t sche_create(int32_t max_coro,int32_t stack_size,void (*idel)(void*),void 
 	sche_t s = calloc(1,sizeof(*s));
 	s->stack_size = stack_size;
 	s->max_coro = max_coro;
-	s->active_list = LINK_LIST_CREATE();
+	s->active_list_1 = LINK_LIST_CREATE();
+	s->active_list_2 = LINK_LIST_CREATE();
 	s->_minheap = minheap_create(max_coro,_less);
 	s->next_check_timeout = GetSystemMs() + 200;
 	s->co = coro_create(s,0,NULL);
@@ -131,8 +181,10 @@ sche_t sche_create(int32_t max_coro,int32_t stack_size,void (*idel)(void*),void 
 void sche_destroy(sche_t *s)
 {
 	coro_t co;
-	while(co = LINK_LIST_POP(coro_t,(*s)->active_list))
+	while(co = LINK_LIST_POP(coro_t,(*s)->active_list_1))
 		coro_destroy(&co);
+	while(co = LINK_LIST_POP(coro_t,(*s)->active_list_2))
+		coro_destroy(&co);		
 	int32_t i = 1;
 	for( ; i < (*s)->_minheap->size; ++i)
 	{
@@ -142,7 +194,8 @@ void sche_destroy(sche_t *s)
 			coro_destroy(&co);
 		}
 	}
-	LINK_LIST_DESTROY(&((*s)->active_list));
+	LINK_LIST_DESTROY(&((*s)->active_list_1));
+	LINK_LIST_DESTROY(&((*s)->active_list_2));
 	minheap_destroy(&((*s)->_minheap));
 	coro_destroy(&(*s)->co);
 	free(*s);
@@ -211,7 +264,7 @@ void coro_block(coro_t co)
 void coro_wakeup(coro_t co)
 {
 	if(co->status == CORO_BLOCK)
-		LINK_LIST_PUSH_BACK(co->_sche->active_list,co);
+		LINK_LIST_PUSH_BACK(co->_sche->active_list_1,co);
 }
 
 

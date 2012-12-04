@@ -29,7 +29,7 @@ typedef void   (*TimingWheel_callback)(TimingWheel_t,void*,uint32_t);
 extern TimingWheel_t CreateTimingWheel(uint32_t precision,uint32_t max);
 extern void DestroyTimingWheel(TimingWheel_t*);
 extern int32_t  RegisterTimer(TimingWheel_t,WheelItem_t,uint32_t timeout);
-extern void  UnRegisterTimer(TimingWheel_t,WheelItem_t);
+extern void  UnRegisterTimer(/*TimingWheel_t,*/WheelItem_t);
 extern int32_t  UpdateWheel(TimingWheel_t,uint32_t now);
 extern WheelItem_t CreateWheelItem(void *ud,TimingWheel_callback callback);
 extern void DestroyWheelItem(WheelItem_t*);

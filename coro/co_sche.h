@@ -1,4 +1,4 @@
-/*	
+﻿/*	
     Copyright (C) <2012>  <huangweilook@21cn.com>
 
     This program is free software: you can redistribute it and/or modify
@@ -34,11 +34,13 @@ enum
 };
 
 struct sche;
-typedef struct coro
+struct coro;
+typedef struct
 {
 	struct list_node next;
 	struct heapele _heapele;
 	struct sche *_sche;
+	struct coro *_goback;
 	uthread_t    ut;
 	void *stack;
 	rpacket_t rpc_response;
@@ -55,7 +57,13 @@ typedef struct sche
   	int32_t max_coro;
   	int32_t stack_size;
   	minheap_t _minheap;
-  	struct link_list *active_list;
+	/* 2级活动列表被wake_up(包括超时和被事件唤醒)的coro被投入到active_list_1,
+	*  其余情况被投入到active_list_2,挑选下一个coro执行时,首先会挑选active_list_1
+	*  中的
+	*/
+  	struct link_list *active_list_1;
+	struct link_list *active_list_2;
+	//struct link_list *active_list;
   	int32_t next_check_timeout;
   	volatile int8_t  stop;
   	int32_t coro_size;

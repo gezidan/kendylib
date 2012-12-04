@@ -11,6 +11,7 @@ struct WheelItem
 	void *ud;
 	TimingWheel_callback callback;
 	int32_t    slot;
+	TimingWheel_t timing_wheel;
 };
 
 struct TimingWheel
@@ -84,6 +85,7 @@ int  RegisterTimer(TimingWheel_t t,WheelItem_t item,uint32_t timeout)
 		return -1;
 	n = (t->current + n)%t->slot_size;
 	Add(t,n,item);
+	item->timing_wheel = t;
 	return 0;
 }
 
@@ -98,6 +100,7 @@ static void Active(TimingWheel_t t,uint32_t slot,uint32_t now)
 		head = head->next;
 		cur->slot = 0;
 		cur->pre = cur->next = 0;
+		cur->timing_wheel = NULL;
 		if(cur->callback)
 			cur->callback(t,cur->ud,now);
 		
@@ -122,9 +125,12 @@ int UpdateWheel(TimingWheel_t t,uint32_t now)
 	return 0;
 }
 
-void UnRegisterTimer(TimingWheel_t t,WheelItem_t wit)
+void UnRegisterTimer(/*TimingWheel_t t,*/WheelItem_t wit)
 {
-	if(!t || !wit)
+	if(!wit)
+		return;
+	TimingWheel_t t = wit->timing_wheel;
+	if(!t)
 		return;
 	if(wit->slot < 0 || wit->slot >= t->slot_size)
 		return;

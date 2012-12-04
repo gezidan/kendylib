@@ -1,5 +1,6 @@
 #include "msg_loop.h"
 #include "SysTime.h"
+#include "coronet.h"
 
 #define MQ_FLUSH_TICK 10 //冲刷消息队列的时间间隔
 #define PEEK_WAIT_TIME 5 //如果消息队列为空，最长的等待时间
@@ -16,7 +17,7 @@ msg_loop_t create_msg_loop(on_packet _on_packet,on_new_connection _on_new_connec
 	return m;
 }
 
-
+int32_t _coronet_add_timer(coronet_t coron,struct coronet_timer *_timer);
 static inline void dispatch_msg(msg_loop_t m,msg_t _msg)
 {
 	switch(_msg->type)
@@ -48,6 +49,19 @@ static inline void dispatch_msg(msg_loop_t m,msg_t _msg)
 				destroy_msg(&_msg);			
 			}
 			break;
+		case MSG_USER_TIMER_TIMEOUT:
+			{
+				struct coronet_timer *_timer = (struct coronet_timer *)_msg->ptr;
+				if( _timer->_callback(_timer->ud,GetCurrentMs()) == 1)
+					_coronet_add_timer(_timer->coron,_timer);
+				else
+				{
+					//不需要添加了,直接删除
+					DestroyWheelItem(&_timer->wheel_item);
+					free(_timer);
+				}
+				destroy_msg(&_msg);
+			};
 	}
 }
 
