@@ -1,4 +1,4 @@
-﻿#ifndef _CORONET_H
+#ifndef _CORONET_H
 #define _CORONET_H
 
 #include "netservice.h"
