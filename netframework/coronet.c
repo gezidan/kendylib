@@ -11,12 +11,12 @@ coronet_t coronet_create()
 struct per_thread_struct;
 struct per_thread_struct* mq_push_local(mq_t m,struct list_node *msg);
 
-static inline timeout_callback(TimingWheel_t t,void *ud,uint32_t now)
+static inline void timeout_callback(TimingWheel_t t,void *ud,uint32_t now)
 {
 	struct coronet_timer *_timer = (struct coronet_timer*)ud;
-	msg_t msg = create_msg(_timer,MSG_USER_TIMER_TIMEOUT);
+	msg_t _msg = create_msg(_timer,MSG_USER_TIMER_TIMEOUT);
 	netservice_t nets = _timer->coron->nets;
-	mq_push_local(nets->mq_out,msg);
+	mq_push_local(nets->mq_out,(struct list_node *)_msg);
 }
 
 void coronet_init_net(coronet_t coron,on_packet _on_packet,on_new_connection _on_new_connection,
@@ -25,7 +25,9 @@ void coronet_init_net(coronet_t coron,on_packet _on_packet,on_new_connection _on
 	init_net_service();
 	coron->nets = create_net_service(1);
 	coron->msgl = create_msg_loop(_on_packet,_on_new_connection,_on_connection_disconnect,_on_send_block);
-	CreateTimingWheel();
+	coron->timer_ms = CreateTimingWheel(50,1000);
+	coron->timer_s = CreateTimingWheel(1000,60*1000);
+	coron->timer_m = CreateTimingWheel(1000*60,60*60*1000);
 }
 
 void coronet_init_coro(coronet_t coron,int32_t max_coro,int32_t stack_size,void (*idel)(void*),void *idel_arg)
@@ -35,7 +37,7 @@ void coronet_init_coro(coronet_t coron,int32_t max_coro,int32_t stack_size,void 
 
 void coronet_run(coronet_t coron)
 {
-	while(1)
+	while(coron->is_stop == 0)
 	{
 		sche_schedule(coron->coro_sche);
 	}
@@ -47,6 +49,9 @@ void coronet_destroy(coronet_t *_coron)
 	destroy_net_service(&coron->nets);
 	destroy_msg_loop(&coron->msgl);
 	sche_destroy(&coron->coro_sche);
+	DestroyTimingWheel(&coron->timer_ms);
+	DestroyTimingWheel(&coron->timer_s);
+	DestroyTimingWheel(&coron->timer_m);
 	free(coron);
 	*_coron = NULL;
 }
@@ -54,9 +59,9 @@ void coronet_destroy(coronet_t *_coron)
 int32_t _coronet_add_timer(coronet_t coron,struct coronet_timer *_timer)
 {
 	int32_t ret = 0;
-	if(timeout < 1000)
+	if(_timer->timeout < 1000)
 		ret = RegisterTimer(coron->timer_ms,_timer->wheel_item,_timer->timeout);
-	else if(timeout < 1000 * 60)
+	else if(_timer->timeout < 1000 * 60)
 		ret = RegisterTimer(coron->timer_s,_timer->wheel_item,_timer->timeout);
 	else	
 		ret = RegisterTimer(coron->timer_m,_timer->wheel_item,_timer->timeout);
@@ -100,6 +105,7 @@ int32_t coronet_add_timer(coronet_t coron,coronet_timer_callback callback,void *
 	_timer->coron = coron;
 	_timer->ud = ud;
 	_timer->timeout = timeout;
+	_timer->_callback = callback;
 	return _coronet_add_timer(coron,_timer);
 }
 
@@ -133,18 +139,24 @@ void peek_msg(coronet_t coron,uint32_t ms)
 	//检查用户定时器,如果有超时事件会触发一个消息并投递到消息队列中,后面的msg_loop_once会提取并执行
 	coronet_check_user_timer(coron);
 	//等待消息的到来
-	msg_loop_once(coron->msgl,coron->nets,ms);	
+	msg_loop_once(coron->msgl,coron->nets,ms);
+	if(coron->is_stop)
+	{
+		//切换回调度器
+		LINK_LIST_PUSH_BACK(co->_sche->active_list_2,co);
+		uthread_switch(co->ut,co->_sche->co->ut,co);
+	}
 }
 
 
 HANDLE coronet_add_listener(coronet_t coron,const char *ip,uint32_t port)
 {
-	return add_listener(coron->nets,ip,port);
+	return net_add_listener(coron->nets,ip,port);
 }
 
 void coronet_rem_listener(coronet_t coron,HANDLE h)
 {
-	rem_listener(coron->nets,h);
+	net_rem_listener(coron->nets,h);
 }
 
 int32_t coronet_connect(coronet_t coron,const char *ip,uint32_t port)

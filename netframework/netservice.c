@@ -92,7 +92,7 @@ static void on_process_msg(struct engine_struct *e,msg_t _msg)
 		case MSG_ACTIVE_CLOSE:
 			{
 				datasocket_t s = (datasocket_t)_msg->ptr;
-				UnRegisterTimer(e->timingwheel,s->c->wheelitem);
+				UnRegisterTimer(s->c->wheelitem);
 				connection_active_close(s->c);
 			}
 			break;
@@ -142,7 +142,7 @@ static void on_socket_disconnect(struct connection *c,int32_t reason)
 	datasocket_t s = c->custom_ptr;
 	if(reason == -1)
 	{
-		UnRegisterTimer(s->e->timingwheel,c->wheelitem);
+		UnRegisterTimer(c->wheelitem);
 		//通知上层，连接被动断开
 		s->close_reason = reason;
 		s->is_close = 1;

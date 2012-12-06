@@ -6,12 +6,14 @@
 #include "datasocket.h"
 #include "SysTime.h"
 #include "timing_wheel.h"
+#include "../coro/co_sche.h"
 
 typedef struct coronet
 {
 	netservice_t    nets;
 	msg_loop_t      msgl;
 	sche_t          coro_sche;
+	volatile        int8_t is_stop;
 	uint32_t        last_check_timer;
 	TimingWheel_t   timer_ms;//精度50ms
 	TimingWheel_t   timer_s; //精度1s
@@ -20,7 +22,7 @@ typedef struct coronet
 
 
 //执行完回调之后,如果需要重新加入到timer中返回1,否则返回0
-typedef int32_t (coronet_timer_callback*)(void *ud,uint32_t now);
+typedef int32_t (*coronet_timer_callback)(void *ud,uint32_t now);
 
 struct coronet_timer
 {
@@ -33,7 +35,7 @@ struct coronet_timer
 
 coronet_t coronet_create();
 void      coronet_init_net(coronet_t,on_packet,on_new_connection,on_connection_disconnect,on_send_block);
-void      coronet_init_coro(int32_t max_coro,int32_t stack_size,void (*)(void*),void*);
+void      coronet_init_coro(coronet_t,int32_t max_coro,int32_t stack_size,void (*)(void*),void*);
 void      coronet_run(coronet_t coron);
 
 int32_t coronet_add_timer(coronet_t,coronet_timer_callback,void *ud,uint32_t timeout);

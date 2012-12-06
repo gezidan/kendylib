@@ -35,7 +35,7 @@ enum
 
 struct sche;
 struct coro;
-typedef struct
+typedef struct coro
 {
 	struct list_node next;
 	struct heapele _heapele;
