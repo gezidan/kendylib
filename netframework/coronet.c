@@ -25,7 +25,7 @@ void coronet_init_net(coronet_t coron,on_packet _on_packet,on_new_connection _on
 	init_net_service();
 	coron->nets = create_net_service(1);
 	coron->msgl = create_msg_loop(_on_packet,_on_new_connection,_on_connection_disconnect,_on_send_block);
-	coron->timer_ms = CreateTimingWheel(50,1000);
+	coron->timer_ms = CreateTimingWheel(5,1000);
 	coron->timer_s = CreateTimingWheel(1000,60*1000);
 	coron->timer_m = CreateTimingWheel(1000*60,60*60*1000);
 }
@@ -74,11 +74,7 @@ int32_t _coronet_add_timer(coronet_t coron,struct coronet_timer *_timer)
 		ret = RegisterTimer(coron->timer_m,_timer->wheel_item,_timer->timeout);
 		
 	if(ret !=0)
-	{
 		DestroyWheelItem(&_timer->wheel_item);
-		//不需要free(_timer),在wheelItem的ondestroy回调中处理
-		//free(_timer);
-	}
 	return ret;
 }
 
@@ -126,7 +122,7 @@ int32_t coronet_add_timer(coronet_t coron,coronet_timer_callback callback,void *
 static inline void coronet_check_user_timer(coronet_t coron)
 {
 	uint32_t now = GetCurrentMs();
-	if(now - coron->last_check_timer >= 50)
+	if(now - coron->last_check_timer >= 5)
 	{
 		UpdateWheel(coron->timer_ms,now);
 		UpdateWheel(coron->timer_s,now);

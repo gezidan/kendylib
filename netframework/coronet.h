@@ -15,7 +15,7 @@ typedef struct coronet
 	sche_t          coro_sche;
 	volatile        int8_t is_stop;
 	uint32_t        last_check_timer;
-	TimingWheel_t   timer_ms;//精度50ms
+	TimingWheel_t   timer_ms;//精度5ms
 	TimingWheel_t   timer_s; //精度1s
 	TimingWheel_t   timer_m; //精度1分钟
 }*coronet_t;

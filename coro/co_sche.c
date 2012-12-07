@@ -46,7 +46,7 @@ static inline coro_t coro_create(struct sche *_sche,uint32_t stack_size,void*(*f
 
 static inline void coro_destroy(coro_t *co)
 {
-	double_link_remove(&co->dblink);
+	double_link_remove(&(*co)->dblink);
 	if((*co)->stack);
 		free((*co)->stack);
 	uthread_destroy(&((*co)->ut));
@@ -208,22 +208,8 @@ sche_t sche_create(int32_t max_coro,int32_t stack_size,void (*idel)(void*),void 
 
 void sche_destroy(sche_t *s)
 {
-	
-	/*while(co = LINK_LIST_POP(coro_t,(*s)->active_list_1))
-		coro_destroy(&co);
-	while(co = LINK_LIST_POP(coro_t,(*s)->active_list_2))
-		coro_destroy(&co);		
-	int32_t i = 1;
-	for( ; i < (*s)->_minheap->size; ++i)
-	{
-		if((*s)->_minheap->data[i])
-		{
-			(coro_t)((int8_t*)(*s)->_minheap->data[i] - sizeof(co->next));
-			coro_destroy(&co);
-		}
-	}*/
 	struct double_link_node *dlnode = NULL;
-	while(dlnode = double_link_pop((*s)->coros))
+	while(dlnode = double_link_pop(&(*s)->coros))
 	{
 		coro_t co = (coro_t)dlnode+sizeof(struct list_node);
 		coro_destroy(&co);
@@ -237,16 +223,17 @@ void sche_destroy(sche_t *s)
 	*s = NULL;
 }
 
-void sche_spawn(sche_t s,void*(*fun)(void*),void*arg)
+int32_t sche_spawn(sche_t s,void*(*fun)(void*),void*arg)
 {
-	if(s->coro_size >= s->max_coro)
-		return NULL;
+	if(s->coro_size > s->max_coro)
+		return -1;
 	coro_t co = coro_create(s,s->stack_size,coro_fun);
 	co->arg = arg;
 	co->fun = fun;
 	++s->coro_size;
 	double_link_push(&s->coros,&co->dblink);
 	uthread_switch(s->co->ut,co->ut,co);
+	return 0;
 }
 
 coro_t get_current_coro()

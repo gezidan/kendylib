@@ -58,8 +58,6 @@ static inline void dispatch_msg(msg_loop_t m,msg_t _msg)
 				{
 					//不需要添加了,直接删除
 					DestroyWheelItem(&_timer->wheel_item);
-					//不需要free(_timer),在wheelItem的ondestroy回调中处理
-					//free(_timer);
 				}
 				destroy_msg(&_msg);
 			};
@@ -88,6 +86,8 @@ void msg_loop_once(msg_loop_t m,netservice_t s,uint32_t ms)
 			mq_flush();
 		}		
 	}while(now_tick < timeout);
+	m->last_sync_tick = now_tick;
+	mq_flush();
 }
 
 void destroy_msg_loop(msg_loop_t *m)
