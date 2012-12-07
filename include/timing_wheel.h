@@ -21,7 +21,7 @@
 typedef struct WheelItem   *WheelItem_t;
 typedef struct TimingWheel *TimingWheel_t;
 typedef void   (*TimingWheel_callback)(TimingWheel_t,void*,uint32_t);
-
+typedef void   (*WheelItem_OnDestroy)(WheelItem_t);
 /*
 * precision:最小精度,以毫秒为单位
 * max:最大能度量的时间,以毫秒为单位
@@ -31,6 +31,7 @@ extern void DestroyTimingWheel(TimingWheel_t*);
 extern int32_t  RegisterTimer(TimingWheel_t,WheelItem_t,uint32_t timeout);
 extern void  UnRegisterTimer(/*TimingWheel_t,*/WheelItem_t);
 extern int32_t  UpdateWheel(TimingWheel_t,uint32_t now);
-extern WheelItem_t CreateWheelItem(void *ud,TimingWheel_callback callback);
+extern WheelItem_t CreateWheelItem(void *ud,TimingWheel_callback callback,WheelItem_OnDestroy ondestroy);
 extern void DestroyWheelItem(WheelItem_t*);
+extern void *GetUserData(WheelItem_t);
 #endif

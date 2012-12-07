@@ -27,6 +27,33 @@ void* coro_fun(void *arg)
 	return NULL;
 }
 
+static inline coro_t coro_create(struct sche *_sche,uint32_t stack_size,void*(*fun)(void*))
+{
+	coro_t co = calloc(1,sizeof(*co));
+	co->_sche = _sche;
+	if(stack_size)
+	{
+		co->stack = calloc(1,stack_size);
+		if(!co->stack)
+		{
+			free(co);
+			return NULL;
+		}
+	}
+	co->ut = uthread_create(NULL,co->stack,stack_size,fun);
+	return co;
+}
+
+static inline void coro_destroy(coro_t *co)
+{
+	double_link_remove(&co->dblink);
+	if((*co)->stack);
+		free((*co)->stack);
+	uthread_destroy(&((*co)->ut));
+	free(*co);
+	*co = NULL;
+}
+
 
 void check_time_out(sche_t s,uint32_t now)
 {
@@ -174,14 +201,15 @@ sche_t sche_create(int32_t max_coro,int32_t stack_size,void (*idel)(void*),void 
 	s->co = coro_create(s,0,NULL);
 	s->idel = idel;
 	s->idel_arg = idel_arg;
+	double_link_clear(&s->coros);
 	set_current_coro(s->co);
 	return s;
 }
 
 void sche_destroy(sche_t *s)
 {
-	coro_t co;
-	while(co = LINK_LIST_POP(coro_t,(*s)->active_list_1))
+	
+	/*while(co = LINK_LIST_POP(coro_t,(*s)->active_list_1))
 		coro_destroy(&co);
 	while(co = LINK_LIST_POP(coro_t,(*s)->active_list_2))
 		coro_destroy(&co);		
@@ -193,7 +221,14 @@ void sche_destroy(sche_t *s)
 			(coro_t)((int8_t*)(*s)->_minheap->data[i] - sizeof(co->next));
 			coro_destroy(&co);
 		}
+	}*/
+	struct double_link_node *dlnode = NULL;
+	while(dlnode = double_link_pop((*s)->coros))
+	{
+		coro_t co = (coro_t)dlnode+sizeof(struct list_node);
+		coro_destroy(&co);
 	}
+	
 	LINK_LIST_DESTROY(&((*s)->active_list_1));
 	LINK_LIST_DESTROY(&((*s)->active_list_2));
 	minheap_destroy(&((*s)->_minheap));
@@ -202,7 +237,7 @@ void sche_destroy(sche_t *s)
 	*s = NULL;
 }
 
-struct coro *sche_spawn(sche_t s,void*(*fun)(void*),void*arg)
+void sche_spawn(sche_t s,void*(*fun)(void*),void*arg)
 {
 	if(s->coro_size >= s->max_coro)
 		return NULL;
@@ -210,34 +245,8 @@ struct coro *sche_spawn(sche_t s,void*(*fun)(void*),void*arg)
 	co->arg = arg;
 	co->fun = fun;
 	++s->coro_size;
+	double_link_push(&s->coros,&co->dblink);
 	uthread_switch(s->co->ut,co->ut,co);
-	return co;
-}
-
-coro_t coro_create(struct sche *_sche,uint32_t stack_size,void*(*fun)(void*))
-{
-	coro_t co = calloc(1,sizeof(*co));
-	co->_sche = _sche;
-	if(stack_size)
-	{
-		co->stack = calloc(1,stack_size);
-		if(!co->stack)
-		{
-			free(co);
-			return NULL;
-		}
-	}
-	co->ut = uthread_create(NULL,co->stack,stack_size,fun);
-	return co;
-}
-
-void coro_destroy(coro_t *co)
-{
-	if((*co)->stack);
-		free((*co)->stack);
-	uthread_destroy(&((*co)->ut));
-	free(*co);
-	*co = NULL;
 }
 
 coro_t get_current_coro()

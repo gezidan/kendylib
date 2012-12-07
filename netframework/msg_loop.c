@@ -58,7 +58,8 @@ static inline void dispatch_msg(msg_loop_t m,msg_t _msg)
 				{
 					//不需要添加了,直接删除
 					DestroyWheelItem(&_timer->wheel_item);
-					free(_timer);
+					//不需要free(_timer),在wheelItem的ondestroy回调中处理
+					//free(_timer);
 				}
 				destroy_msg(&_msg);
 			};
@@ -68,11 +69,16 @@ static inline void dispatch_msg(msg_loop_t m,msg_t _msg)
 void msg_loop_once(msg_loop_t m,netservice_t s,uint32_t ms)
 {
 	msg_t _msg = NULL;
+	uint32_t sleeptime = PEEK_WAIT_TIME;
+	if(ms < PEEK_WAIT_TIME)
+		sleeptime = ms;
 	uint32_t timeout = GetCurrentMs() + ms;
 	uint32_t now_tick;
 	do
 	{
-		_msg = net_peek_msg(s,PEEK_WAIT_TIME);
+		if(1 == s->stop)
+			return;
+		_msg = net_peek_msg(s,sleeptime);
 		if(_msg)
 			dispatch_msg(m,_msg);
 		now_tick = GetCurrentMs();

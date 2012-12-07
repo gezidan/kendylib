@@ -37,10 +37,17 @@ void coronet_init_coro(coronet_t coron,int32_t max_coro,int32_t stack_size,void 
 
 void coronet_run(coronet_t coron)
 {
-	while(coron->is_stop == 0)
+	coron->is_stop = 0;
+	while(0 == coron->is_stop)
 	{
 		sche_schedule(coron->coro_sche);
 	}
+}
+
+void coronet_stop(coronet_t coron)
+{
+	coron->is_stop = 1;
+	stop_net_service(coron->nets);
 }
 
 void coronet_destroy(coronet_t *_coron)
@@ -69,7 +76,8 @@ int32_t _coronet_add_timer(coronet_t coron,struct coronet_timer *_timer)
 	if(ret !=0)
 	{
 		DestroyWheelItem(&_timer->wheel_item);
-		free(_timer);
+		//不需要free(_timer),在wheelItem的ondestroy回调中处理
+		//free(_timer);
 	}
 	return ret;
 }
@@ -98,10 +106,16 @@ void process_rpc_return(rpacket_t r)
 	}		
 }
 
+static void wheelItem_OnDestroy(WheelItem_t wit)
+{
+	struct coronet_timer *_timer = (struct coronet_timer *)GetUserData(wit);
+	free(_timer);
+}
+
 int32_t coronet_add_timer(coronet_t coron,coronet_timer_callback callback,void *ud,uint32_t timeout)
 {
 	struct coronet_timer *_timer = calloc(1,sizeof(*_timer));
-	_timer->wheel_item = CreateWheelItem(_timer,timeout_callback);
+	_timer->wheel_item = CreateWheelItem(_timer,timeout_callback,wheelItem_OnDestroy);
 	_timer->coron = coron;
 	_timer->ud = ud;
 	_timer->timeout = timeout;
@@ -131,7 +145,7 @@ void peek_msg(coronet_t coron,uint32_t ms)
 	assert(coron->msgl);
 	assert(coron->coro_sche);
 	coro_t co = get_current_coro();
-
+	
 	//首先检查是否有超时的coro,如果有唤醒,被唤醒后的coro会被投入到active_list_1
 	check_time_out(coron->coro_sche,GetCurrentMs());
 	//查看active_list_1中是否有coro等待执行,如果有,优先先执行coro
@@ -140,6 +154,7 @@ void peek_msg(coronet_t coron,uint32_t ms)
 	coronet_check_user_timer(coron);
 	//等待消息的到来
 	msg_loop_once(coron->msgl,coron->nets,ms);
+	
 	if(coron->is_stop)
 	{
 		//切换回调度器

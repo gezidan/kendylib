@@ -12,6 +12,7 @@ struct WheelItem
 	TimingWheel_callback callback;
 	int32_t    slot;
 	TimingWheel_t timing_wheel;
+	WheelItem_OnDestroy on_destroy;
 };
 
 struct TimingWheel
@@ -23,7 +24,12 @@ struct TimingWheel
 	WheelItem_t   slot[0];
 };
 
-WheelItem_t CreateWheelItem(void *ud,TimingWheel_callback callback)
+void *GetUserData(WheelItem_t w)
+{
+	return w->ud;
+}
+
+WheelItem_t CreateWheelItem(void *ud,TimingWheel_callback callback,WheelItem_OnDestroy ondestroy)
 {
 	WheelItem_t wit = malloc(sizeof(*wit));
 	if(!wit)
@@ -32,11 +38,14 @@ WheelItem_t CreateWheelItem(void *ud,TimingWheel_callback callback)
 	wit->callback = callback;
 	wit->pre = wit->next = 0;
 	wit->slot = -1;
+	wit->on_destroy = ondestroy;
 	return wit;
 }
 
 void DestroyWheelItem(WheelItem_t *wit)
 {
+	if((*wit)->on_destroy)
+		(*wit)->on_destroy(*wit);
 	free(*wit);
 	*wit = 0;
 }
@@ -57,6 +66,18 @@ TimingWheel_t CreateTimingWheel(uint32_t precision,uint32_t max)
 
 void DestroyTimingWheel(TimingWheel_t *t)
 {
+	//销毁所有剩余的定时器
+	uint32_t i = 0;
+	for( ; i < (*t)->slot_size; ++i)
+	{
+	   WheelItem_t cur = (*t)->slot[i];
+	   while(cur)
+       {
+			WheelItem_t tmp = cur;		
+			cur = cur->next;	
+			DestroyWheelItem(&tmp);
+      }
+	}
 	free(*t);
 	*t = 0;
 }
