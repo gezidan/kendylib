@@ -36,7 +36,7 @@ typedef struct rpacket
 	buffer_t readbuf;      //当前rpos所在的buffer_t
 	uint8_t  raw;          //原始字节流数据包
 	uint8_t  mt;
-	void    *ptr;
+	uint64_t usr_data;
 	allocator_t allocator;
 }*rpacket_t;
 

@@ -38,7 +38,7 @@ typedef struct wpacket
 	uint32_t data_size;//实际数据大小,包含包长度
 	uint8_t  raw;
 	uint8_t  mt;
-	void     *ptr;
+	uint64_t usr_data;
 	packet_send_finish _packet_send_finish;
 	allocator_t allocator;
 	uint32_t send_tick;//进入发送队列的时间

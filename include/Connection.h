@@ -46,7 +46,7 @@ struct connection
 	uint8_t mt;
 	uint8_t raw;
 	uint16_t is_close;
-	void    *custom_ptr;
+	uint64_t usr_data;
 	uint32_t last_recv;
 	uint32_t recv_timeout;
 	uint32_t send_timeout;
