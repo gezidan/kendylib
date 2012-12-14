@@ -95,8 +95,12 @@ void process_connection_disconnect(datasocket_t s,int32_t reason)
 
 void process_send_block(datasocket_t s)
 {
+	remove_client(s);
+	--count;
+	printf("%d\n",count);		
 	//发送阻塞,直接关闭
 	close_datasocket(s);
+	
 }
 
 
