@@ -15,7 +15,7 @@ static int8_t is_init = 0;
 static allocator_t rpacket_allocator = NULL;
 static allocator_t wpacket_allocator = NULL;
 
-#define MQ_SYNC_SIZE 64                 //消息队列冲刷的阀值
+#define MQ_SYNC_SIZE 1024                 //消息队列冲刷的阀值
 #define SYS_TICKER 5                    //系统时间更新的间隔(单位ms)
 #define ENGINE_RUN_TIME 10               //网络循环的运行时间(单位ms)
 #define WHEEL_TICK 1000                 //时间轮的时间间隔(单位ms)
@@ -119,7 +119,6 @@ static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 		{
 			double_link_remove((struct double_link_node*)sw);
 			free_connection(s->e,s->c);
-			//ReleaseSocketWrapper(c->socket);	
 			//通知上层，连接超时关闭
 			s->close_reason = -3;
 			s->is_close = 1;
@@ -255,8 +254,7 @@ static void *mainloop(void *arg)
 			if(_msg->type == MSG_WPACKET)
 			{
 				//是一个需要发送的数据包
-				wpacket_t wpk = (wpacket_t)_msg;
-				on_process_send(e,wpk);
+				on_process_send(e,(wpacket_t)_msg);
 			}
 			else
 			{
@@ -365,6 +363,9 @@ void destroy_net_service(netservice_t *s)
 	uint32_t i = 0;
 	for( ;i < _s->engine_count; ++i)
 	{
+		uint32_t j = 1;
+		for( ; j < CON_POOL_SIZE; ++j)
+			connection_destroy(&_s->engines[i].con_pool[j].c);
 		DestroyTimingWheel(&_s->engines[i].timingwheel);
 		destroy_thread(&_s->engines[i].thread_engine);
 		CloseEngine(_s->engines[i].engine);

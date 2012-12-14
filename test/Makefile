@@ -10,7 +10,7 @@ accept_connect:
 server:kendy.a testserver.c
 	gcc -O3 -g -o server testserver.c kendy.a -I../include -lpthread -lrt -ltcmalloc
 client:kendy.a testclient.c
-	gcc -g -o client testclient.c kendy.a -I../include -lpthread -lrt
+	gcc -O3 -g -o client testclient.c kendy.a -I../include -lpthread -lrt
 objpool:kendy.a
 	gcc -O3 -g -o objpool testobjpool.c kendy.a -I../include -lpthread -lrt -ltcmalloc
 spin:kendy.a

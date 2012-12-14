@@ -120,7 +120,7 @@ int main(int argc,char **argv)
 		now = GetSystemMs();
 		if(now - tick > 1000)
 		{
-			//printf("total send:%u,total_recv:%u\n",(send_count*1000)/(now-tick),total_bytes_recv/1024/1024);
+			printf("total send:%u,total_recv:%u\n",(send_count*1000)/(now-tick),total_bytes_recv/1024/1024);
 			//printf("w:%d,r:%d,b:%d\n",wpacket_count,rpacket_count,buf_count);
 			tick = now;
 			total_bytes_recv = 0;
