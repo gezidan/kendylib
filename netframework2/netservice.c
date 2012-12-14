@@ -17,7 +17,7 @@ static allocator_t wpacket_allocator = NULL;
 
 #define MQ_SYNC_SIZE 64                 //消息队列冲刷的阀值
 #define SYS_TICKER 5                    //系统时间更新的间隔(单位ms)
-#define ENGINE_RUN_TIME 10               //网络循环的运行时间(单位ms)
+#define ENGINE_RUN_TIME 2               //网络循环的运行时间(单位ms)
 #define WHEEL_TICK 1000                 //时间轮的时间间隔(单位ms)
 
 
@@ -121,6 +121,7 @@ static inline void free_connection(struct engine_struct *e,connd_t connd)
 		c->unpack_pos = 0;
 		c->unpack_size = 0;
 		c->is_close = 0;
+		c->send_timeout = c->recv_timeout = 0;
 		c->recv_overlap.isUsed = c->send_overlap.isUsed = 0;
 		if(c->wheelitem)
 			DestroyWheelItem(&(c->wheelitem));
@@ -137,7 +138,7 @@ static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 	struct connection *c = get_connection(s->e,s->c);
 	if(NULL == c)
 		return;
-	if(now > c->last_recv && now - c->last_recv >= c->recv_timeout)
+	if(c->recv_timeout > 0 && now > c->last_recv && now - c->last_recv >= c->recv_timeout)
 	{
 		//超时了,关闭套接口
 		free_connection(s->e,s->c);
@@ -146,21 +147,24 @@ static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 		s->is_close = 1;
 		msg_t _msg = create_msg((uint64_t)s,MSG_DISCONNECTED);
 		mq_push(s->e->service->mq_out,(list_node*)_msg);
-
+		return;
 	}else
 	{
 		RegisterTimer(t,c->wheelitem,WHEEL_TICK);
 	}
 	
 	//检测是否有发送阻塞
-	wpacket_t w = (wpacket_t)link_list_head(c->send_list);
-	if(w)
+	if(c->send_timeout > 0)
 	{
-		if(now > w->send_tick && now - w->send_tick >= c->send_timeout)
+		wpacket_t w = (wpacket_t)link_list_head(c->send_list);
+		if(w)
 		{
-			//发送队列队首包超过了15秒任然没有发出去,通知上层,发送阻塞
-			msg_t _msg = create_msg((uint64_t)s,MSG_SEND_BLOCK);
-			mq_push(s->e->service->mq_out,(list_node*)_msg);
+			if(now > w->send_tick && now - w->send_tick >= c->send_timeout)
+			{
+				//发送队列队首包超过了15秒任然没有发出去,通知上层,发送阻塞
+				msg_t _msg = create_msg((uint64_t)s,MSG_SEND_BLOCK);
+				mq_push(s->e->service->mq_out,(list_node*)_msg);
+			}
 		}
 	}
 }

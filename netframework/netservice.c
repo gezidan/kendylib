@@ -53,7 +53,7 @@ wpacket_t    get_wpacket_by_rpacket(rpacket_t r)
 static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 {
 	datasocket_t s = (datasocket_t)arg;
-	if(now > s->c->last_recv && now - s->c->last_recv >= s->c->recv_timeout)
+	if(s->c->recv_timeout > 0 && now > s->c->last_recv && now - s->c->last_recv >= s->c->recv_timeout)
 	{
 		//超时了,关闭套接口
 		struct socket_wrapper *sw = GetSocketByHandle(s->c->socket);
@@ -66,21 +66,25 @@ static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 			s->is_close = 1;
 			msg_t _msg = create_msg(s,MSG_DISCONNECTED);
 			mq_push(s->e->service->mq_out,(list_node*)_msg);
+			return;
 		}
 	}else
 	{
 		RegisterTimer(t,s->c->wheelitem,WHEEL_TICK);
 	}
 	
-	//检测是否有发送阻塞
-	wpacket_t w = (wpacket_t)link_list_head(s->c->send_list);
-	if(w)
+	if(s->c->send_timeout > 0)
 	{
-		if(now > w->send_tick && now - w->send_tick >= s->c->send_timeout)
+		//检测是否有发送阻塞
+		wpacket_t w = (wpacket_t)link_list_head(s->c->send_list);
+		if(w)
 		{
-			//发送队列队首包超过了15秒任然没有发出去,通知上层,发送阻塞
-			msg_t _msg = create_msg(s,MSG_SEND_BLOCK);
-			mq_push(s->e->service->mq_out,(list_node*)_msg);
+			if(now > w->send_tick && now - w->send_tick >= s->c->send_timeout)
+			{
+				//发送队列队首包超过了15秒任然没有发出去,通知上层,发送阻塞
+				msg_t _msg = create_msg(s,MSG_SEND_BLOCK);
+				mq_push(s->e->service->mq_out,(list_node*)_msg);
+			}
 		}
 	}
 }

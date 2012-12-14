@@ -24,6 +24,7 @@ datasocket_t create_datasocket(struct engine_struct *e,connd_t c,mq_t _mq)
 
 void close_datasocket(datasocket_t s)
 {
+	printf("active close\n");
 	if(0 == s->is_close)
 	{
 		msg_t m = create_msg((uint64_t)s,MSG_ACTIVE_CLOSE);
