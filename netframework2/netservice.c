@@ -110,7 +110,7 @@ static inline void free_connection(struct engine_struct *e,connd_t connd)
 	struct st_connd *tmp = (struct st_connd*)&connd;
 	if(tmp->idx >= 1 && tmp->idx < e->con_pool_size && tmp->timestamp == e->con_pool[tmp->idx].timestamp)
 	{
-		struct connection *c = e->con_pool[tmp->idx].c;
+		struct connection *c = e->con_pool[tmp->idx].c;	
 		ReleaseSocketWrapper(c->socket);
 		wpacket_t w;
 		while(w = LINK_LIST_POP(wpacket_t,c->send_list))
@@ -140,17 +140,13 @@ static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 	if(now > c->last_recv && now - c->last_recv >= c->recv_timeout)
 	{
 		//超时了,关闭套接口
-		struct socket_wrapper *sw = GetSocketByHandle(c->socket);
-		if(sw)
-		{
-			double_link_remove((struct double_link_node*)sw);
-			free_connection(s->e,s->c);
-			//通知上层，连接超时关闭
-			s->close_reason = -3;
-			s->is_close = 1;
-			msg_t _msg = create_msg((uint64_t)s,MSG_DISCONNECTED);
-			mq_push(s->e->service->mq_out,(list_node*)_msg);
-		}
+		free_connection(s->e,s->c);
+		//通知上层，连接超时关闭
+		s->close_reason = -3;
+		s->is_close = 1;
+		msg_t _msg = create_msg((uint64_t)s,MSG_DISCONNECTED);
+		mq_push(s->e->service->mq_out,(list_node*)_msg);
+
 	}else
 	{
 		RegisterTimer(t,c->wheelitem,WHEEL_TICK);

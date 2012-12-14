@@ -152,7 +152,6 @@ int32_t main(int32_t argc,char **argv)
 			send_request = 0;
 			ava_interval = 0;
 		}
-		
 		if(now - send_tick > send_interval)
 		{
 			send_tick = now;

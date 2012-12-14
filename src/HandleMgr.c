@@ -81,6 +81,7 @@ int32_t  ReleaseSocketWrapper(HANDLE handle)
 		//mutex_lock(socket_pool[handle]->mtx);
 		if(socket_pool[handle]->status != 0)
 		{
+			double_link_remove((struct double_link_node*)socket_pool[handle]);
 			RemoveBinding(socket_pool[handle]->engine,socket_pool[handle]);
 			close(socket_pool[handle]->fd);
 			socket_pool[handle]->status = 0;
