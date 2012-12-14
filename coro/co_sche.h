@@ -79,13 +79,14 @@ void sche_destroy(sche_t *);
 
 void sche_schedule(sche_t);
 int32_t sche_spawn(sche_t,void*(*fun)(void*),void*arg);
+void sche_sche_co(coro_t from,coro_t to);
 //coro_t coro_create(struct sche *,uint32_t stack_size,void*(*fun)(void*));
 //void coro_destroy(coro_t *);
 
-extern inline coro_t get_current_coro();
-extern inline void coro_sleep(coro_t,int32_t);
-extern inline void coro_yield(coro_t);
-extern inline void coro_block(coro_t);
-extern inline void coro_wakeup(coro_t);
+coro_t get_current_coro();
+void coro_sleep(coro_t,int32_t);
+void coro_yield(coro_t);
+void coro_block(coro_t);
+void coro_wakeup(coro_t);
 
 #endif
