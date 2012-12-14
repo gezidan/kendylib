@@ -22,7 +22,7 @@ datasocket_t create_datasocket(struct engine_struct *e,struct connection *c,mq_t
 	s->_refbase.mt = 1;
 	s->_refbase.refcount = 1;
 	s->_refbase.destroyer = on_destroy;
-	c->custom_ptr = s;
+	c->usr_data = (uint64_t)s;
 	s->e = e;
 	return s;
 }
@@ -62,7 +62,7 @@ int32_t data_send(datasocket_t s,wpacket_t w)
 		return -1;
 	}
 	ref_increase(&s->_refbase);	
-	w->ptr = s;
+	w->usr_data = (uint64_t)s;
 	mq_push(s->_mq,(list_node*)w);
 	return 0;
 }

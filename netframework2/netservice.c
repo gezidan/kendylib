@@ -15,7 +15,7 @@ static int8_t is_init = 0;
 static allocator_t rpacket_allocator = NULL;
 static allocator_t wpacket_allocator = NULL;
 
-#define MQ_SYNC_SIZE 1024                 //消息队列冲刷的阀值
+#define MQ_SYNC_SIZE 64                 //消息队列冲刷的阀值
 #define SYS_TICKER 5                    //系统时间更新的间隔(单位ms)
 #define ENGINE_RUN_TIME 10               //网络循环的运行时间(单位ms)
 #define WHEEL_TICK 1000                 //时间轮的时间间隔(单位ms)

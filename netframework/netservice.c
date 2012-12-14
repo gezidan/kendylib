@@ -91,14 +91,14 @@ static void on_process_msg(struct engine_struct *e,msg_t _msg)
 	{
 		case MSG_ACTIVE_CLOSE:
 			{
-				datasocket_t s = (datasocket_t)_msg->ptr;
+				datasocket_t s = (datasocket_t)_msg->usr_data;
 				UnRegisterTimer(s->c->wheelitem);
 				connection_active_close(s->c);
 			}
 			break;
 		case MSG_NEW_CONNECTION:
 			{
-				datasocket_t s = (datasocket_t)_msg->ptr;
+				datasocket_t s = (datasocket_t)_msg->usr_data;
 				Bind2Engine(e->engine,s->c->socket,RecvFinish,SendFinish);
 				s->c->last_recv = GetSystemMs();
 				connection_start_recv(s->c);
@@ -107,7 +107,7 @@ static void on_process_msg(struct engine_struct *e,msg_t _msg)
 		case MSG_SET_RECV_TIMEOUT:
 		case MSG_SET_SEND_TIMEOUT:
 			{
-				datasocket_t s = (datasocket_t)_msg->ptr;
+				datasocket_t s = (datasocket_t)_msg->usr_data;
 				if(!s->c->wheelitem)
 				{
 					s->c->wheelitem = CreateWheelItem((void*)s,timeout_check,NULL);
@@ -132,14 +132,14 @@ static void on_process_send(datasocket_t s,wpacket_t w)
 
 static void on_process_packet(struct connection *c,rpacket_t r)
 {
-	datasocket_t s = c->custom_ptr;
-	r->ptr = s;
+	datasocket_t s = c->usr_data;
+	r->usr_data = s;
 	mq_push(s->e->service->mq_out,(list_node*)r);	
 }
 
 static void on_socket_disconnect(struct connection *c,int32_t reason)
 {
-	datasocket_t s = c->custom_ptr;
+	datasocket_t s = c->usr_data;
 	if(reason == -1)
 	{
 		UnRegisterTimer(c->wheelitem);
@@ -167,7 +167,7 @@ static void *mainloop(void *arg)
 			{
 				//是一个需要发送的数据包
 				wpacket_t wpk = (wpacket_t)_msg;
-				datasocket_t s = (datasocket_t)wpk->ptr;
+				datasocket_t s = (datasocket_t)wpk->usr_data;
 				on_process_send(s,wpk);
 			}
 			else

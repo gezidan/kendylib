@@ -23,16 +23,16 @@ typedef struct msg
 {
 	list_node next;
 	uint8_t   type;
-	void *ptr;	
+	uint64_t  usr_data;	
 }*msg_t;
 
 
-static inline msg_t create_msg(void *ptr,uint8_t type)
+static inline msg_t create_msg(uint64_t usr_data,uint8_t type)
 {
 	if(type <= MSG_WPACKET || type >= MSG_END)
 		return NULL;
 	msg_t m = (msg_t)calloc(1,sizeof(*m));
-	m->ptr = ptr;
+	m->usr_data = usr_data;
 	m->type = type;
 	return m;	
 }

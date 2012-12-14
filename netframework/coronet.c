@@ -1,5 +1,6 @@
 #include "coronet.h"
 #include "msg.h"
+#include <assert.h>
 
 coronet_t coronet_create()
 {
@@ -97,8 +98,7 @@ void process_rpc_return(rpacket_t r)
 		co_wakeup->rpc_response = r;
 		co_wakeup->_goback = co;
 		//直接跳过去执行co_wakeup
-		set_current_coro(co_wakeup);
-		uthread_switch(co->ut,co_wakeup->ut,co);
+		sche_sche_co(co,co_wakeup);
 	}		
 }
 

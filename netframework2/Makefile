@@ -1,5 +1,5 @@
 all:
-	gcc -g -O3 -c *.c -I../include 
+	gcc -g -O3 -c *.c -I../include -Wpointer-to-int-cast -Wint-to-pointer-cast
 	ar -rc net.a *.o
 	rm -f *.o
 	cp net.a ../dbcache/frontend/cache_server

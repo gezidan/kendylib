@@ -25,33 +25,33 @@ static inline void dispatch_msg(msg_loop_t m,msg_t _msg)
 		case MSG_RPACKET:
 			{
 				rpacket_t r = (rpacket_t)_msg;
-				m->_on_packet((datasocket_t)r->ptr,r);
+				m->_on_packet((datasocket_t)r->usr_data,r);
 				rpacket_destroy(&r);
 			}
 			break;
 		case MSG_NEW_CONNECTION:
 			{
-				m->_on_new_connection((datasocket_t)_msg->ptr);
+				m->_on_new_connection((datasocket_t)_msg->usr_data);
 				destroy_msg(&_msg);
 			}
 			break;
 		case MSG_DISCONNECTED:
 			{
-				datasocket_t s = (datasocket_t)_msg->ptr;
+				datasocket_t s = (datasocket_t)_msg->usr_data;
 				m->_on_connection_disconnect(s,s->close_reason);
 				destroy_msg(&_msg);
 			}
 			break;
 		case MSG_SEND_BLOCK:
 			{
-				datasocket_t s = (datasocket_t)_msg->ptr;
+				datasocket_t s = (datasocket_t)_msg->usr_data;
 				m->_on_send_block(s);
 				destroy_msg(&_msg);			
 			}
 			break;
 		case MSG_USER_TIMER_TIMEOUT:
 			{
-				struct coronet_timer *_timer = (struct coronet_timer *)_msg->ptr;
+				struct coronet_timer *_timer = (struct coronet_timer *)_msg->usr_data;
 				if( _timer->_callback(_timer->ud,GetCurrentMs()) == 1)
 					_coronet_add_timer(_timer->coron,_timer);
 				else

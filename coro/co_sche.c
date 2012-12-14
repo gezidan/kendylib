@@ -9,7 +9,7 @@ static inline int8_t _less(struct heapele*l,struct heapele*r)
 	return ((coro_t)l)->timeout < ((coro_t)r)->timeout;
 }
 
-static inline  __attribute__((always_inline))void set_current_coro(coro_t co)
+static inline void set_current_coro(coro_t co)
 {
 	current_coro = co;
 }
@@ -117,7 +117,7 @@ coro_t _sche_next_1(sche_t s,coro_t co)
 *  也为空,返回到主调度器所在的coro中
 */
 
-static inline  __attribute__((always_inline))  coro_t _sche_next(sche_t s,coro_t co)
+static inline coro_t _sche_next(sche_t s,coro_t co)
 {
 
 	coro_t next = NULL;
@@ -146,7 +146,7 @@ static inline  __attribute__((always_inline))  coro_t _sche_next(sche_t s,coro_t
 	return (coro_t)uthread_switch(co->ut,next->ut,co);
 }
 
-static inline  __attribute__((always_inline)) void sche_next(sche_t s,coro_t co,uint8_t status)
+static inline void sche_next(sche_t s,coro_t co,uint8_t status)
 {
 	co->status = status;
 
@@ -156,7 +156,7 @@ static inline  __attribute__((always_inline)) void sche_next(sche_t s,coro_t co,
 	_sche_next(s,co);
 }
 
-static inline  __attribute__((always_inline)) void sche_add_timeout(sche_t s,coro_t co)
+static inline void sche_add_timeout(sche_t s,coro_t co)
 {
 	co->status = CORO_SLEEP;
 	struct heapele *hele = &(co->_heapele);
@@ -263,5 +263,8 @@ void coro_wakeup(coro_t co)
 		LINK_LIST_PUSH_BACK(co->_sche->active_list_1,co);
 }
 
-
-
+void sche_sche_co(coro_t from,coro_t to)
+{
+	set_current_coro(to);
+	uthread_switch(from->ut,to->ut,from);
+}
