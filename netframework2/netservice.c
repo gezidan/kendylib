@@ -55,27 +55,52 @@ struct st_connd
 	uint32_t timestamp;
 };
 
-static inline struct connection *get_free_connection(struct engine_struct *e,connd_t *connd)
+static inline void on_process_packet(struct connection *c,rpacket_t r)
+{
+	datasocket_t s = (datasocket_t)c->usr_data;
+	r->usr_data = (uint64_t)s;
+	mq_push(s->e->service->mq_out,(list_node*)r);	
+}
+
+static void on_socket_disconnect(struct connection *c,int32_t reason);
+
+static struct connection *get_free_connection(struct engine_struct *e,connd_t *connd)
 {
 	uint32_t i = 1;
-	for( ; i < CON_POOL_SIZE; ++i)
+	if(0 == e->con_free_size)
 	{
-		if(0 == e->con_pool[i].timestamp)
+		//扩大容量
+		uint32_t new_size = e->con_pool_size*2;
+		struct con_pair *new_pool = calloc(new_size,sizeof(*new_pool));
+		if(!new_pool)
+			return NULL;
+		memcpy(new_pool,e->con_pool,sizeof(*new_pool)*e->con_pool_size);
+		for(i = e->con_pool_size; i < new_size; ++i)
+			e->con_pool[i].c = connection_create(-1,0,MUTIL_THREAD,on_process_packet,on_socket_disconnect);
+		i =	e->con_pool_size;
+		e->con_free_size = new_size - e->con_pool_size;
+		e->con_pool_size = new_size;
+	}
+		
+	for( ; i < e->con_pool_size; ++i)
+	{
+		if(e->con_pool[i].c && 0 == e->con_pool[i].timestamp)
 		{
 			e->con_pool[i].timestamp = GetSystemMs();
 			struct st_connd *tmp = (struct st_connd*)connd;
 			tmp->idx = i;
 			tmp->timestamp = e->con_pool[i].timestamp;
+			--e->con_free_size;
 			return e->con_pool[i].c;
 		}
-	}
+	}	
 	return NULL;
 }
 
 static inline struct connection *get_connection(struct engine_struct *e,connd_t connd)
 {
 	struct st_connd *tmp = (struct st_connd*)&connd;
-	if(tmp->idx >= 1 && tmp->idx < CON_POOL_SIZE && tmp->timestamp == e->con_pool[tmp->idx].timestamp)
+	if(tmp->idx >= 1 && tmp->idx < e->con_pool_size && tmp->timestamp == e->con_pool[tmp->idx].timestamp)
 		return e->con_pool[tmp->idx].c;
 	return NULL;
 }
@@ -83,7 +108,7 @@ static inline struct connection *get_connection(struct engine_struct *e,connd_t 
 static inline void free_connection(struct engine_struct *e,connd_t connd)
 {
 	struct st_connd *tmp = (struct st_connd*)&connd;
-	if(tmp->idx >= 1 && tmp->idx < CON_POOL_SIZE && tmp->timestamp == e->con_pool[tmp->idx].timestamp)
+	if(tmp->idx >= 1 && tmp->idx < e->con_pool_size && tmp->timestamp == e->con_pool[tmp->idx].timestamp)
 	{
 		struct connection *c = e->con_pool[tmp->idx].c;
 		ReleaseSocketWrapper(c->socket);
@@ -100,6 +125,7 @@ static inline void free_connection(struct engine_struct *e,connd_t connd)
 		if(c->wheelitem)
 			DestroyWheelItem(&(c->wheelitem));
 		e->con_pool[tmp->idx].timestamp = 0;
+		++e->con_free_size;
 	}
 }
 
@@ -216,13 +242,6 @@ static inline void on_process_send(struct engine_struct *e,wpacket_t w)
 		connection_send(c,w,NULL);
 }
 
-static inline void on_process_packet(struct connection *c,rpacket_t r)
-{
-	datasocket_t s = (datasocket_t)c->usr_data;
-	r->usr_data = (uint64_t)s;
-	mq_push(s->e->service->mq_out,(list_node*)r);	
-}
-
 static void on_socket_disconnect(struct connection *c,int32_t reason)
 {
 	datasocket_t s = (datasocket_t)c->usr_data;
@@ -332,9 +351,14 @@ netservice_t create_net_service(uint32_t thread_count)
 		s->engines[i].thread_engine = create_thread(THREAD_JOINABLE);//joinable
 		s->engines[i].service = s;
 		s->engines[i].timingwheel = CreateTimingWheel(WHEEL_TICK,MAX_WHEEL_TIME);
+		s->engines[i].con_pool = calloc(INIT_CON_POOL_SIZE,sizeof(*s->engines[i].con_pool));
+		s->engines[i].con_pool_size = INIT_CON_POOL_SIZE;
+		s->engines[i].con_free_size = INIT_CON_POOL_SIZE-1;
 		uint32_t j = 1;
-		for( ; j < CON_POOL_SIZE; ++j)
+		for( ; j < INIT_CON_POOL_SIZE; ++j)
+		{
 			s->engines[i].con_pool[j].c = connection_create(-1,0,MUTIL_THREAD,on_process_packet,on_socket_disconnect);		
+		}
 		thread_run(mainloop,&s->engines[i]);//启动线程
 	}
 	thread_run(_Listen,s);//启动listener线程
@@ -364,8 +388,9 @@ void destroy_net_service(netservice_t *s)
 	for( ;i < _s->engine_count; ++i)
 	{
 		uint32_t j = 1;
-		for( ; j < CON_POOL_SIZE; ++j)
+		for( ; j < _s->engines[i].con_pool_size; ++j)
 			connection_destroy(&_s->engines[i].con_pool[j].c);
+		free(_s->engines[i].con_pool);
 		DestroyTimingWheel(&_s->engines[i].timingwheel);
 		destroy_thread(&_s->engines[i].thread_engine);
 		CloseEngine(_s->engines[i].engine);

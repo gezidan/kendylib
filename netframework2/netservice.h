@@ -33,7 +33,7 @@ struct con_pair
 	struct   connection *c;
 	uint32_t timestamp;
 };
-#define CON_POOL_SIZE 4096
+#define INIT_CON_POOL_SIZE 1024
 struct engine_struct
 {
 	mq_t     mq_in;
@@ -41,7 +41,9 @@ struct engine_struct
 	thread_t thread_engine;
 	struct netservice *service;
 	TimingWheel_t timingwheel;
-	struct con_pair con_pool[CON_POOL_SIZE];
+	struct con_pair *con_pool;
+	uint32_t         con_pool_size;//连接池大小
+	uint32_t         con_free_size;//可用连接的数量
 };
 
 #define MAX_IO_THREADS 64               //最大IO线程数量
