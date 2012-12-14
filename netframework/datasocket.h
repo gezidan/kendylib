@@ -23,18 +23,21 @@
 #include "netservice.h"
 
 struct engine_struct;
-
+typedef uint64_t connd_t;
 typedef struct datasocket
 {
 	struct refbase _refbase;
-	struct connection *c;
+	connd_t c;
+	//struct connection *c;
 	mq_t           _mq;
 	struct engine_struct *e;
 	int32_t  close_reason;
 	volatile int8_t is_close;
+	uint32_t recv_timeout;
+	uint32_t send_timeout;
 }*datasocket_t;
 
-datasocket_t create_datasocket(struct engine_struct *e,struct connection*,mq_t _mq);
+datasocket_t create_datasocket(struct engine_struct *e,connd_t,mq_t _mq);
 void         close_datasocket(datasocket_t);    //active close datasocket connection
 void         release_datasocket(datasocket_t*);  //decrease ref count
 void	     acquire_datasocket(datasocket_t);  //increase ref count; 
