@@ -3,7 +3,6 @@ all:
 	ar -rc kendy.a *.o
 	cp kendy.a ../../luanet
 	cp kendy.a ../netframework/test
-	cp kendy.a ../netframework2/test
 	cp kendy.a ../rpctest
 	cp kendy.a ../dbcache/frontend
 	mv kendy.a ../test
@@ -13,7 +12,6 @@ debug:
 	ar -rc kendy.a *.o
 	cp kendy.a ../../luanet
 	cp kendy.a ../netframework/test
-	cp kendy.a ../netframework2/test
 	cp kendy.a ../rpctest
 	cp kendy.a ../dbcache/frontend	
 	mv kendy.a ../test
