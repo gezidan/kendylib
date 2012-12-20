@@ -61,7 +61,7 @@ struct map_node** maze_get_neighbors(struct map_node *mnode)
 }
 
 //计算到达相临节点需要的代价
-double maze_cal_G_value(struct path_node *from,struct path_node *to)
+double maze_cost_2_neighbor(struct path_node *from,struct path_node *to)
 {
 	struct maze_node *_from = (struct maze_node*)from->_map_node;
 	struct maze_node *_to = (struct maze_node*)to->_map_node;
@@ -84,7 +84,7 @@ double maze_cal_G_value(struct path_node *from,struct path_node *to)
 	}	
 }
 
-double maze_cal_H_value(struct path_node *from,struct path_node *to)
+double maze_cost_2_goal(struct path_node *from,struct path_node *to)
 {
 	struct maze_node *_from = (struct maze_node*)from->_map_node;
 	struct maze_node *_to = (struct maze_node*)to->_map_node;
@@ -138,7 +138,7 @@ int main()
 	struct maze_map *map = create_map(array,25,15);
 	struct map_node *from = (struct map_node*)get_mazenode_by_xy(map,1,1);
 	struct map_node *to = (struct map_node*)get_mazenode_by_xy(map,4,1);
-	struct A_star_procedure *astar = create_astar(maze_get_neighbors,maze_cal_G_value,maze_cal_H_value);
+	struct A_star_procedure *astar = create_astar(maze_get_neighbors,maze_cost_2_neighbor,maze_cost_2_goal);
 	struct path_node *path = find_path(astar,from,to);
 	while(path)
 	{

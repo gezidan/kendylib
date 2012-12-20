@@ -110,7 +110,7 @@ struct path_node* find_path(struct A_star_procedure *astar,struct map_node *from
 					continue;//在close表中,不做处理
 				if(is_in_openlist(neighbor))
 				{
-					double new_G = current_node->G + astar->_cal_G_value(current_node,neighbor);
+					double new_G = current_node->G + astar->_cost_2_neighbor(current_node,neighbor);
 					if(new_G < neighbor->G)
 					{
 						//经过当前neighbor路径更佳,更新路径
@@ -121,8 +121,8 @@ struct path_node* find_path(struct A_star_procedure *astar,struct map_node *from
 					continue;
 				}
 				neighbor->parent = current_node;
-				neighbor->G = current_node->G + astar->_cal_G_value(current_node,neighbor);
-				neighbor->H = astar->_cal_H_value(neighbor,_to);
+				neighbor->G = current_node->G + astar->_cost_2_neighbor(current_node,neighbor);
+				neighbor->H = astar->_cost_2_goal(neighbor,_to);
 				neignbor->F = neighbor->G + neighbor->H;
 				insert_2_open(astar,neighbor);					
 			}
@@ -145,12 +145,12 @@ static uint64_t _hash_func_(void* key)
 }
 
 
-struct A_star_procedure *create_astar(get_neighbors _get_neighbors,cal_G_value _cal_G_value,cal_H_value _cal_H_value)
+struct A_star_procedure *create_astar(get_neighbors _get_neighbors,cost_2_neighbor _cost_2_neighbor,cost_2_goal _cost_2_goal)
 {
 	struct A_star_procedure *astar = (struct A_star_procedure *)calloc(1,sizeof(*astar));
 	astar->_get_neighbors = _get_neighbors;
-	astar->_cal_G_value = _cal_G_value;
-	astar->_cal_H_value = _cal_H_value;
+	astar->_cost_2_neighbor = _cost_2_neighbor;
+	astar->_cost_2_goal = _cost_2_goal;
 	double_link_clear(&astar->open_list);
 	double_link_clear(&astar->close_list);
 	astar->mnode_2_pnode = (4096,sizeof(void*),sizeof(void*),_hash_func_,_hash_key_eq_);

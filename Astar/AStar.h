@@ -37,22 +37,22 @@ struct path_node
 //由使用者提供的3个函数
 //get_neighbors约定:如果一个map_node*是阻挡点,将不会被返回
 typedef struct map_node** (*get_neighbors)(struct map_node*);
-typedef double (*cal_G_value)(struct path_node*,struct path_node*);
-typedef double (*cal_H_value)(struct path_node*,struct path_node*);
+typedef double (*cost_2_neighbor)(struct path_node*,struct path_node*);
+typedef double (*cost_2_goal)(struct path_node*,struct path_node*);
 
 //一次路径搜索的过程对象
 struct A_star_procedure
 {
 	get_neighbors _get_neighbors;
-	cal_G_value _cal_G_value;//用于计算两个路径点G值的函数指针
-	cal_H_value _cal_H_value;//用于计算两个路径点H值的函数指针
+	cost_2_neighbor _cost_2_neighbor;//用于计算两个路径点G值的函数指针
+	cost_2_goal _cost_2_goal;//用于计算两个路径点H值的函数指针
 	struct double_link open_list;
 	struct double_link close_list;
 	hash_map_t mnode_2_pnode;//map_node到path_node的映射
 	struct link_list *pnodes;//所有临时path_node列表
 };
 
-struct A_star_procedure *create_astar(get_neighbors,cal_G_value,cal_H_value);
+struct A_star_procedure *create_astar(get_neighbors,cost_2_neighbor,cost_2_goal);
 //寻找从from到to的路径,找到返回路径点,否则返回NULL
 struct path_node* find_path(struct A_star_procedure *astar,struct map_node *from,struct map_node *to);
 void   destroy_Astar(struct A_star_procedure**);
