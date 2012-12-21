@@ -102,7 +102,7 @@ static inline void swap(int *a, int *b)
 
 struct map_node** _8_get_neighbors(struct map_node *mnode)
 {
-	struct map_node **ret = (struct map_node **)calloc(4,sizeof(*ret));
+	struct map_node **ret = (struct map_node **)calloc(5,sizeof(*ret));
 	struct _8puzzle_node *__8puzzle_node = (struct _8puzzle_node*)mnode;
 	struct _8puzzle_map *_puzzle_map = __8puzzle_node->_map;
 	int p[3][3];
@@ -119,6 +119,7 @@ struct map_node** _8_get_neighbors(struct map_node *mnode)
 		struct _8puzzle_node *tmp = getnode_by_pv(_puzzle_map,p);
 		ret[c++] = (struct map_node*)tmp;
 	}
+	ret[c] = NULL;
 	return ret;
 }
 

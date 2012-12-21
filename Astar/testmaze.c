@@ -44,7 +44,7 @@ struct maze_node *get_mazenode_by_xy(struct maze_map *map,int x,int y)
 //获得当前maze_node的8个临近节点,如果是阻挡点会被忽略
 struct map_node** maze_get_neighbors(struct map_node *mnode)
 {
-	struct map_node **ret = (struct map_node **)calloc(8,sizeof(*ret));
+	struct map_node **ret = (struct map_node **)calloc(9,sizeof(*ret));
 	struct maze_node *_maze_node = (struct maze_node*)mnode;
 	struct maze_map *_maze_map = _maze_node->_map;
 	int32_t i = 0;
@@ -57,6 +57,7 @@ struct map_node** maze_get_neighbors(struct map_node *mnode)
 		if(tmp && tmp->value != BLOCK)
 			ret[c++] = (struct map_node*)tmp;
 	}
+	ret[c] = NULL;
 	return ret;
 }
 
