@@ -164,9 +164,6 @@ void destroy_map(struct _8puzzle_map **map)
 	free(*map);
 }
 
-/* 先检查是否无解,原理见:
-*  http://blog.csdn.net/tiaotiaoyly/article/details/2008233
-*/
 int8_t check(int *a,int *b)
 {
 	uint32_t _a = 0;
@@ -226,7 +223,10 @@ int main()
 			{
 				for(j = 0; j < 3; ++j)
 				{
-					printf("%d",mnode->puzzle[i][j]);
+					if(mnode->puzzle[i][j] == 0)
+						printf(" ");
+					else
+						printf("%d",mnode->puzzle[i][j]);
 				}
 				printf("\n");
 			}
