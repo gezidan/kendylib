@@ -111,6 +111,7 @@ static int32_t _hash_map_expand(hash_map_t h)
 		h->slot_size >>= 1;
 		return -1;
 	}
+	h->size = 0;
 	for(; i < old_slot_size; ++i)
 	{
 		struct hash_item *_item = GET_ITEM(old_items,h->item_size,i);
