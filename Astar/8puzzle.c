@@ -173,13 +173,13 @@ int8_t check(int *a,int *b)
 	for( ; i < 9; ++i)
 	{
 		for( j = i+1;j<9;++j)
-			if(a[i] > a[j])
+			if((a[i]!=0 && a[j]) != 0 && (a[i] > a[j]))
 				++_a;
 	}
 	for( i=0; i < 9; ++i)
 	{
 		for( j = i+1;j<9;++j)
-			if(b[i] > b[j])
+			if((b[i]!=0 && b[j]) != 0 && (b[i] > b[j]))
 				++_b;
 	}
 	return _a%2 == _b%2;
@@ -188,7 +188,6 @@ int8_t check(int *a,int *b)
 int main()
 {
 	{	
-		
 		int f[3][3] = {
 			{2,3,4},
 			{1,8,5},
@@ -199,43 +198,97 @@ int main()
 			{1,2,3},
 			{8,0,4},
 			{7,6,5},
+		};		
+		if(!check(&f[0][0],&t[0][0]))
+		{
+			printf("no way\n");
+		}
+		else
+		{
+			struct _8puzzle_map *map = create_map();
+			struct map_node *from = (struct map_node*)getnode_by_pv(map,f);
+			struct map_node *to = (struct map_node*)getnode_by_pv(map,t);
+			struct A_star_procedure *astar = create_astar(_8_get_neighbors,_8_cost_2_neighbor,_8_cost_2_goal);
+			struct path_node *path = find_path(astar,from,to);
+			printf("\n");
+			if(!path)
+				printf("no way\n");
+			while(path)
+			{
+				struct _8puzzle_node *mnode = (struct _8puzzle_node *)path->_map_node;
+				int i = 0;
+				int j = 0;
+				for( ; i < 3; ++i)
+				{
+					for(j = 0; j < 3; ++j)
+					{
+						if(mnode->puzzle[i][j] == 0)
+							printf(" ");
+						else
+							printf("%d",mnode->puzzle[i][j]);
+					}
+					printf("\n");
+				}
+				printf("\n");
+				path = path->parent;
+			}
+			printf("state count:%d\n",hash_map_size(map->puzzle_2_mnode));
+			destroy_map(&map);
+			destroy_Astar(&astar);	
+		}		
+	}
+	
+	{	
+		int f[3][3] = {
+			{1,2,3},
+			{4,5,6},
+			{7,8,0},
+		};
+		
+		int t[3][3] = {
+			{8,7,6},
+			{5,4,3},
+			{2,1,0},
 		};	
 		if(!check(&f[0][0],&t[0][0]))
 		{
 			printf("no way\n");
-			exit(0);
 		}
-		
-		struct _8puzzle_map *map = create_map();
-		struct map_node *from = (struct map_node*)getnode_by_pv(map,f);
-		struct map_node *to = (struct map_node*)getnode_by_pv(map,t);
-		struct A_star_procedure *astar = create_astar(_8_get_neighbors,_8_cost_2_neighbor,_8_cost_2_goal);
-		struct path_node *path = find_path(astar,from,to);
-		printf("\n");
-		if(!path)
-			printf("no way\n");
-		while(path)
+		else
 		{
-			struct _8puzzle_node *mnode = (struct _8puzzle_node *)path->_map_node;
-			int i = 0;
-			int j = 0;
-			for( ; i < 3; ++i)
+		
+			struct _8puzzle_map *map = create_map();
+			struct map_node *from = (struct map_node*)getnode_by_pv(map,f);
+			struct map_node *to = (struct map_node*)getnode_by_pv(map,t);
+			struct A_star_procedure *astar = create_astar(_8_get_neighbors,_8_cost_2_neighbor,_8_cost_2_goal);
+			struct path_node *path = find_path(astar,from,to);
+			printf("\n");
+			if(!path)
+				printf("no way\n");
+			while(path)
 			{
-				for(j = 0; j < 3; ++j)
+				struct _8puzzle_node *mnode = (struct _8puzzle_node *)path->_map_node;
+				int i = 0;
+				int j = 0;
+				for( ; i < 3; ++i)
 				{
-					if(mnode->puzzle[i][j] == 0)
-						printf(" ");
-					else
-						printf("%d",mnode->puzzle[i][j]);
+					for(j = 0; j < 3; ++j)
+					{
+						if(mnode->puzzle[i][j] == 0)
+							printf(" ");
+						else
+							printf("%d",mnode->puzzle[i][j]);
+					}
+					printf("\n");
 				}
 				printf("\n");
+				path = path->parent;
 			}
-			printf("\n");
-			path = path->parent;
+			printf("state count:%d\n",hash_map_size(map->puzzle_2_mnode));
+			destroy_map(&map);
+			destroy_Astar(&astar);
 		}
-		destroy_map(&map);
-		destroy_Astar(&astar);		
-	}
+	}	
 	return 0;
 }
 
