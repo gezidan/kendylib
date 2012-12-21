@@ -159,7 +159,7 @@ struct A_star_procedure *create_astar(get_neighbors _get_neighbors,cost_2_neighb
 	double_link_clear(&astar->open_list);
 	double_link_clear(&astar->close_list);
 	astar->pnodes = create_link_list();
-	astar->mnode_2_pnode = hash_map_create(4096,sizeof(void*),sizeof(void*),_hash_func_,_hash_key_eq_);
+	astar->mnode_2_pnode = hash_map_create(40960,sizeof(void*),sizeof(void*),_hash_func_,_hash_key_eq_);
 	return astar;
 }
 

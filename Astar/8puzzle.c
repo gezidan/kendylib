@@ -41,17 +41,23 @@ static inline uint64_t _hash_func_(void* key)
 static inline uint64_t puzzle_value(int p[3][3])
 {
 	uint64_t pv = 0;
-	int c = 100000000;
+	static int factor[9] = {
+		100000000,
+		10000000,
+		1000000,
+		100000,
+		10000,
+		1000,
+		100,
+		10,
+		1,		
+	};
+	int c = 0;
 	int i = 0;
 	int j = 0;
 	for( ; i < 3; ++i)
-	{
 		for(j = 0;j < 3;++j)
-		{
-			pv += p[i][j]*c;
-			c/=10;
-		}
-	}
+			pv += p[i][j]*factor[c++];
 	return pv;
 }
 
@@ -61,7 +67,7 @@ struct _8puzzle_map
 	hash_map_t puzzle_2_mnode;
 };
 
-struct _8puzzle_node* getnode_by_pv(struct _8puzzle_map *pmap,int p[3][3])
+struct _8puzzle_node* getnode_by_pv(struct _8puzzle_map *pmap,int p[3][3],int zero_x,int zero_y)
 {
 	hash_map_t h = pmap->puzzle_2_mnode;
 	uint64_t pv = puzzle_value(p);
@@ -76,6 +82,12 @@ struct _8puzzle_node* getnode_by_pv(struct _8puzzle_map *pmap,int p[3][3])
 		pnode->_map = pmap;
 		LINK_LIST_PUSH_BACK(pmap->mnodes,&pnode->_lnode);
 		HASH_MAP_INSERT(uint64_t,void*,h,pv,(void*)pnode);
+		if(zero_x >= 0 && zero_y >= 0)
+		{
+			pnode->zero_x = zero_x;
+			pnode->zero_y = zero_y;
+			return pnode;
+		}
 		int i = 0;
 		int j = 0;
 		for( ; i < 3; ++i)
@@ -116,7 +128,7 @@ struct map_node** _8_get_neighbors(struct map_node *mnode)
 			continue;
 		memcpy(p,__8puzzle_node->puzzle,sizeof(int)*9);
 		swap(&p[y][x],&p[__8puzzle_node->zero_y][__8puzzle_node->zero_x]);		
-		struct _8puzzle_node *tmp = getnode_by_pv(_puzzle_map,p);
+		struct _8puzzle_node *tmp = getnode_by_pv(_puzzle_map,p,x,y);
 		ret[c++] = (struct map_node*)tmp;
 	}
 	ret[c] = NULL;
@@ -132,17 +144,13 @@ double _8_cost_2_goal(struct path_node *from,struct path_node *to)
 {
 	struct _8puzzle_node *_from = (struct _8puzzle_node*)from->_map_node;
 	struct _8puzzle_node *_to = (struct _8puzzle_node*)to->_map_node;
+	int *tmp_from = (int*)_from->puzzle;
+	int *tmp_to = (int*)_to->puzzle;
 	int i = 0;
-	int j = 0;
 	double sum = 0.0f;
-	for( ; i < 3; ++i)
-	{
-		for(j = 0; j < 3; ++j)
-		{
-			if(_from->puzzle[i][j] != _to->puzzle[i][j])
-				++sum;
-		}
-	}
+	for( ; i < 9; ++i)
+		if(tmp_from[i] != tmp_to[i])
+			++sum;
 	return sum*5.0f;
 }
 
@@ -150,7 +158,7 @@ struct _8puzzle_map *create_map()
 {
 	struct _8puzzle_map *map = (struct _8puzzle_map *)calloc(1,sizeof(*map));
 	map->mnodes = create_link_list();
-	map->puzzle_2_mnode = hash_map_create(4096,sizeof(uint64_t),sizeof(void*),_hash_func_,_hash_key_eq_);
+	map->puzzle_2_mnode = hash_map_create(40960,sizeof(uint64_t),sizeof(void*),_hash_func_,_hash_key_eq_);
 	return map;
 }
 
@@ -208,8 +216,8 @@ int main()
 		else
 		{
 			struct _8puzzle_map *map = create_map();
-			struct map_node *from = (struct map_node*)getnode_by_pv(map,f);
-			struct map_node *to = (struct map_node*)getnode_by_pv(map,t);
+			struct map_node *from = (struct map_node*)getnode_by_pv(map,f,-1,-1);
+			struct map_node *to = (struct map_node*)getnode_by_pv(map,t,-1,-1);
 			struct A_star_procedure *astar = create_astar(_8_get_neighbors,_8_cost_2_neighbor,_8_cost_2_goal);
 			struct path_node *path = find_path(astar,from,to);
 			printf("\n");
@@ -236,7 +244,7 @@ int main()
 				++path_count;
 			}
 			printf("path_count:%d\n",path_count);
-			printf("state count:%d\n",hash_map_size(map->puzzle_2_mnode));
+			printf("state count:%d\n",link_list_size(map->mnodes));
 			destroy_map(&map);
 			destroy_Astar(&astar);	
 		}		
@@ -262,8 +270,8 @@ int main()
 		{
 		
 			struct _8puzzle_map *map = create_map();
-			struct map_node *from = (struct map_node*)getnode_by_pv(map,f);
-			struct map_node *to = (struct map_node*)getnode_by_pv(map,t);
+			struct map_node *from = (struct map_node*)getnode_by_pv(map,f,-1,-1);
+			struct map_node *to = (struct map_node*)getnode_by_pv(map,t,-1,-1);
 			struct A_star_procedure *astar = create_astar(_8_get_neighbors,_8_cost_2_neighbor,_8_cost_2_goal);
 			uint32_t tick = GetSystemMs();
 			struct path_node *path = find_path(astar,from,to);
@@ -292,7 +300,7 @@ int main()
 				++path_count;
 			}
 			printf("path_count:%d,%d\n",path_count,tick);
-			printf("state count:%d\n",hash_map_size(map->puzzle_2_mnode));
+			printf("state count:%d\n",link_list_size(map->mnodes));
 			destroy_map(&map);
 			destroy_Astar(&astar);
 		}
