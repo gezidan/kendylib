@@ -2,7 +2,7 @@
 #include "AStar.h"
 #include <stdio.h>
 #include <math.h>
-
+#include <assert.h>
 struct maze_map;
 struct maze_node
 {
@@ -38,13 +38,13 @@ struct maze_node *get_mazenode_by_xy(struct maze_map *map,int x,int y)
 {
 	if(x < 0 || x >= map->max_x || y < 0 || y >= map->max_y)
 		return NULL;
-	return map->_maze_map[y][x];
+	return map->_maze_map[y*map->max_x+x];
 }
 
 //获得当前maze_node的8个临近节点,如果是阻挡点会被忽略
 struct map_node** maze_get_neighbors(struct map_node *mnode)
 {
-	struct map_node **ret = (struct map_node **)calloc(8,*ret);
+	struct map_node **ret = (struct map_node **)calloc(8,sizeof(*ret));
 	struct maze_node *_maze_node = (struct maze_node*)mnode;
 	struct maze_map *_maze_map = _maze_node->_map;
 	int32_t i = 0;
@@ -52,7 +52,7 @@ struct map_node** maze_get_neighbors(struct map_node *mnode)
 	for( ; i < 8; ++i)
 	{
 		int x = _maze_node->x + direction[i][0];
-		int y = _maze_node->x + direction[i][1];
+		int y = _maze_node->y + direction[i][1];
 		struct maze_node *tmp = get_mazenode_by_xy(_maze_map,x,y);
 		if(tmp && tmp->value != BLOCK)
 			ret[c++] = (struct map_node*)tmp;
@@ -93,26 +93,33 @@ double maze_cost_2_goal(struct path_node *from,struct path_node *to)
 	return (delta_x * 50.0f) + (delta_y * 50.0f);
 }
 
-struct maze_map* create_map(int **array,int max_x,int max_y)
+struct maze_map* create_map(int *array,int max_x,int max_y)
 {
 	struct maze_map *_map = calloc(1,sizeof(*_map));
 	_map->max_x = max_x;
 	_map->max_y = max_y;
-	_map->_maze_map = calloc(max_x,max_y,sizeof(struct maze_node*));
+	_map->_maze_map = (struct maze_node**)calloc(max_x*max_y,sizeof(struct maze_node*));
 	int i = 0;
 	int j = 0;
 	for( ; i < max_y; ++i)
 	{
-		for( ; j < max_x ++j)
-		{
-			_map->_maze_map[i][j] = calloc(1,sizeof(struct maze_node));
-			_map->_maze_map[i][j]->_map = _map;
-			_map->_maze_map[i][j]->x = j;
-			_map->_maze_map[i][j]->y = i;
-			_map->_maze_map[i][j]->value = array[i][j];
+		for(j = 0; j < max_x;++j)
+		{		
+			_map->_maze_map[i*max_x+j] = calloc(1,sizeof(struct maze_node));
+			struct maze_node *tmp = _map->_maze_map[i*max_x+j];
+			tmp->_map = _map;
+			tmp->x = j;
+			tmp->y = i;
+			tmp->value = array[i*max_x+j];			
 		}
 	}
 	return _map;
+}
+
+void destroy_map(struct maze_map **map)
+{
+	free((*map)->_maze_map);
+	free(*map);
 }
 
 int main()
@@ -123,40 +130,117 @@ int main()
 		{2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
 		{2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
 		{2,0,0,2,0,0,0,0,0,0,0,0,2,2,2,2,2,2,2,2,0,0,0,0,2},
-		{2,0,0,2,0,0,2,2,2,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,2},
-		{2,0,0,2,0,0,2,0,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,2},
-		{2,0,0,2,0,0,2,0,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,2},
-		{2,0,0,2,0,0,2,0,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,2},
-		{2,0,0,2,0,0,2,0,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,2},
-		{2,0,0,2,0,0,2,0,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,2},
-		{2,0,0,2,0,0,2,0,0,2,0,0,2,0,0,0,0,0,0,0,0,0,0,0,2},
-		{2,0,0,2,2,2,2,0,0,2,2,2,2,0,0,0,0,0,0,0,0,0,0,0,2},
+		{2,0,0,2,0,0,2,2,2,2,0,0,2,0,0,0,0,0,0,2,0,0,0,0,2},
+		{2,0,0,2,0,0,2,0,0,2,0,0,2,0,0,0,0,0,0,2,0,0,0,0,2},
+		{2,0,0,2,0,0,2,0,0,2,0,0,2,0,0,0,0,0,0,2,0,0,0,0,2},
+		{2,0,0,2,0,0,2,0,0,2,0,0,2,0,0,0,0,0,0,2,0,0,0,0,2},
+		{2,0,0,2,0,0,2,0,0,2,0,0,2,0,0,0,0,0,0,2,0,0,0,0,2},
+		{2,0,0,2,0,0,2,0,0,2,0,0,2,0,0,0,0,0,0,2,0,0,0,0,2},
+		{2,0,0,2,0,0,2,0,0,2,0,0,2,0,0,0,0,0,0,2,0,0,0,0,2},
+		{2,0,0,2,2,2,2,0,0,2,2,2,2,0,0,0,0,0,0,2,2,2,2,0,2},
 		{2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
 		{2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
 		{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
 	};
-	struct maze_map *map = create_map(array,25,15);
-	struct map_node *from = (struct map_node*)get_mazenode_by_xy(map,1,1);
-	struct map_node *to = (struct map_node*)get_mazenode_by_xy(map,4,1);
-	struct A_star_procedure *astar = create_astar(maze_get_neighbors,maze_cost_2_neighbor,maze_cost_2_goal);
-	struct path_node *path = find_path(astar,from,to);
-	while(path)
-	{
-		struct maze_node *mnode = (struct maze_node *)path->_map_node;
-		mnode->value = 1;
-		path = paht->parent;
-	}
-	//重新打印地图和路径
-	int i = 0;
-	int j = 0;
-	for(; i < 15; ++i)
-	{
-		for(; j < 25; ++j)
-		{
-			printf("%d",map->_maze_map[i][j]->value);
-		}
+	{	
+		struct maze_map *map = create_map((int*)array,25,15);
+		struct map_node *from = (struct map_node*)get_mazenode_by_xy(map,1,1);
+		struct map_node *to = (struct map_node*)get_mazenode_by_xy(map,4,10);
+		struct A_star_procedure *astar = create_astar(maze_get_neighbors,maze_cost_2_neighbor,maze_cost_2_goal);
+		struct path_node *path = find_path(astar,from,to);
 		printf("\n");
+		if(!path)
+			printf("no way\n");
+		while(path)
+		{
+			struct maze_node *mnode = (struct maze_node *)path->_map_node;
+			mnode->value = 1;
+			path = path->parent;
+		}	
+		//重新打印地图和路径
+		int i = 0;
+		int j = 0;
+		for(; i < 15; ++i)
+		{
+			for(j = 0; j < 25; ++j)
+			{
+				struct maze_node *tmp = get_mazenode_by_xy(map,j,i);
+				if(tmp->value != 0)
+					printf("%d",tmp->value);
+				else
+					printf(" ");
+			}
+			printf("\n");
+		}
+		destroy_map(&map);
+		destroy_Astar(&astar);
 	}
+	{	
+		struct maze_map *map = create_map((int*)array,25,15);
+		struct map_node *from = (struct map_node*)get_mazenode_by_xy(map,1,1);
+		struct map_node *to = (struct map_node*)get_mazenode_by_xy(map,11,10);
+		struct A_star_procedure *astar = create_astar(maze_get_neighbors,maze_cost_2_neighbor,maze_cost_2_goal);
+		struct path_node *path = find_path(astar,from,to);
+		printf("\n");
+		if(!path)
+			printf("no way\n");
+		while(path)
+		{
+			struct maze_node *mnode = (struct maze_node *)path->_map_node;
+			mnode->value = 1;
+			path = path->parent;
+		}	
+		//重新打印地图和路径
+		int i = 0;
+		int j = 0;
+		for(; i < 15; ++i)
+		{
+			for(j = 0; j < 25; ++j)
+			{
+				struct maze_node *tmp = get_mazenode_by_xy(map,j,i);
+				if(tmp->value != 0)
+					printf("%d",tmp->value);
+				else
+					printf(" ");
+			}
+			printf("\n");
+		}
+		destroy_map(&map);
+		destroy_Astar(&astar);
+	}
+	{	
+		struct maze_map *map = create_map((int*)array,25,15);
+		struct map_node *from = (struct map_node*)get_mazenode_by_xy(map,1,1);
+		struct map_node *to = (struct map_node*)get_mazenode_by_xy(map,4,1);
+		struct A_star_procedure *astar = create_astar(maze_get_neighbors,maze_cost_2_neighbor,maze_cost_2_goal);
+		struct path_node *path = find_path(astar,from,to);
+		printf("\n");
+		if(!path)
+			printf("no way\n");
+		while(path)
+		{
+			struct maze_node *mnode = (struct maze_node *)path->_map_node;
+			mnode->value = 1;
+			path = path->parent;
+		}	
+		//重新打印地图和路径
+		int i = 0;
+		int j = 0;
+		for(; i < 15; ++i)
+		{
+			for(j = 0; j < 25; ++j)
+			{
+				struct maze_node *tmp = get_mazenode_by_xy(map,j,i);
+				if(tmp->value != 0)
+					printf("%d",tmp->value);
+				else
+					printf(" ");
+			}
+			printf("\n");
+		}
+		destroy_map(&map);
+		destroy_Astar(&astar);
+	}	
 	return 0;
 }
 

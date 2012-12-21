@@ -15,6 +15,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <stdint.h>
+#include <stdlib.h>
 #include "double_link.h"
 #include "link_list.h"
 #include "hash_map.h"
@@ -25,8 +26,8 @@ struct map_node{};
 struct path_node
 {	
 	struct list_node l_node;	
-	double_link_node _open_list_node;
-	double_link_node _close_list_node;
+	struct double_link_node _open_list_node;
+	struct double_link_node _close_list_node;
 	struct path_node *parent;
 	struct map_node  *_map_node;
 	double G;//从初始点到当前点的开销

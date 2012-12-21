@@ -5,13 +5,13 @@
 //返回path_node是否在open表中
 static inline int8_t is_in_openlist(struct path_node *pnode)
 {
-	return pnode->_open_list_node->pre && pnode->_open_list_node->next;
+	return pnode->_open_list_node.pre && pnode->_open_list_node.next;
 }
 
 //返回path_node是否在close表中
 static inline int8_t is_in_closelist(struct path_node *pnode)
 {
-	return pnode->_open_list_node->pre && pnode->_open_list_node->next;
+	return pnode->_close_list_node.pre && pnode->_close_list_node.next;
 }
 
 static inline struct path_node *get_pnode_from_mnode(struct A_star_procedure *astar,struct map_node *mnode)
@@ -36,15 +36,16 @@ static inline struct path_node *remove_min_pnode(struct A_star_procedure *astar)
 		return NULL;
 	double min_F = DBL_MAX;
 	struct path_node *min_node = NULL;
-	double_link_node *dn = 	astar->open_list.head.next;
+	struct double_link_node *dn = 	astar->open_list.head.next;
 	while(dn != &astar->open_list.tail)
 	{
-		struct path_node *tmp = (struct path_node*)(dl+sizeof(struct list_node));
+		struct path_node *tmp = (struct path_node*)((char*)dn-sizeof(struct list_node));
 		if(tmp->F < min_F)
 		{
 			min_F = tmp->F;
 			min_node = tmp;
 		}
+		dn = dn->next;
 	}
 	
 	if(min_node)
@@ -94,6 +95,8 @@ struct path_node* find_path(struct A_star_procedure *astar,struct map_node *from
 		current_node = remove_min_pnode(astar);
 		if(!current_node)
 			return NULL;//无路可达
+		if(current_node == _to)
+			return current_node;
 		//current插入到close表
 		insert_2_close(astar,current_node);	
 		//获取current的相邻节点
@@ -115,7 +118,7 @@ struct path_node* find_path(struct A_star_procedure *astar,struct map_node *from
 					{
 						//经过当前neighbor路径更佳,更新路径
 						neighbor->G = new_G;
-						neignbor->F = neighbor->G + neighbor->H;
+						neighbor->F = neighbor->G + neighbor->H;
 						neighbor->parent = current_node;
 					}
 					continue;
@@ -123,7 +126,7 @@ struct path_node* find_path(struct A_star_procedure *astar,struct map_node *from
 				neighbor->parent = current_node;
 				neighbor->G = current_node->G + astar->_cost_2_neighbor(current_node,neighbor);
 				neighbor->H = astar->_cost_2_goal(neighbor,_to);
-				neignbor->F = neighbor->G + neighbor->H;
+				neighbor->F = neighbor->G + neighbor->H;
 				insert_2_open(astar,neighbor);					
 			}
 			free(neighbors);
@@ -134,7 +137,9 @@ struct path_node* find_path(struct A_star_procedure *astar,struct map_node *from
 
 static int32_t _hash_key_eq_(void *l,void *r)
 {
-	if(r == l)
+	struct map_node** _l = (struct map_node**)l;
+	struct map_node** _r = (struct map_node**)r;
+	if(*_r == *_l)
 		return 0;
 	return -1;
 }
@@ -153,7 +158,8 @@ struct A_star_procedure *create_astar(get_neighbors _get_neighbors,cost_2_neighb
 	astar->_cost_2_goal = _cost_2_goal;
 	double_link_clear(&astar->open_list);
 	double_link_clear(&astar->close_list);
-	astar->mnode_2_pnode = (4096,sizeof(void*),sizeof(void*),_hash_func_,_hash_key_eq_);
+	astar->pnodes = create_link_list();
+	astar->mnode_2_pnode = hash_map_create(4096,sizeof(void*),sizeof(void*),_hash_func_,_hash_key_eq_);
 	return astar;
 }
 

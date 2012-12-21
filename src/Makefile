@@ -5,6 +5,7 @@ all:
 	cp kendy.a ../netframework/test
 	cp kendy.a ../rpctest
 	cp kendy.a ../dbcache/frontend
+	cp kendy.a ../Astar
 	mv kendy.a ../test
 	rm -f *.o
 debug:
@@ -13,7 +14,8 @@ debug:
 	cp kendy.a ../../luanet
 	cp kendy.a ../netframework/test
 	cp kendy.a ../rpctest
-	cp kendy.a ../dbcache/frontend	
+	cp kendy.a ../dbcache/frontend
+	cp kendy.a ../Astar	
 	mv kendy.a ../test
 	rm -f *.o	
 all-mt:
