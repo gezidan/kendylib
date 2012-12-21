@@ -7,7 +7,7 @@
 #include "common_hash_function.h"
 #include <stdlib.h>
 #include <string.h>
-
+#include "SysTime.h"
 struct _8puzzle_map;
 struct _8puzzle_node
 {
@@ -142,7 +142,7 @@ double _8_cost_2_goal(struct path_node *from,struct path_node *to)
 				++sum;
 		}
 	}
-	return sum;
+	return sum*5.0f;
 }
 
 struct _8puzzle_map *create_map()
@@ -264,7 +264,9 @@ int main()
 			struct map_node *from = (struct map_node*)getnode_by_pv(map,f);
 			struct map_node *to = (struct map_node*)getnode_by_pv(map,t);
 			struct A_star_procedure *astar = create_astar(_8_get_neighbors,_8_cost_2_neighbor,_8_cost_2_goal);
+			uint32_t tick = GetSystemMs();
 			struct path_node *path = find_path(astar,from,to);
+			tick = GetSystemMs()-tick;
 			printf("\n");
 			if(!path)
 				printf("no way\n");
@@ -288,7 +290,7 @@ int main()
 				path = path->parent;
 				++path_count;
 			}
-			printf("path_count:%d\n",path_count);
+			printf("path_count:%d,%d\n",path_count,tick);
 			printf("state count:%d\n",hash_map_size(map->puzzle_2_mnode));
 			destroy_map(&map);
 			destroy_Astar(&astar);
