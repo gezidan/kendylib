@@ -187,6 +187,7 @@ int8_t check(int *a,int *b)
 
 int main()
 {
+	int path_count = 0;
 	{	
 		int f[3][3] = {
 			{2,3,4},
@@ -231,13 +232,15 @@ int main()
 				}
 				printf("\n");
 				path = path->parent;
+				++path_count;
 			}
+			printf("path_count:%d\n",path_count);
 			printf("state count:%d\n",hash_map_size(map->puzzle_2_mnode));
 			destroy_map(&map);
 			destroy_Astar(&astar);	
 		}		
 	}
-	
+	path_count = 0;
 	{	
 		int f[3][3] = {
 			{1,2,3},
@@ -283,7 +286,9 @@ int main()
 				}
 				printf("\n");
 				path = path->parent;
+				++path_count;
 			}
+			printf("path_count:%d\n",path_count);
 			printf("state count:%d\n",hash_map_size(map->puzzle_2_mnode));
 			destroy_map(&map);
 			destroy_Astar(&astar);
