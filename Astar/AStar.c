@@ -115,6 +115,14 @@ void minheap_insert(minheap_t m,struct path_node *e)
 	up(m,e->heap_index);	
 }
 
+void minheap_clear(minheap_t m)
+{
+	int32_t i = 1;
+	for( ; i <= m->size; ++i)
+		m->data[i]->heap_index = 0;
+	m->size = 0;
+}
+
 void minheap_remove(minheap_t m,struct path_node *e)
 {
 	struct path_node **back = calloc(1,sizeof(struct path_node*)*(m->size-1));
@@ -218,6 +226,7 @@ static inline init_state(struct A_star_procedure *astar)
 		tmp->G = tmp->H = tmp->F = 0.0f;
 		n = n->next;
 	}
+	minheap_clear(astar->open_list);
 	double_link_clear(&astar->close_list);
 }
 
