@@ -138,8 +138,7 @@ struct map_node** _8_get_neighbors(struct map_node *mnode)
 double _8_cost_2_neighbor(struct path_node *from,struct path_node *to)
 {
 	return 1.0f;
-}
-
+} 
 double _8_cost_2_goal(struct path_node *from,struct path_node *to)
 {
 	struct _8puzzle_node *_from = (struct _8puzzle_node*)from->_map_node;
@@ -150,8 +149,12 @@ double _8_cost_2_goal(struct path_node *from,struct path_node *to)
 	double sum = 0.0f;
 	for( ; i < 9; ++i)
 		if(tmp_from[i] != tmp_to[i])
-			++sum;
+			++sum;	
+#ifndef _MINHEAP_					
 	return sum*5.0f;
+#else
+	return sum*4.66f;
+#endif
 }
 
 struct _8puzzle_map *create_map()
