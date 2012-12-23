@@ -50,7 +50,6 @@ static inline void insert_2_close(struct A_star_procedure *astar,struct path_nod
 
 static inline init_state(struct A_star_procedure *astar)
 {
-	
 	struct double_link_node *dln = NULL;
 	while(dln = double_link_pop(&astar->close_list));
 	minheap_clear(astar->open_list,NULL);
