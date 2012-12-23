@@ -5,7 +5,8 @@
 
 minheap_t minheap_create(int32_t size,int8_t (*less)(struct heapele*l,struct heapele*r))
 {
-	minheap_t m = calloc(1,sizeof(*m) + (size * sizeof(struct heapele*)));
+	minheap_t m = calloc(1,sizeof(*m));// + (size * sizeof(struct heapele*)));
+	m->data = (struct heapele**)calloc(size,sizeof(struct heapele*));
 	m->size = 0;
 	m->max_size = size;
 	m->less = less;
@@ -115,13 +116,23 @@ void minheap_change(minheap_t m,struct heapele *e)
 	down(m,idx);
 	up(m,idx);
 }
-
+#include <stdio.h>
 void minheap_insert(minheap_t m,struct heapele *e)
 {
 	if(e->index)
-		return minheap_change(m,e);	
-	if(m->size >= m->max_size)
-		return;
+		return minheap_change(m,e);
+	if(m->size >= m->max_size-1)
+	{
+		//expand the heap
+		uint32_t new_size = m->max_size*2;
+		struct heapele** tmp = (struct heapele**)calloc(new_size,sizeof(struct heapele*));
+		if(!tmp)
+			return;
+		memcpy(tmp,m->data,m->max_size*sizeof(struct heapele*));
+		free(m->data);
+		m->data = tmp;
+		m->max_size = new_size;
+	}	
 	++m->size;
 	m->data[m->size] = e;
 	e->index = m->size;

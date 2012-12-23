@@ -145,7 +145,7 @@ struct A_star_procedure *create_astar(get_neighbors _get_neighbors,cost_2_neighb
 	astar->_cost_2_neighbor = _cost_2_neighbor;
 	astar->_cost_2_goal = _cost_2_goal;
 	//double_link_clear(&astar->open_list);
-	astar->open_list = minheap_create(40960,_less);
+	astar->open_list = minheap_create(1024,_less);
 	double_link_clear(&astar->close_list);
 	astar->pnodes = create_link_list();
 	astar->mnode_2_pnode = hash_map_create(81920,sizeof(void*),sizeof(void*),_hash_func_,_hash_key_eq_);

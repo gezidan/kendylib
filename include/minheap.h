@@ -27,7 +27,7 @@ typedef struct minheap
 	int32_t size;
 	int32_t max_size;
 	int8_t (*less)(struct heapele*l,struct heapele*r);//if l < r return 1,else return 0	
-	struct heapele* data[];
+	struct heapele** data;
 }*minheap_t;
 
 
