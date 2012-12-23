@@ -36,6 +36,22 @@ static inline int32_t double_link_empty(struct double_link *dl)
 	return dl->head.next == &dl->tail ? 1:0;
 }
 
+static inline struct double_link_node *double_link_first(struct double_link *dl)
+{
+	if(double_link_empty(dl))
+		return NULL;
+	return dl->head.next;
+}
+
+static inline struct double_link_node *double_link_last(struct double_link *dl)
+{
+	if(double_link_empty(dl))
+		return NULL;
+	return dl->tail.pre;
+}
+
+
+
 static inline int32_t double_link_remove(struct double_link_node *dln)
 {
 	if(!dln->pre || !dln->next)

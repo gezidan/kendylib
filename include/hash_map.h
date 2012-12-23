@@ -18,6 +18,7 @@
 #define _HASH_MAP_H
 #include <stdint.h>
 #include "common_hash_function.h"
+#include "double_link.h"
 typedef struct hash_map* hash_map_t;
 
 typedef uint64_t (*hash_func)(void*);
@@ -31,6 +32,7 @@ typedef struct
 
 struct hash_item
 {
+	struct double_link_node dnode;
 	uint64_t hash_code;
 	int8_t flag;
 	int8_t key_and_val[0];
@@ -44,6 +46,8 @@ void*          hash_map_remove(hash_map_t,void* key);
 int32_t        hash_map_is_vaild_iter(hash_map_iter);
 hash_map_iter  hash_map_find(hash_map_t,void* key); 
 void*          hash_map_erase(hash_map_t,hash_map_iter);
+hash_map_iter  hash_map_begin(hash_map_t);
+hash_map_iter  hash_map_iter_next(hash_map_iter); 
 
 int32_t        hash_map_size(hash_map_t);
 

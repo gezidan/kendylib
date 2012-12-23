@@ -162,3 +162,15 @@ struct heapele* minheap_popmin(minheap_t m)
 	}
 	return NULL;
 }
+
+void minheap_clear(minheap_t m,clear_fun f)
+{
+	uint32_t i = 1;
+	for( ; i < m->size; ++i)
+	{
+		if(f)
+			f(m->data[i]);
+		m->data[i]->index = 0;
+	}
+	m->size = 0;
+}

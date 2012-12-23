@@ -33,6 +33,8 @@ typedef struct minheap
 
 minheap_t minheap_create(int32_t size,int8_t (*)(struct heapele*l,struct heapele*r));
 void minheap_destroy(minheap_t*);
+typedef void (*clear_fun)(struct heapele*);
+void minheap_clear(minheap_t,clear_fun);
 
 void minheap_remove(minheap_t,struct heapele*);
 void minheap_change(minheap_t,struct heapele*);

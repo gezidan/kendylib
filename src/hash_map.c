@@ -22,6 +22,7 @@ struct hash_map
 	uint32_t item_size;
 	uint32_t expand_size;
 	struct hash_item *_items;
+	struct double_link dlink;
 };
 
 #define GET_KEY(HASH_MAP,ITEM) ((void*)(ITEM)->key_and_val)
@@ -52,6 +53,7 @@ hash_map_t hash_map_create(uint32_t slot_size,uint32_t key_size,
 	h->item_size = sizeof(struct hash_item) + key_size + val_size;
 	h->_items = calloc(slot_size,h->item_size);
 	h->expand_size = h->slot_size - h->slot_size/4;
+	double_link_clear(&h->dlink);
 	if(!h->_items)
 	{
 		free(h);
@@ -86,6 +88,7 @@ static struct hash_item *_hash_map_insert(hash_map_t h,void* key,void* val,uint6
 			item->hash_code = hash_code;
 			//printf("check_count:%d\n",check_count);
 			++h->size;
+			double_link_push(&h->dlink,(struct double_link_node*)item);
 			return item;
 		}
 		else
@@ -112,6 +115,7 @@ static int32_t _hash_map_expand(hash_map_t h)
 		return -1;
 	}
 	h->size = 0;
+	double_link_clear(&h->dlink);
 	for(; i < old_slot_size; ++i)
 	{
 		struct hash_item *_item = GET_ITEM(old_items,h->item_size,i);
@@ -141,6 +145,32 @@ hash_map_iter hash_map_insert(hash_map_t h,void *key,void *val)
 	return iter;
 	
 }
+
+hash_map_iter  hash_map_begin(hash_map_t h)
+{
+	hash_map_iter iter = {0,0};
+	struct hash_item *item = (struct hash_item *)double_link_first(&h->dlink);
+	if( item != NULL)
+	{
+		iter.data1 = h;
+		iter.data2 = item;
+	}
+	return iter;
+}
+
+hash_map_iter  hash_map_iter_next(hash_map_iter it)
+{
+	struct hash_item *item = it.data2;
+	hash_map_t h = it.data1 = h;
+	hash_map_iter iter = {0,0};
+	if(!item || !h)
+		return iter;
+	if(item == (struct hash_item*)double_link_last(&h->dlink))
+		return iter;
+	iter.data1 = h;
+	iter.data2 = item->dnode.next;
+	return iter;	
+} 
 
 static struct hash_item *_hash_map_find(hash_map_t h,void *key)
 {
@@ -185,6 +215,7 @@ void* hash_map_remove(hash_map_t h,void* key)
 	{
 		item->flag = ITEM_DELETE;
 		--h->size;
+		double_link_remove((struct double_link_node*)item);
 		return GET_VAL(h,item);
 	}
 	return NULL;

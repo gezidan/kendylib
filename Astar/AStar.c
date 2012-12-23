@@ -27,7 +27,6 @@ static inline struct path_node *get_pnode_from_mnode(struct A_star_procedure *as
 	{
 		pnode = calloc(1,sizeof(*pnode));
 		pnode->_map_node = mnode;
-		LINK_LIST_PUSH_BACK(astar->pnodes,pnode);
 		HASH_MAP_INSERT(void*,void*,astar->mnode_2_pnode,(void*)mnode,(void*)pnode);
 	}
 	return pnode;
@@ -36,12 +35,12 @@ static inline struct path_node *get_pnode_from_mnode(struct A_star_procedure *as
 static inline struct path_node *remove_min_pnode(struct A_star_procedure *astar)
 {
 	struct heapele *hele = minheap_popmin(astar->open_list);
-	return (struct path_node*)((char*)hele-sizeof(struct list_node));
+	return (struct path_node*)hele;
 }
 
 static inline void insert_2_open(struct A_star_procedure *astar,struct path_node *pnode)
 {
-	minheap_insert(astar->open_list,&pnode->_heapele);
+	minheap_insert(astar->open_list,(struct heapele*)pnode);
 }
 
 static inline void insert_2_close(struct A_star_procedure *astar,struct path_node *pnode)
@@ -51,16 +50,10 @@ static inline void insert_2_close(struct A_star_procedure *astar,struct path_nod
 
 static inline init_state(struct A_star_procedure *astar)
 {
-	struct list_node *n = link_list_head(astar->pnodes);
-	while(n)
-	{
-		struct path_node *tmp = (struct path_node*)n;
-		tmp->_close_list_node.pre = tmp->_close_list_node.next = NULL;
-		tmp->parent = NULL;
-		tmp->G = tmp->H = tmp->F = 0.0f;
-		n = n->next;
-	}
-	double_link_clear(&astar->close_list);
+	
+	struct double_link_node *dln = NULL;
+	while(dln = double_link_pop(&astar->close_list));
+	minheap_clear(astar->open_list,NULL);
 }
 
 struct path_node* find_path(struct A_star_procedure *astar,struct map_node *from,struct map_node *to)
@@ -133,8 +126,8 @@ static uint64_t _hash_func_(void* key)
 
 static inline int8_t _less(struct heapele*l,struct heapele*r)
 {
-	struct path_node *_l = (struct path_node*)((char*)l-sizeof(struct list_node));
-	struct path_node *_r = (struct path_node*)((char*)r-sizeof(struct list_node));  
+	struct path_node *_l = (struct path_node*)l;
+	struct path_node *_r = (struct path_node*)r;  
 	return _l->F < _r->F;
 }
 
@@ -144,25 +137,23 @@ struct A_star_procedure *create_astar(get_neighbors _get_neighbors,cost_2_neighb
 	astar->_get_neighbors = _get_neighbors;
 	astar->_cost_2_neighbor = _cost_2_neighbor;
 	astar->_cost_2_goal = _cost_2_goal;
-	//double_link_clear(&astar->open_list);
-	astar->open_list = minheap_create(1024,_less);
+	astar->open_list = minheap_create(8192,_less);
 	double_link_clear(&astar->close_list);
-	astar->pnodes = create_link_list();
-	astar->mnode_2_pnode = hash_map_create(81920,sizeof(void*),sizeof(void*),_hash_func_,_hash_key_eq_);
+	astar->mnode_2_pnode = hash_map_create(8192,sizeof(void*),sizeof(void*),_hash_func_,_hash_key_eq_);
 	return astar;
 }
 
 void   destroy_Astar(struct A_star_procedure **_astar)
 {
 	struct A_star_procedure *astar = *_astar;
-	struct list_node *n = NULL;
-	while(n = link_list_pop(astar->pnodes))
+	hash_map_iter it = hash_map_begin(astar->mnode_2_pnode);
+	while(hash_map_is_vaild_iter(it))
 	{
-		struct path_node *tmp = (struct path_node*)n;
+		struct path_node *tmp = HASH_MAP_ITER_GET(struct path_node*,it);
 		free(tmp);
+		it = hash_map_iter_next(it);
 	}
 	minheap_destroy(&astar->open_list);
-	destroy_link_list(&astar->pnodes);
 	hash_map_destroy(&astar->mnode_2_pnode);
 	free(astar);
 	*_astar = NULL;
