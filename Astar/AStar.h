@@ -33,9 +33,7 @@ struct map_node{};
 //路径节点
 struct path_node
 {	
-	//struct list_node l_node;
 	struct heapele _heapele;	
-	//struct double_link_node _open_list_node;
 	struct double_link_node _close_list_node;
 	struct path_node *parent;
 	struct map_node  *_map_node;
@@ -57,10 +55,8 @@ struct A_star_procedure
 	cost_2_neighbor _cost_2_neighbor;//用于计算两个路径点G值的函数指针
 	cost_2_goal _cost_2_goal;//用于计算两个路径点H值的函数指针
 	minheap_t open_list;
-	//struct double_link open_list;
 	struct double_link close_list;
 	hash_map_t mnode_2_pnode;//map_node到path_node的映射
-	//struct link_list *pnodes;//所有临时path_node列表
 };
 
 struct A_star_procedure *create_astar(get_neighbors,cost_2_neighbor,cost_2_goal);
