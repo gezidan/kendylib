@@ -150,11 +150,7 @@ double _8_cost_2_goal(struct path_node *from,struct path_node *to)
 	for( ; i < 9; ++i)
 		if(tmp_from[i] != tmp_to[i])
 			++sum;	
-#ifndef _MINHEAP_					
-	return sum*5.0f;
-#else
 	return sum*4.66f;
-#endif
 }
 
 struct _8puzzle_map *create_map()
