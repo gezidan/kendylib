@@ -123,6 +123,41 @@ void destroy_map(struct maze_map **map)
 	free(*map);
 }
 
+void show_maze(struct maze_map *map,struct A_star_procedure *astar,int fx,int fy,int tx,int ty)
+{
+	struct map_node *from = (struct map_node*)get_mazenode_by_xy(map,fx,fy);
+	struct map_node *to = (struct map_node*)get_mazenode_by_xy(map,tx,ty);
+	struct path_node *path = find_path(astar,from,to);
+	printf("\n");
+	if(!path)
+		printf("no way\n");
+	while(path)
+	{
+		struct maze_node *mnode = (struct maze_node *)path->_map_node;
+		mnode->value = 1;
+		path = path->parent;
+	}	
+	//重新打印地图和路径
+	int i = 0;
+	int j = 0;
+	for(; i < map->max_y; ++i)
+	{
+		for(j = 0; j < map->max_x; ++j)
+		{
+			struct maze_node *tmp = get_mazenode_by_xy(map,j,i);
+			if(tmp->value != 0)
+			{
+				printf("%d",tmp->value);
+				if(tmp->value == 1)
+					tmp->value = 0;
+			}
+			else
+				printf(" ");
+		}
+		printf("\n");
+	}
+}
+
 int main()
 {
 	int array[15][25] =
@@ -143,106 +178,12 @@ int main()
 		{2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2},
 		{2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
 	};
-	{	
-		struct maze_map *map = create_map((int*)array,25,15);
-		struct map_node *from = (struct map_node*)get_mazenode_by_xy(map,1,1);
-		struct map_node *to = (struct map_node*)get_mazenode_by_xy(map,4,10);
-		struct A_star_procedure *astar = create_astar(maze_get_neighbors,maze_cost_2_neighbor,maze_cost_2_goal);
-		struct path_node *path = find_path(astar,from,to);
-		printf("\n");
-		if(!path)
-			printf("no way\n");
-		while(path)
-		{
-			struct maze_node *mnode = (struct maze_node *)path->_map_node;
-			mnode->value = 1;
-			path = path->parent;
-		}	
-		//重新打印地图和路径
-		int i = 0;
-		int j = 0;
-		for(; i < 15; ++i)
-		{
-			for(j = 0; j < 25; ++j)
-			{
-				struct maze_node *tmp = get_mazenode_by_xy(map,j,i);
-				if(tmp->value != 0)
-					printf("%d",tmp->value);
-				else
-					printf(" ");
-			}
-			printf("\n");
-		}
-		destroy_map(&map);
-		destroy_Astar(&astar);
-	}
-	{	
-		struct maze_map *map = create_map((int*)array,25,15);
-		struct map_node *from = (struct map_node*)get_mazenode_by_xy(map,1,1);
-		struct map_node *to = (struct map_node*)get_mazenode_by_xy(map,11,10);
-		struct A_star_procedure *astar = create_astar(maze_get_neighbors,maze_cost_2_neighbor,maze_cost_2_goal);
-		struct path_node *path = find_path(astar,from,to);
-		printf("\n");
-		if(!path)
-			printf("no way\n");
-		while(path)
-		{
-			struct maze_node *mnode = (struct maze_node *)path->_map_node;
-			mnode->value = 1;
-			path = path->parent;
-		}	
-		//重新打印地图和路径
-		int i = 0;
-		int j = 0;
-		for(; i < 15; ++i)
-		{
-			for(j = 0; j < 25; ++j)
-			{
-				struct maze_node *tmp = get_mazenode_by_xy(map,j,i);
-				if(tmp->value != 0)
-					printf("%d",tmp->value);
-				else
-					printf(" ");
-			}
-			printf("\n");
-		}
-		destroy_map(&map);
-		destroy_Astar(&astar);
-	}
-	{	
-		struct maze_map *map = create_map((int*)array,25,15);
-		struct map_node *from = (struct map_node*)get_mazenode_by_xy(map,1,1);
-		struct map_node *to = (struct map_node*)get_mazenode_by_xy(map,4,1);
-		struct A_star_procedure *astar = create_astar(maze_get_neighbors,maze_cost_2_neighbor,maze_cost_2_goal);
-		struct path_node *path = find_path(astar,from,to);
-		printf("\n");
-		if(!path)
-			printf("no way\n");
-		while(path)
-		{
-			struct maze_node *mnode = (struct maze_node *)path->_map_node;
-			mnode->value = 1;
-			path = path->parent;
-		}	
-		//重新打印地图和路径
-		int i = 0;
-		int j = 0;
-		for(; i < 15; ++i)
-		{
-			for(j = 0; j < 25; ++j)
-			{
-				struct maze_node *tmp = get_mazenode_by_xy(map,j,i);
-				if(tmp->value != 0)
-					printf("%d",tmp->value);
-				else
-					printf(" ");
-			}
-			printf("\n");
-		}
-		destroy_map(&map);
-		destroy_Astar(&astar);
-	}	
+	struct maze_map *map = create_map((int*)array,25,15);
+	struct A_star_procedure *astar = create_astar(maze_get_neighbors,maze_cost_2_neighbor,maze_cost_2_goal);
+	show_maze(map,astar,1,1,4,10);
+	show_maze(map,astar,1,1,11,10);
+	show_maze(map,astar,1,1,4,1);	
+	destroy_map(&map);
+	destroy_Astar(&astar);
 	return 0;
 }
-
-
