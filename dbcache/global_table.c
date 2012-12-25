@@ -1,8 +1,8 @@
 #include "global_table.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include "kstring.h"
-#include "SysTime.h"
+#include "util/kstring.h"
+#include "util/SysTime.h"
 enum
 {
 	_EMPTY = 0,

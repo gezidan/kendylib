@@ -18,8 +18,8 @@
 #ifndef _DBTYPE_H
 #define _DBTYPE_H
 #include <stdint.h>
-#include "link_list.h"
-#include "refbase.h"
+#include "util/link_list.h"
+#include "util/refbase.h"
 /*
 * 定义内存数据库value支持的类型
 */

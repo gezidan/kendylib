@@ -18,9 +18,9 @@
 #ifndef _DATA_STRUCT_H
 #define _DATA_STRUCT_H
 #include <stdint.h>
-#include "refbase.h"
+#include "util/refbase.h"
 #include "dbtype.h"
-#include "link_list.h"
+#include "util/link_list.h"
 
 /*
 * 内存数据库value支持的两个容器类型

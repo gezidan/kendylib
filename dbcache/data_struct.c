@@ -1,8 +1,8 @@
 #include "data_struct.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include "SysTime.h"
-#include "common_define.h"
+#include "util/SysTime.h"
+#include "net/common_define.h"
 
 static void db_array_destroy(void *arg)
 {

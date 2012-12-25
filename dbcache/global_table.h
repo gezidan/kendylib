@@ -19,7 +19,7 @@
 #define _GLOBAL_TABLE_H
 #include "dbtype.h"
 #include "data_struct.h"
-#include "common_hash_function.h"
+#include "util/common_hash_function.h"
 #include <string.h>
 
 typedef struct global_table *global_table_t;
