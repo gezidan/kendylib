@@ -1,5 +1,5 @@
 #include "AStar.h"
-#include "common_hash_function.h"
+#include "util/common_hash_function.h"
 #include <float.h>
 #include <stdlib.h>
 #include <assert.h>

@@ -16,16 +16,10 @@
 */
 #include <stdint.h>
 #include <stdlib.h>
-#include "double_link.h"
-#include "link_list.h"
-#include "hash_map.h"
-
-#include <stdint.h>
-#include <stdlib.h>
-#include "double_link.h"
-#include "link_list.h"
-#include "hash_map.h"
-#include "minheap.h"
+#include "util/double_link.h"
+#include "util/link_list.h"
+#include "util/hash_map.h"
+#include "util/minheap.h"
 
 //一个地图块节点
 struct map_node{};

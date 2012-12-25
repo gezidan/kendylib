@@ -3,11 +3,11 @@
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
-#include "link_list.h"
-#include "common_hash_function.h"
+#include "util/link_list.h"
+#include "util/common_hash_function.h"
 #include <stdlib.h>
 #include <string.h>
-#include "SysTime.h"
+#include "util/SysTime.h"
 struct _8puzzle_map;
 struct _8puzzle_node
 {
