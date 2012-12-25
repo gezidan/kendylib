@@ -1,11 +1,11 @@
 #include "netservice.h"
 #include "msg.h"
 #include "datasocket.h"
-#include "mq.h"
-#include "SysTime.h"
-#include "double_link.h"
-#include "block_obj_allocator.h"
-#include "Connector.h"
+#include "util/mq.h"
+#include "util/SysTime.h"
+#include "util/double_link.h"
+#include "util/block_obj_allocator.h"
+#include "net/Connector.h"
 
 extern struct socket_wrapper* GetSocketByHandle(HANDLE);
 extern int32_t      ReleaseSocketWrapper(HANDLE);

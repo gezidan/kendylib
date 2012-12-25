@@ -18,14 +18,14 @@
 #ifndef _NETSERVICE_H
 #define _NETSERVICE_H
 
-#include "mq.h"
-#include "thread.h"
-#include "KendyNet.h"
-#include "Acceptor.h"
+#include "util/mq.h"
+#include "util/thread.h"
+#include "net/KendyNet.h"
+#include "net/Acceptor.h"
 #include "msg.h"
-#include "timing_wheel.h"
-#include "wpacket.h"
-#include "rpacket.h"
+#include "util/timing_wheel.h"
+#include "net/wpacket.h"
+#include "net/rpacket.h"
 
 struct netservice;
 struct con_pair

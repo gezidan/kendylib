@@ -19,8 +19,8 @@
 #define _MSG_LOOP_H
 
 #include "datasocket.h"
-#include "rpacket.h"
-#include "thread.h"
+#include "net/rpacket.h"
+#include "util/thread.h"
 #include "netservice.h"
 
 //主消息循环，用于提取并处理从网络层过来的消息

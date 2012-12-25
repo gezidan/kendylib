@@ -17,9 +17,9 @@
 #ifndef _DATASOCKET_H
 #define _DATASOCKET_H
 
-#include "Connection.h"
-#include "refbase.h"
-#include "mq.h"
+#include "net/Connection.h"
+#include "util/refbase.h"
+#include "util/mq.h"
 #include "netservice.h"
 
 struct engine_struct;

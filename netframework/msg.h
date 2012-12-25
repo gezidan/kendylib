@@ -17,8 +17,8 @@
 
 #ifndef _MSG_H
 #define _MSG_H
-#include "KendyNet.h"
-#include "common_define.h"
+#include "net/KendyNet.h"
+#include "net/common_define.h"
 typedef struct msg
 {
 	list_node next;
