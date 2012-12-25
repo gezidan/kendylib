@@ -17,12 +17,11 @@
 #ifndef _COSCHE_H
 #define _COSCHE_H
 
-#include "minheap.h"
-#include "uthread.h"
-#include "minheap.h"
-#include "link_list.h"
-#include "rpacket.h"
-#include "double_link.h"
+#include "util/minheap.h"
+#include "util/uthread.h"
+#include "util/link_list.h"
+#include "net/rpacket.h"
+#include "util/double_link.h"
 
 enum
 {
