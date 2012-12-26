@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "uthread.h"
-#include "SysTime.h"
+#include "util/uthread.h"
+#include "util/SysTime.h"
 #include <stdlib.h>
 void* ufun2(void *arg)
 {

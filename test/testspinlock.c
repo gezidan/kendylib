@@ -1,8 +1,8 @@
-#include "thread.h"
-#include "atomic.h"
-#include "spinlock.h"
+#include "util/thread.h"
+#include "util/atomic.h"
+#include "util/spinlock.h"
 #include <stdio.h>
-#include "SysTime.h"
+#include "util/SysTime.h"
 
 spinlock_t g_lock;
 static atomic_32_t counter = 0;

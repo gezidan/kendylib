@@ -1,6 +1,5 @@
 #include "uthread.h"
 #include <stdlib.h>
-#include <ucontext.h>
 #include <pthread.h>
 #include "link_list.h"
 
@@ -200,6 +199,7 @@ void* __attribute__((regparm(3))) uthread_switch(uthread_t from,uthread_t to,voi
 
 
 /*
+#include <ucontext.h>
 struct uthread
 {
    ucontext_t ucontext;	

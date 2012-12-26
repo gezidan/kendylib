@@ -1,7 +1,7 @@
 timer:
 	gcc -g -o test testtimer.c kendy.a -I../include -lrt
 thread:
-	gcc -g -o test testthread.c kendy.a -I../include -lpthread
+	gcc -g -o test testthread.c ../lib/util.a -I../ -lpthread
 wheel:kendy.a testwheel.c
 	gcc -g -o wheel testwheel.c kendy.a -I../include -lrt -lpthread
 accept_connect:
@@ -13,10 +13,10 @@ client:kendy.a testclient.c
 	gcc -O3 -g -o client testclient.c kendy.a -I../include -lpthread -lrt -ltcmalloc
 objpool:kendy.a
 	gcc -O3 -g -o objpool testobjpool.c kendy.a -I../include -lpthread -lrt -ltcmalloc
-spin:kendy.a
-	gcc -g -o spin testspinlock.c kendy.a -I../include -lpthread -lrt
-ut:kendy.a testuthread.c
-	gcc -g -O3 -o ut testuthread.c kendy.a -I../include -lpthread -lrt -ltcmalloc
+spin:testspinlock.c
+	gcc -g -o spin testspinlock.c ../lib/util.a -I../ -lpthread
+ut:testuthread.c
+	gcc -g -O3 -o ut testuthread.c ../lib/util.a -I../ -lpthread
 ut-debug:kendy.a testuthread.c
 	gcc -g -o ut testuthread.c kendy.a -I../include -lpthread -lrt -ltcmalloc	 
 log:kendy.a testlog.c

@@ -55,8 +55,13 @@ void thread_start_run(thread_t t,thread_routine r,void *arg)
 void thread_suspend(thread_t t,int32_t ms)
 {
 	pthread_t self = pthread_self();
+#ifdef _MINGW_
+	if(self.p != t->threadid.p || self.x != t->threadid.x)
+		return;
+#else	
 	if(self != t->threadid)
 		return;//只能挂起自己
+#endif	
 	mutex_lock(t->mtx);
 	if(0 >= ms)
 	{
@@ -78,8 +83,13 @@ void thread_suspend(thread_t t,int32_t ms)
 void thread_resume(thread_t t)
 {
 	pthread_t self = pthread_self();
+#ifdef _MINGW_
+	if(self.p != t->threadid.p || self.x != t->threadid.x)
+		return;
+#else	
 	if(self == t->threadid)
 		return;//只能有其它线程resume
+#endif
 	mutex_lock(t->mtx);
 	if(t->is_suspend)
 	{

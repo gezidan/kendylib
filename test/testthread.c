@@ -1,6 +1,6 @@
-#include "thread.h"
+#include "util/thread.h"
 #include <stdio.h>
-#include "sync.h"
+#include "util/sync.h"
 
 
 void *routine(void *arg)
