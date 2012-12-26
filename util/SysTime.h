@@ -1,6 +1,5 @@
 #ifndef _SYSTIME_H
 #define _SYSTIME_H
-#include <sys/timerfd.h>
 #include <stdint.h>
 #include <time.h>
 #include <sys/time.h> 
