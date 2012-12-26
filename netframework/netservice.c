@@ -20,7 +20,7 @@ static allocator_t wpacket_allocator = NULL;
 #define ENGINE_RUN_TIME 2               //网络循环的运行时间(单位ms)
 #define WHEEL_TICK 1000                 //时间轮的时间间隔(单位ms)
 
-
+static cc_count = 0;
 int32_t init_net_service()
 {
 	if(0 == is_init)
@@ -139,14 +139,19 @@ static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 	if(NULL == c)
 		return;
 	if(c->recv_timeout > 0 && now > c->last_recv && now - c->last_recv >= c->recv_timeout)
-	{
+	{		
+		printf("recv timeout\n");
+		show_connection_info(c);
 		//超时了,关闭套接口
 		free_connection(s->e,s->c);
 		//通知上层，连接超时关闭
 		s->close_reason = -3;
 		s->is_close = 1;
-		msg_t _msg = create_msg((uint64_t)s,MSG_DISCONNECTED);
+		msg_t _msg = create_msg((uint64_t)s,MSG_DISCONNECTED);		
+
 		mq_push(s->e->service->mq_out,(list_node*)_msg);
+
+
 		return;
 	}else
 	{
@@ -160,10 +165,13 @@ static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 		if(w)
 		{
 			if(now > w->send_tick && now - w->send_tick >= c->send_timeout)
-			{
+			{				
+				printf("send timeout\n");
+				show_connection_info(c);
 				//发送队列队首包超过了15秒任然没有发出去,通知上层,发送阻塞
 				msg_t _msg = create_msg((uint64_t)s,MSG_SEND_BLOCK);
 				mq_push(s->e->service->mq_out,(list_node*)_msg);
+
 			}
 		}
 	}
@@ -194,6 +202,8 @@ static void on_process_msg(struct engine_struct *e,msg_t _msg)
 					exit(0);
 					return;
 				}
+				++cc_count;
+				printf("cc_count:%d\n",cc_count);
 				c->rpacket_allocator = rpacket_allocator;
 				c->socket = s;
 				setNonblock(s);
@@ -244,6 +254,8 @@ static inline void on_process_send(struct engine_struct *e,wpacket_t w)
 
 static void on_socket_disconnect(struct connection *c,int32_t reason)
 {
+	--cc_count;
+	printf("cc_count:%d\n",cc_count);
 	datasocket_t s = (datasocket_t)c->usr_data;
 	UnRegisterTimer(c->wheelitem);
 	free_connection(s->e,s->c);
@@ -255,6 +267,7 @@ static void on_socket_disconnect(struct connection *c,int32_t reason)
 		s->is_close = 1;
 		msg_t _msg = create_msg((uint64_t)s,MSG_DISCONNECTED);
 		mq_push(s->e->service->mq_out,(list_node*)_msg);
+		mq_flush();
 	}
 }
 

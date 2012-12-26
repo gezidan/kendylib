@@ -1,13 +1,13 @@
 #include "netservice.h"
 #include "msg_loop.h"
 #include "datasocket.h"
-#include "SysTime.h"
+#include "util/SysTime.h"
 
 atomic_32_t wpacket_count = 0;
 atomic_32_t rpacket_count = 0;
 atomic_32_t buf_count = 0;
 
-#define MAX_CLIENT 1000
+#define MAX_CLIENT 5000
 static datasocket_t clients[MAX_CLIENT];
 uint32_t send_count = 0;
 void init_clients()
@@ -72,14 +72,14 @@ uint32_t total_bytes_recv = 0;
 void server_process_packet(datasocket_t s,rpacket_t r)
 {
 	total_bytes_recv += rpacket_len(r);
-	send2_all_client(r);
-	//send2_client(s,r);	
+	//send2_all_client(r);
+	send2_client(s,r);	
 }
 
 void process_new_connection(datasocket_t s)
 {
-	set_recv_timeout(s,60*1000);
-	set_send_timeout(s,60*1000);
+	set_recv_timeout(s,10*1000);
+	set_send_timeout(s,10*1000);
 	add_client(s);
 	++count;
 	printf("%d\n",count);

@@ -6,6 +6,7 @@
 #include "epoll.h"
 #include "Engine.h"
 #include "Socket.h"
+#include <stdio.h>
 
 socket_t create_socket()
 {
@@ -139,4 +140,11 @@ int32_t  Process(socket_t s)
 	int32_t read_active = s->readable && !LINK_LIST_IS_EMPTY(s->pending_recv);
 	int32_t write_active = s->writeable && !LINK_LIST_IS_EMPTY(s->pending_send);
 	return (read_active || write_active) && s->isactived == 0;
+}
+
+void show_s_info(socket_t s)
+{
+	printf("readable:%d,writeable:%d,isactived:%d\n",s->readable,s->writeable,s->isactived);
+	printf("pending_send:%d\n",link_list_size(s->pending_send));
+	printf("pending_recv:%d\n",link_list_size(s->pending_recv));
 }

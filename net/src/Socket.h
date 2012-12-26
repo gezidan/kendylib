@@ -44,5 +44,6 @@ void free_socket(socket_t*);
 
 int32_t raw_send(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_code);
 int32_t raw_recv(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_code);
+void show_s_info(socket_t s);
 
 #endif

@@ -384,3 +384,18 @@ void connection_active_close(struct connection *c)
 	if(c->_on_disconnect)
 		c->_on_disconnect(c,-2);//-2,active colse
 }
+#include "Socket.h"
+#include "HandleMgr.h"
+#include "SocketWrapper.h"
+void show_connection_info(struct connection *c)
+{
+	if(c->recv_overlap.isUsed)
+		printf("recv_overlap.isUsed\n");
+	if(c->send_overlap.isUsed)
+		printf("send_overlap.isUsed\n");
+	socket_t s = GetSocketByHandle(c->socket);
+	if(s)
+		show_s_info(s);
+	else
+		printf("s == NULL\n");
+}

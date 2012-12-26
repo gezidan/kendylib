@@ -1,10 +1,10 @@
 #include <stdio.h>
-#include "SocketWrapper.h"
-#include "SysTime.h"
-#include "KendyNet.h"
-#include "Connector.h"
-#include "Connection.h"
-#include "common_define.h"
+#include "net/SocketWrapper.h"
+#include "util/SysTime.h"
+#include "net/KendyNet.h"
+#include "net/Connector.h"
+#include "net/Connection.h"
+#include "net/common_define.h"
 allocator_t wpacket_allocator = NULL;
 
 static int32_t connect_count = 0;
@@ -69,16 +69,14 @@ void on_process_packet(struct connection *c,rpacket_t r)
 		ava_interval /= 2;
 	}
 	++packet_recv;
-	rpacket_destroy(&r);
-/*	
+	rpacket_destroy(&r);	
 	wpacket_t wpk = wpacket_create(SINGLE_THREAD,wpacket_allocator,64,0);
 	wpacket_write_uint32(wpk,c->socket);
 	uint32_t sys_t = GetSystemMs();
 	wpacket_write_uint32(wpk,sys_t);
 	wpacket_write_string(wpk,"hello kenny");
 	connection_send(c,wpk,NULL);
-	++send_request;
-*/	
+	++send_request;	
 }
 
 void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
@@ -155,6 +153,7 @@ int32_t main(int32_t argc,char **argv)
 		if(now - send_tick > send_interval)
 		{
 			send_tick = now;
+			/*
 			for(i = 0; i < client_count; ++i)
 			{
 					if(clients[i])
@@ -170,7 +169,7 @@ int32_t main(int32_t argc,char **argv)
 						connection_send(clients[i],wpk,NULL);
 						}
 					}
-			}
+			}*/
 				
 		}
 		

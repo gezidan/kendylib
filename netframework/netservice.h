@@ -33,7 +33,7 @@ struct con_pair
 	struct   connection *c;
 	uint32_t timestamp;
 };
-#define INIT_CON_POOL_SIZE 1024
+#define INIT_CON_POOL_SIZE 4096
 struct engine_struct
 {
 	mq_t     mq_in;

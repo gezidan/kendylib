@@ -1,16 +1,16 @@
 
-#include "KendyNet.h"
-#include "Connection.h"
+#include "net/KendyNet.h"
+#include "net/Connection.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "thread.h"
-#include "SocketWrapper.h"
-#include "SysTime.h"
-#include "Acceptor.h"
+#include "util/thread.h"
+#include "net/SocketWrapper.h"
+#include "util/SysTime.h"
+#include "net/Acceptor.h"
 #include <stdint.h>
-#include "block_obj_allocator.h"
+#include "util/block_obj_allocator.h"
 #include <assert.h>
-#include "common_define.h"
+#include "net/common_define.h"
 uint32_t packet_recv = 0;
 uint32_t packet_send = 0;
 uint32_t send_request = 0;
@@ -21,7 +21,7 @@ uint32_t last_send_tick = 0;
 allocator_t wpacket_allocator = NULL;
 uint32_t total_bytes_recv = 0;
 
-#define MAX_CLIENT 500
+#define MAX_CLIENT 2000
 static struct connection *clients[MAX_CLIENT];
 
 void init_clients()
@@ -81,10 +81,10 @@ void remove_client(struct connection *c,int32_t reason)
 
 void on_process_packet(struct connection *c,rpacket_t r)
 {
-	send2_all_client(r);
-	//wpacket_t w = wpacket_create_by_rpacket(wpacket_allocator,r);
-	//connection_send(c,w,NULL);	
-	//++send_request;
+	//send2_all_client(r);
+	wpacket_t w = wpacket_create_by_rpacket(wpacket_allocator,r);
+	connection_send(c,w,NULL);	
+	++send_request;
 	
 	total_bytes_recv += rpacket_len(r);
 	rpacket_destroy(&r);
