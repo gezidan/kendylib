@@ -21,12 +21,13 @@
 #include "util/refbase.h"
 #include "util/mq.h"
 #include "netservice.h"
-
+#include "util/double_link.h"
 struct engine_struct;
 typedef uint64_t connd_t;
 typedef struct datasocket
 {
 	struct refbase _refbase;
+	struct double_link_node dn;
 	connd_t c;
 	//struct connection *c;
 	mq_t           _mq;

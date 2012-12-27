@@ -102,14 +102,11 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 	{
 		if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN))
 		{
+			printf("recv close\n");
 			c->recv_overlap.isUsed = 0;
+			c->is_close = 1;
 			if(!c->send_overlap.isUsed)
 			{
-				if(c->is_close == 1)
-				{
-					printf("RecvFinish is_close\n");
-					exit(0);
-				}
 				//-1,passive close
 				c->_on_disconnect(c,-1);
 			}
@@ -286,14 +283,10 @@ void SendFinish(int32_t bytestransfer,st_io *io)
 	{
 		if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN))
 		{
+			printf("send close\n");
 			c->send_overlap.isUsed = 0;
 			if(!c->recv_overlap.isUsed)
 			{
-				if(c->is_close == 1)
-				{
-					printf("SendFinish is_close\n");
-					exit(0);
-				}
 				//-1,passive close
 				c->_on_disconnect(c,-1);
 			}
@@ -313,7 +306,13 @@ void SendFinish(int32_t bytestransfer,st_io *io)
 				{
 					//没有数据需要发送了
 					c->send_overlap.isUsed = 0;
-					return;
+					if(c->is_close)
+					{
+						bytestransfer = 0;
+						break;
+					}
+					else
+						return;
 				}
 				bytestransfer = WSASend(c->socket,io,SEND_NOW,&err_code);
 			}
@@ -364,7 +363,7 @@ int connection_destroy(struct connection** c)
 int32_t connection_start_recv(struct connection *c)
 {
 	if(c->unpack_buf)
-		return -1;
+		return -10;
 	c->unpack_buf = buffer_create_and_acquire(c->mt,NULL,BUFFER_SIZE);
 	c->next_recv_buf = buffer_acquire(NULL,c->unpack_buf);
 	c->next_recv_pos = c->unpack_pos = c->unpack_size = 0;
@@ -374,7 +373,7 @@ int32_t connection_start_recv(struct connection *c)
 	c->recv_overlap.isUsed = 1;
 	c->recv_overlap.m_super.iovec = c->wrecvbuf;
 	uint32_t err_code;
-	return WSARecv(c->socket,&c->recv_overlap.m_super,0,&err_code);
+	return WSARecv(c->socket,&c->recv_overlap.m_super,RECV_POST,&err_code);
 }
 
 void connection_active_close(struct connection *c)
@@ -383,19 +382,4 @@ void connection_active_close(struct connection *c)
 	c->recv_overlap.isUsed = c->send_overlap.isUsed = 0;
 	if(c->_on_disconnect)
 		c->_on_disconnect(c,-2);//-2,active colse
-}
-#include "Socket.h"
-#include "HandleMgr.h"
-#include "SocketWrapper.h"
-void show_connection_info(struct connection *c)
-{
-	if(c->recv_overlap.isUsed)
-		printf("recv_overlap.isUsed\n");
-	if(c->send_overlap.isUsed)
-		printf("send_overlap.isUsed\n");
-	socket_t s = GetSocketByHandle(c->socket);
-	if(s)
-		show_s_info(s);
-	else
-		printf("s == NULL\n");
 }

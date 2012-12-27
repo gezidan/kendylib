@@ -20,7 +20,6 @@ static allocator_t wpacket_allocator = NULL;
 #define ENGINE_RUN_TIME 2               //网络循环的运行时间(单位ms)
 #define WHEEL_TICK 1000                 //时间轮的时间间隔(单位ms)
 
-static cc_count = 0;
 int32_t init_net_service()
 {
 	if(0 == is_init)
@@ -140,18 +139,13 @@ static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 		return;
 	if(c->recv_timeout > 0 && now > c->last_recv && now - c->last_recv >= c->recv_timeout)
 	{		
-		printf("recv timeout\n");
-		show_connection_info(c);
 		//超时了,关闭套接口
 		free_connection(s->e,s->c);
 		//通知上层，连接超时关闭
 		s->close_reason = -3;
 		s->is_close = 1;
 		msg_t _msg = create_msg((uint64_t)s,MSG_DISCONNECTED);		
-
 		mq_push(s->e->service->mq_out,(list_node*)_msg);
-
-
 		return;
 	}else
 	{
@@ -166,8 +160,6 @@ static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 		{
 			if(now > w->send_tick && now - w->send_tick >= c->send_timeout)
 			{				
-				printf("send timeout\n");
-				show_connection_info(c);
 				//发送队列队首包超过了15秒任然没有发出去,通知上层,发送阻塞
 				msg_t _msg = create_msg((uint64_t)s,MSG_SEND_BLOCK);
 				mq_push(s->e->service->mq_out,(list_node*)_msg);
@@ -193,6 +185,7 @@ static void on_process_msg(struct engine_struct *e,msg_t _msg)
 		case MSG_NEW_CONNECTION:
 			{
 				HANDLE s = (HANDLE)_msg->usr_data;
+				setNonblock(s);
 				connd_t con = 0;
 				struct connection *c = get_free_connection(e,&con);
 				if(!c)
@@ -202,20 +195,29 @@ static void on_process_msg(struct engine_struct *e,msg_t _msg)
 					exit(0);
 					return;
 				}
-				++cc_count;
-				printf("cc_count:%d\n",cc_count);
-				c->rpacket_allocator = rpacket_allocator;
-				c->socket = s;
-				setNonblock(s);
-				datasocket_t data_s = create_datasocket(e,con,e->mq_in);
-				c->usr_data = (uint64_t)data_s;
-				//通知上层，一个新连接到来
-				msg_t _msg = create_msg((uint64_t)data_s,MSG_NEW_CONNECTION);
-				mq_push(e->service->mq_out,(list_node*)_msg);
-				mq_flush();
-				Bind2Engine(e->engine,s,RecvFinish,SendFinish);
-				c->last_recv = GetSystemMs();
-				connection_start_recv(c);
+				if(0!=Bind2Engine(e->engine,s,RecvFinish,SendFinish))
+				{
+					ReleaseSocketWrapper(s);
+					connection_destroy(&c);
+				}
+				else
+				{				
+					c->rpacket_allocator = rpacket_allocator;
+					c->socket = s;
+					datasocket_t data_s = create_datasocket(e,con,e->mq_in);
+					c->usr_data = (uint64_t)data_s;
+					//通知上层，一个新连接到来
+					msg_t _msg = create_msg((uint64_t)data_s,MSG_NEW_CONNECTION);
+					mq_push(e->service->mq_out,(list_node*)_msg);
+					mq_flush();
+					c->last_recv = GetSystemMs();
+					int32_t ret = connection_start_recv(c);
+					if(-10 == ret)
+					{
+						printf("connection_start_recv error:%d\n",ret);
+						exit(0);
+					}
+				}
 			}
 			break;
 			
@@ -254,8 +256,6 @@ static inline void on_process_send(struct engine_struct *e,wpacket_t w)
 
 static void on_socket_disconnect(struct connection *c,int32_t reason)
 {
-	--cc_count;
-	printf("cc_count:%d\n",cc_count);
 	datasocket_t s = (datasocket_t)c->usr_data;
 	UnRegisterTimer(c->wheelitem);
 	free_connection(s->e,s->c);
@@ -294,7 +294,7 @@ static void *mainloop(void *arg)
 				on_process_msg(e,_msg);
 				destroy_msg(&_msg);
 			}
-		}
+		}		
 		//执行超时检测
 		UpdateWheel(e->timingwheel,GetCurrentMs());
 		//////////

@@ -69,6 +69,4 @@ int32_t connection_start_recv(struct connection*);
 
 void SendFinish(int32_t bytetransfer,st_io *io);
 void RecvFinish(int32_t bytetransfer,st_io *io);
-void show_connection_info(struct connection *c);
-
 #endif

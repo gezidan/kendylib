@@ -87,7 +87,7 @@ static inline void _recv(socket_t s)
 		if(io_req = LINK_LIST_POP(st_io*,s->pending_recv))
 		{
 			ret = raw_recv(s,io_req,&bytes_transfer,&io_req->err_code);
-			if(ret >= 0 || io_req->err_code != EAGAIN)
+			if(io_req->err_code != EAGAIN)
 				s->OnRead(bytes_transfer,io_req);		
 		}
 	}
@@ -127,7 +127,7 @@ static inline void _send(socket_t s)
 		if(io_req = LINK_LIST_POP(st_io*,s->pending_send))
 		{	
 			ret = raw_send(s,io_req,&bytes_transfer,&io_req->err_code);
-			if(ret >= 0 || io_req->err_code != EAGAIN)
+			if(io_req->err_code != EAGAIN)
 				s->OnWrite(bytes_transfer,io_req);
 		}
 	}	
@@ -140,11 +140,4 @@ int32_t  Process(socket_t s)
 	int32_t read_active = s->readable && !LINK_LIST_IS_EMPTY(s->pending_recv);
 	int32_t write_active = s->writeable && !LINK_LIST_IS_EMPTY(s->pending_send);
 	return (read_active || write_active) && s->isactived == 0;
-}
-
-void show_s_info(socket_t s)
-{
-	printf("readable:%d,writeable:%d,isactived:%d\n",s->readable,s->writeable,s->isactived);
-	printf("pending_send:%d\n",link_list_size(s->pending_send));
-	printf("pending_recv:%d\n",link_list_size(s->pending_recv));
 }

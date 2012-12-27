@@ -26,6 +26,7 @@
 #include "util/timing_wheel.h"
 #include "net/wpacket.h"
 #include "net/rpacket.h"
+#include "util/double_link.h"
 
 struct netservice;
 struct con_pair
