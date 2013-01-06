@@ -28,4 +28,4 @@ hash:kendy.a testhash.c
 testmq:kendy.a testmq.c
 	gcc -g -O3 -o testmq testmq.c kendy.a -I../include -lpthread -lrt -ltcmalloc
 syn_st:test_syn_st.c
-	gcc -g -O3 -o syn_st test_syn_st.c ../lib/util.a -I../ -lpthread -ltcmalloc								
+	gcc -g -O3 -o syn_st test_syn_st.c ../lib/util.a -I../ -lpthread								
