@@ -52,22 +52,18 @@ struct point GetPoint()
 	{
 		struct point *ptr_p = g_point;
 		int save_version = ptr_p->version;
+		ret.x = ptr_p->x;
+		ret.y = ptr_p->y;
+		ret.z = ptr_p->z;
+		//__sync_synchronize();
 		if(ptr_p == g_point && save_version == ptr_p->version)
 		{
-			ret.x = ptr_p->x;
-			ret.y = ptr_p->y;
-			ret.z = ptr_p->z;
-			//__sync_synchronize();
-			if(ptr_p == g_point && save_version == ptr_p->version)
+			if(ret.x != ret.y || ret.x != ret.z || ret.y != ret.z)
 			{
-				if(ret.x != ret.y || ret.x != ret.z || ret.y != ret.z)
-				{
-					printf("%d,%d,%d,%u\n",ret.x,ret.y,ret.z,save_version);
-					assert(0);
-				}	
-				break;
-			}
-			++miss_count;
+				printf("%d,%d,%d,%u\n",ret.x,ret.y,ret.z,save_version);
+				assert(0);
+			}	
+			break;
 		}
 		++miss_count;
 	}
@@ -121,8 +117,8 @@ int main()
 	SetPoint(p);
 	thread_t t1 = CREATE_THREAD_RUN(1,SetRotine,NULL);
 	thread_t t2 = CREATE_THREAD_RUN(1,GetRoutine,NULL);	
-	//thread_t t3 = CREATE_THREAD_RUN(1,GetRoutine,NULL);
-	//thread_t t4 = CREATE_THREAD_RUN(1,GetRoutine,NULL);								
+	thread_t t3 = CREATE_THREAD_RUN(1,GetRoutine,NULL);
+	thread_t t4 = CREATE_THREAD_RUN(1,GetRoutine,NULL);								
 	uint32_t tick = GetSystemMs();
 	while(1)
 	{
