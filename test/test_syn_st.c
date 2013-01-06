@@ -1,5 +1,5 @@
-//#define _GNU_SOURCE
-//#include <sched.h>
+#define _GNU_SOURCE
+#include <sched.h>
 #include "util/thread.h"
 #include "util/SysTime.h"
 #include "util/atomic.h"
@@ -57,7 +57,7 @@ struct point GetPoint()
 		ret.x = ptr_p->x;
 		ret.y = ptr_p->y;
 		ret.z = ptr_p->z;
-		//__sync_synchronize();
+		__asm__ volatile("" : : : "memory");
 		if(ptr_p == g_point && save_version == ptr_p->version)
 		{
 			if(ret.x != ret.y || ret.x != ret.z || ret.y != ret.z)
@@ -85,9 +85,9 @@ void SetPoint(struct point p)
 	new_p->x = p.x;
 	new_p->y = p.y;
 	new_p->z = p.z;
-	//__sync_synchronize();
+	__asm__ volatile("" : : : "memory");
 	new_p->version = ++g_version;
-	//__sync_synchronize();
+	__asm__ volatile("" : : : "memory");
 	g_point = new_p;
 	++set_count;
 }
@@ -95,13 +95,12 @@ void SetPoint(struct point p)
 
 void *SetRotine(void *arg)
 {
-	/*
 	cpu_set_t mask;
 	CPU_ZERO(&mask);
     CPU_SET(0, &mask);
     if (pthread_setaffinity_np(pthread_self(), sizeof(mask), &mask) < 0) {
 		fprintf(stderr, "set thread affinity failed\n");
-    }*/	
+    }
 	while(1)
 	{
 		struct point p;
@@ -112,13 +111,13 @@ void *SetRotine(void *arg)
 
 void *GetRoutine(void *arg)
 {
-	/*
+	int n = (int)arg;	
 	cpu_set_t mask;
 	CPU_ZERO(&mask);
-    CPU_SET(1, &mask);
+    CPU_SET(n, &mask);
     if (pthread_setaffinity_np(pthread_self(), sizeof(mask), &mask) < 0) {
 		fprintf(stderr, "set thread affinity failed\n");
-    }*/		
+    }
 	while(1)
 	{
 		struct point p = GetPoint();
@@ -132,9 +131,9 @@ int main()
 	p.x = p.y = p.z = 1;
 	SetPoint(p);
 	thread_t t1 = CREATE_THREAD_RUN(1,SetRotine,NULL);
-	thread_t t2 = CREATE_THREAD_RUN(1,GetRoutine,NULL);	
-	//thread_t t3 = CREATE_THREAD_RUN(1,GetRoutine,NULL);
-	//thread_t t4 = CREATE_THREAD_RUN(1,GetRoutine,NULL);								
+	thread_t t2 = CREATE_THREAD_RUN(1,GetRoutine,(void*)1);
+	thread_t t3 = CREATE_THREAD_RUN(1,GetRoutine,(void*)2);	
+	thread_t t4 = CREATE_THREAD_RUN(1,GetRoutine,(void*)3);							
 	uint32_t tick = GetSystemMs();
 	while(1)
 	{
