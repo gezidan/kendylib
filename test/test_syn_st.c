@@ -15,81 +15,94 @@ struct point
 	volatile int y;
 	volatile int z;
 };
+//#define _USE_MTX_
+
+struct point_container
+{
+	uint32_t g_version;
+	struct point  array[2];	
+	int32_t index;
+	mutex_t mtx;
+#ifdef _USE_MTX_
+	struct point p;
+#else
+	volatile struct point *ptr;
+#endif	
+};
+
+struct point_container g_points[1000];
 
 volatile int get_count = 0;
 volatile int set_count = 0;
 volatile int miss_count = 0;
-mutex_t mtx;
-//#define _USE_MTX_
+
 #ifdef _USE_MTX_
 struct point g_point;
-struct point GetPoint()
+struct point GetPoint(struct point_container *pc)
 {
-	mutex_lock(mtx);
+	mutex_lock(pc->mtx);
 	struct point ret;
-	ret.x = g_point.x;
-	ret.y = g_point.y;
-	ret.z = g_point.z;
-	++get_count;
-	mutex_unlock(mtx);
+	ret.x = pc->p.x;
+	ret.y = pc->p.y;
+	ret.z = pc->p.z;
+	mutex_unlock(pc->mtx);
+	ATOMIC_INCREASE(&get_count);
 	return ret;
 }
-void SetPoint(struct point p)
+void SetPoint(struct point_container *pc,struct point p)
 {
-	mutex_lock(mtx);
-	g_point.x = p.x;
-	g_point.y = p.y;
-	g_point.z = p.z;
-	++set_count;
-	mutex_unlock(mtx);
+	mutex_lock(pc->mtx);
+	pc->p.x = p.x;
+	pc->p.y = p.y;
+	pc->p.z = p.z;
+	mutex_unlock(pc->mtx);
+	ATOMIC_INCREASE(&set_count);
 }
 
 #else
-struct point * volatile g_point = NULL;
-
-struct point GetPoint()
+struct point GetPoint(struct point_container *pc)
 {
 	struct point ret;
 	while(1)
 	{
-		struct point *ptr_p = g_point;
+		volatile struct point *ptr_p = pc->ptr;
 		int save_version = ptr_p->version;
-		ret.x = ptr_p->x;
-		ret.y = ptr_p->y;
-		ret.z = ptr_p->z;
-		__asm__ volatile("" : : : "memory");
-		if(ptr_p == g_point && save_version == ptr_p->version)
+		if(ptr_p == pc->ptr && save_version == ptr_p->version)
 		{
-			if(ret.x != ret.y || ret.x != ret.z || ret.y != ret.z)
+			ret.x = ptr_p->x;
+			ret.y = ptr_p->y;
+			ret.z = ptr_p->z;
+			__asm__ volatile("" : : : "memory");
+			if(ptr_p == pc->ptr && save_version == ptr_p->version)
 			{
-				printf("%d,%d,%d,%u\n",ret.x,ret.y,ret.z,save_version);
-				assert(0);
-			}	
-			break;
+				if(ret.x != ret.y || ret.x != ret.z || ret.y != ret.z)
+				{
+					printf("%d,%d,%d,%u\n",ret.x,ret.y,ret.z,save_version);
+					assert(0);
+				}	
+				break;
+			}
+			ATOMIC_INCREASE(&miss_count);
 		}
-		++miss_count;
-	}
-	++get_count;
+		else
+			ATOMIC_INCREASE(&miss_count);
+	}	
+	ATOMIC_INCREASE(&get_count);
 	return ret;
 }
 
-void SetPoint(struct point p)
+void SetPoint(struct point_container *pc,struct point p)
 {
-	static uint32_t g_version = 0;
-	struct point *old_p = g_point;
-	static struct point  array[2];	
-	static int32_t index  = 0;
-	
-	struct point *new_p = &array[index];
-	index = (index + 1)%2;	
+	struct point *new_p = &pc->array[pc->index];
+	pc->index = (pc->index + 1)%2;
 	new_p->x = p.x;
 	new_p->y = p.y;
 	new_p->z = p.z;
 	__asm__ volatile("" : : : "memory");
-	new_p->version = ++g_version;
+	new_p->version = ++pc->g_version;
 	__asm__ volatile("" : : : "memory");
-	g_point = new_p;
-	++set_count;
+	pc->ptr = new_p;	
+	ATOMIC_INCREASE(&set_count);
 }
 #endif
 
@@ -101,11 +114,15 @@ void *SetRotine(void *arg)
     if (pthread_setaffinity_np(pthread_self(), sizeof(mask), &mask) < 0) {
 		fprintf(stderr, "set thread affinity failed\n");
     }
+    int idx = 0;
+    int pos = 0;
 	while(1)
 	{
 		struct point p;
-		p.x = p.y = p.z = (rand()%10) + 1;
-		SetPoint(p);
+		++pos;
+		p.x = p.y = p.z = pos+1;
+		SetPoint(&g_points[idx],p);
+		idx = (idx + 1)%1;
 	}
 }
 
@@ -118,18 +135,24 @@ void *GetRoutine(void *arg)
     if (pthread_setaffinity_np(pthread_self(), sizeof(mask), &mask) < 0) {
 		fprintf(stderr, "set thread affinity failed\n");
     }
+    int idx = 0;
 	while(1)
 	{
-		struct point p = GetPoint();
+		struct point p = GetPoint(&g_points[idx]);
+		idx = (idx + 1)%1;
 	}
 }
 
 int main()
-{
-	mtx = mutex_create();	
+{	
 	struct point p;
 	p.x = p.y = p.z = 1;
-	SetPoint(p);
+	int i = 0;
+	for(; i < 1000; ++i)
+	{
+		g_points[i].mtx = mutex_create();
+		SetPoint(&g_points[i],p);
+	}
 	thread_t t1 = CREATE_THREAD_RUN(1,SetRotine,NULL);
 	thread_t t2 = CREATE_THREAD_RUN(1,GetRoutine,(void*)1);
 	thread_t t3 = CREATE_THREAD_RUN(1,GetRoutine,(void*)2);	
