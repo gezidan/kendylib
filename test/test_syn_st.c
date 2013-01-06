@@ -18,7 +18,7 @@ volatile int get_count = 0;
 volatile int set_count = 0;
 volatile int miss_count = 0;
 mutex_t mtx;
-#define _USE_MTX_
+//#define _USE_MTX_
 #ifdef _USE_MTX_
 struct point g_point;
 struct point GetPoint()
@@ -43,7 +43,7 @@ void SetPoint(struct point p)
 }
 
 #else
-struct point *g_point = NULL;
+struct point * volatile g_point = NULL;
 
 struct point GetPoint()
 {
@@ -52,30 +52,24 @@ struct point GetPoint()
 	{
 		struct point *ptr_p = g_point;
 		int save_version = ptr_p->version;
-		if(save_version & 0xABCD0000)
+		if(ptr_p == g_point && save_version == ptr_p->version)
 		{
 			ret.x = ptr_p->x;
 			ret.y = ptr_p->y;
 			ret.z = ptr_p->z;
-			int new_version = ptr_p->version;
-			if(ptr_p == g_point && (new_version & 0xABCD0000) && save_version == new_version)
+			//__sync_synchronize();
+			if(ptr_p == g_point && save_version == ptr_p->version)
 			{
 				if(ret.x != ret.y || ret.x != ret.z || ret.y != ret.z)
 				{
-					printf("%d,%d,%d,%u\n",ret.x,ret.y,ret.z,new_version);
+					printf("%d,%d,%d,%u\n",ret.x,ret.y,ret.z,save_version);
 					assert(0);
-				}
-				if(ret.x == 0 || ret.y == 0 || ret.z == 0)
-				{
-					printf("%d,%d,%d,%u\n",ret.x,ret.y,ret.z,new_version);
-					assert(0);
-				}			
+				}	
 				break;
 			}
 			++miss_count;
-	    }
-	    else
-			++miss_count;
+		}
+		++miss_count;
 	}
 	++get_count;
 	return ret;
@@ -93,12 +87,10 @@ void SetPoint(struct point p)
 	new_p->x = p.x;
 	new_p->y = p.y;
 	new_p->z = p.z;
-	++g_version;
-	new_p->version = 0xABCD0000 + (g_version%65535);
-	__sync_synchronize();
+	//__sync_synchronize();
+	new_p->version = ++g_version;
+	//__sync_synchronize();
 	g_point = new_p;
-	if(old_p)
-		old_p->version = 0;
 	++set_count;
 }
 #endif
@@ -141,7 +133,7 @@ int main()
 			get_count = set_count = miss_count = 0;
 			tick = new_tick;
 		}
-		sleepms(10);
+		sleepms(50);
 	}
 	//getchar();
 	return 0;
