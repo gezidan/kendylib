@@ -72,7 +72,6 @@ struct point GetPoint(struct point_container *pc)
 			ret.x = ptr_p->x;
 			ret.y = ptr_p->y;
 			ret.z = ptr_p->z;
-			__asm__ volatile("" : : : "memory");
 			if(ptr_p == pc->ptr && save_version == ptr_p->version)
 			{
 				if(ret.x != ret.y || ret.x != ret.z || ret.y != ret.z)
