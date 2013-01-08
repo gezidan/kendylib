@@ -51,7 +51,7 @@ void *GetRoutine(void *arg)
 }
 
 int main()
-{
+{		
 	struct point p;
 	p.x = p.y = p.z = 1;
 	int i = 0;

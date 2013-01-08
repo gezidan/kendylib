@@ -38,7 +38,7 @@ volatile int miss_count = 0;
 
 #ifdef _USE_MTX_
 struct point g_point;
-struct point GetPoint(struct point_container *pc)
+inline struct point GetPoint(struct point_container *pc)
 {
 	mutex_lock(pc->mtx);
 	struct point ret;
@@ -49,7 +49,7 @@ struct point GetPoint(struct point_container *pc)
 	ATOMIC_INCREASE(&get_count);
 	return ret;
 }
-void SetPoint(struct point_container *pc,struct point p)
+inline void SetPoint(struct point_container *pc,struct point p)
 {
 	mutex_lock(pc->mtx);
 	pc->p.x = p.x;
