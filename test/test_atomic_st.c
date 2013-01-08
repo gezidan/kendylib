@@ -62,8 +62,8 @@ int main()
 	}
 	thread_t t1 = CREATE_THREAD_RUN(1,SetRotine,NULL);
 	thread_t t2 = CREATE_THREAD_RUN(1,GetRoutine,(void*)1);	
-	thread_t t3 = CREATE_THREAD_RUN(1,GetRoutine,(void*)1);	
-	thread_t t4 = CREATE_THREAD_RUN(1,GetRoutine,(void*)1);	
+	thread_t t3 = CREATE_THREAD_RUN(1,GetRoutine,(void*)2);	
+	thread_t t4 = CREATE_THREAD_RUN(1,GetRoutine,(void*)3);	
 	uint32_t tick = GetSystemMs();
 	while(1)
 	{

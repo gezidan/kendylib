@@ -48,7 +48,20 @@ TYPE NAME(struct atomic_type *at)\
 		int save_version = ptr_p->version;\
 		if(ptr_p == at->ptr && save_version == ptr_p->version)\
 		{\
-			memcpy(ret.base.data,ptr_p->data,at->data_size);\
+			int s;\
+			int i = 0;\
+			if(at->data_size%4==0)\
+			{\
+				s = at->data_size/4;\
+				for(;i<s;++i)\
+					((int32_t*)ret.base.data)[i]=((int32_t*)ptr_p->data)[i];\
+			}else if(at->data_size%2==0)\
+			{\
+				s = at->data_size/2;\
+				for(;i<s;++i)\
+					((int16_t*)ret.base.data)[i]=((int16_t*)ptr_p->data)[i];\
+			}else\
+				memcpy(ret.base.data,ptr_p->data,at->data_size);\
 			__asm__ volatile("" : : : "memory");\
 			if(ptr_p == at->ptr && save_version == ptr_p->version)\
 				break;\
@@ -66,7 +79,20 @@ void NAME(struct atomic_type *at,TYPE p)\
 {\
 	struct atomic_st *new_p = at->array[at->index];\
 	at->index = (at->index + 1)%2;\
-	memcpy(new_p->data,p.base.data,at->data_size);\
+	int s;\
+	int i = 0;\
+	if(at->data_size%4==0)\
+	{\
+		s = at->data_size/4;\
+		for(;i<s;++i)\
+			((int32_t*)new_p->data)[i]=((int32_t*)p.base.data)[i];\
+	}else if(at->data_size%2==0)\
+	{\
+		s = at->data_size/2;\
+		for(;i<s;++i)\
+			((int16_t*)new_p->data)[i]=((int16_t*)p.base.data)[i];\
+	}else\
+		memcpy(new_p->data,p.base.data,at->data_size);\
 	__asm__ volatile("" : : : "memory");\
 	new_p->version = ++at->g_version;\
 	__asm__ volatile("" : : : "memory");\
