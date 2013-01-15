@@ -24,7 +24,7 @@ typedef volatile int32_t atomic_32_t;
 typedef volatile int64_t atomic_64_t;
 
 #define COMPARE_AND_SWAP(PTR,OLD,NEW) __sync_val_compare_and_swap(PTR,OLD,NEW)  
-#define ATOMIC_INCREASE(PTR) __sync_add_and_fetch(PTR,1) //Ô­×Ó¼Ó1,·µ»Ø²Ù×÷ºóµÄÖµ
-#define ATOMIC_DECREASE(PTR) __sync_sub_and_fetch(PTR,1) //Ô­×Ó¼õ1,·µ»Ø²Ù×÷ºóµÄÖµ
-
+#define ATOMIC_INCREASE(PTR) __sync_add_and_fetch(PTR,1) //Ô­ï¿½Ó¼ï¿½1,ï¿½ï¿½ï¿½Ø²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+#define ATOMIC_DECREASE(PTR) __sync_sub_and_fetch(PTR,1) //Ô­ï¿½Ó¼ï¿½1,ï¿½ï¿½ï¿½Ø²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+#define ATOMIC_SET(PTR,VAL)  __sync_lock_test_and_set(PTR,VAL)
 #endif
