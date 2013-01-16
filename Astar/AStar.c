@@ -48,6 +48,11 @@ static inline void insert_2_close(struct A_star_procedure *astar,struct path_nod
 	double_link_push(&astar->close_list,&pnode->_close_list_node);
 }
 
+static inline void change_open(struct A_star_procedure *astar,struct path_node *pnode)
+{
+	minheap_change(astar->open_list,(struct heapele*)pnode);
+}
+
 static inline init_state(struct A_star_procedure *astar)
 {
 	struct double_link_node *dln = NULL;
@@ -94,6 +99,7 @@ struct path_node* find_path(struct A_star_procedure *astar,struct map_node *from
 						neighbor->G = new_G;
 						neighbor->F = neighbor->G + neighbor->H;
 						neighbor->parent = current_node;
+						change_open(astar,neighbor);
 					}
 					continue;
 				}
