@@ -52,8 +52,8 @@ int32_t epoll_loop(engine_t n,int32_t ms)
 				s->isactived = 1;
 				double_link_push(n->actived,(struct double_link_node*)s);
 			}
-			//if(GetCurrentMs() >= timeout)
-			//	break;
+			if(GetSystemMs() >= timeout)
+				break;
 		}
 		
 		current_tick = GetSystemMs();
