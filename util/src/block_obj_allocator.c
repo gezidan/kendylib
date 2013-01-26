@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include "allocator.h"
 
+/*
+*  空闲内存列表
+*/
 struct free_list{
 	list_node next;
 	uint32_t  size;
@@ -16,6 +19,9 @@ struct free_list{
 	void *mem;
 };
 
+/*
+ * 每线程一个的内存分配器 
+*/
 struct thread_allocator
 {
 	list_node next;
@@ -37,6 +43,9 @@ struct block_obj_allocator
 	uint32_t obj_size;
 };
 
+/*
+ *从空闲列表中获取一个内存块
+*/ 
 static inline void *free_list_get(struct free_list *f)
 {
 	void *ptr = (void*)f->head;
@@ -47,6 +56,9 @@ static inline void *free_list_get(struct free_list *f)
 	return ptr;
 }
 
+/*
+ *归还内存块到空闲列表 
+*/
 static inline void free_list_put(struct free_list *f,void *ptr)
 {
 	list_node *l = (list_node*)ptr;
@@ -63,6 +75,9 @@ static inline void free_list_put(struct free_list *f,void *ptr)
 
 #define DEFAULT_BLOCK_SIZE 1024*1024
 
+/*
+ * 创建空闲内存列表，同时创建可供分配的内存块 
+*/
 static struct free_list *creat_new_freelist(uint32_t size)
 {
 	printf("creat_new_freelist\n");
@@ -82,7 +97,9 @@ static struct free_list *creat_new_freelist(uint32_t size)
 	return f;	
 }
 
-
+/*
+ * 创建空闲内存列表，不创建可供分配的内存块 
+*/
 static struct free_list *creat_empty_freelist(uint32_t size)
 {
 	printf("creat_empty_freelist\n");
