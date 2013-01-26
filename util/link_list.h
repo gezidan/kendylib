@@ -38,6 +38,11 @@ static inline struct list_node* link_list_head(struct link_list *l)
 	return l->head;
 }
 
+static inline struct list_node* link_list_tail(struct link_list *l)
+{
+	return l->tail;
+}
+
 
 static inline void link_list_swap(struct link_list *to,struct link_list *from)
 {
