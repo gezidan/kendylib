@@ -4,7 +4,7 @@ all:
 	mv util.a ../../lib
 	rm -f *.o
 debug:
-	gcc -g -c *.c -I../
+	gcc -g -c *.c -I../ -D _DEBUG
 	ar -rc util.a *.o
 	mv util.a ../../lib
 	rm -f *.o

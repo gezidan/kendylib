@@ -31,6 +31,7 @@ struct thread_allocator
 	list_node next;
 	block_obj_allocator_t central_allocator;
 	struct double_link _free_list;
+	struct double_link _empty_list;
 	uint32_t   free_size;
 };
 
@@ -45,20 +46,21 @@ struct block_obj_allocator
 	uint32_t obj_size;
 };
 
-static struct mem_list *creat_new_memlist(struct memory_block *mb,uint32_t size)
+static void init_mem_block(struct mem_list *m,struct memory_block *mb,uint32_t obj_size)
+{
+	int32_t i = 0;
+	for( ; i < m->init_size; ++i)
+	{
+		list_node *l = (list_node*)(((uint8_t*)mb->mem)+(i*obj_size));
+		LINK_LIST_PUSH_BACK(&m->l,l);
+	}
+}
+
+static struct mem_list *create_memlist(uint32_t size)
 { 	
 	uint32_t init_size = DEFAULT_BLOCK_SIZE/size;
 	struct mem_list *m = (struct mem_list*)calloc(1,sizeof(*m));
 	m->init_size = init_size;
-	if(mb)
-	{
-		int32_t i = 0;
-		for( ; i < init_size; ++i)
-		{
-			list_node *l = (list_node*)(((uint8_t*)mb->mem)+(i*size));
-			LINK_LIST_PUSH_BACK(&m->l,l);
-		}
-	}
 	return m;	
 }
 
@@ -80,7 +82,7 @@ static inline struct mem_list *central_get_memlist(block_obj_allocator_t central
 		LINK_LIST_PUSH_BACK(central->_memory_blocks,_mb);
 		*mb = _mb;
 	}
-	if(central->mtx)spin_unlock(central->mtx);	
+	if(central->mtx)spin_unlock(central->mtx);
 	return m; 
 }
 
@@ -102,19 +104,25 @@ static inline void *thread_allocator_alloc(struct thread_allocator *a)
 		m = central_get_memlist(a->central_allocator,&mb);
 		if(!m)
 		{
-			m = creat_new_memlist(mb,a->central_allocator->obj_size);
-			double_link_push(&a->_free_list,(struct double_link_node*)m);
-		}
+			m = (struct mem_list *)double_link_pop(&a->_empty_list);
+			if(!m)
+				m = create_memlist(a->central_allocator->obj_size);
+			init_mem_block(m,mb,a->central_allocator->obj_size);
+		}	
+		double_link_push(&a->_free_list,(struct double_link_node*)m);
 		a->free_size += m->l.size;
 	}
 	else
 		m = (struct mem_list*)double_link_first(&a->_free_list);
 		
 	ptr = LINK_LIST_POP(void*,&m->l);
+	--a->free_size;
 	assert(ptr);
 	if(!m->l.size)
-		free(m);
-	--a->free_size;
+	{
+		double_link_remove((struct double_link_node*)m);
+		double_link_push(&a->_empty_list,(struct double_link_node*)m);
+	}
 	return ptr;		
 }
 
@@ -122,17 +130,23 @@ static inline void thread_allocator_dealloc(struct thread_allocator *a,void *ptr
 {
 	struct mem_list *m = NULL;
 	struct double_link_node *dl = double_link_last(&a->_free_list);
-	while(dl != &a->_free_list.head)
+	if(dl)
 	{
-		m = (struct mem_list*)dl;
-		if(m->l.size < m->init_size)
-			break;
-		m = NULL;
-		dl = dl->pre;	
+		while(dl != &a->_free_list.head)
+		{
+			m = (struct mem_list*)dl;
+			if(m->l.size < m->init_size)
+				break;
+			m = NULL;
+			dl = dl->pre;	
+		}
 	}
+	
 	if(!m)
 	{
-		m = creat_new_memlist(NULL,a->central_allocator->obj_size);
+		m = (struct mem_list *)double_link_pop(&a->_empty_list);
+		if(!m)
+			m = create_memlist(a->central_allocator->obj_size);
 		double_link_push(&a->_free_list,(struct double_link_node*)m);
 	}
 	LINK_LIST_PUSH_BACK(&m->l,ptr);
@@ -158,6 +172,7 @@ static void release_memlist(struct double_link *mlist)
 void destroy_thread_allocator(struct thread_allocator *a)
 {
 	release_memlist(&a->_free_list);
+	release_memlist(&a->_empty_list);
 	free(a);
 }
 
@@ -168,6 +183,7 @@ struct thread_allocator *create_thread_allocator(block_obj_allocator_t ba)
 	{
 		a->central_allocator = ba;
 		double_link_clear(&a->_free_list);
+		double_link_clear(&a->_empty_list);
 		if(ba->mtx)spin_lock(ba->mtx);
 		LINK_LIST_PUSH_BACK(ba->_thread_allocators,a);
 		if(ba->mtx)spin_unlock(ba->mtx);
