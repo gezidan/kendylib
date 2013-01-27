@@ -1,6 +1,6 @@
-server:kendy.a rpcserver.c
-	gcc -g -o server rpcserver.c kendy.a -I../include -lpthread -lrt -ltcmalloc
-client:kendy.a ../coro/coro.a rpcclient.c
-	gcc -g -o client rpcclient.c ../coro/coro.a kendy.a -I../include  -I../coro -lpthread -lrt -ltcmalloc
-syncall:.kendy.a ../coro/coro.a synccall.c
-	gcc -O3 -g -o syncall synccall.c ../coro/coro.a kendy.a -I../include  -I../coro -lpthread -lrt -ltcmalloc		
+server:rpcserver.c
+	gcc -O3 -g -o server rpcserver.c ../lib/net.a ../lib/util.a -I../ -lpthread -lrt -ltcmalloc
+client:rpcclient.c
+	gcc -O3 -g -o client rpcclient.c ../coro/coro.a ../lib/net.a ../lib/util.a -I../  -I../coro -lpthread -lrt -ltcmalloc
+syncall:synccall.c
+	gcc -O3 -g -o syncall synccall.c ../coro/coro.a ../lib/net.a ../lib/util.a -I../  -I../coro -lpthread -lrt -ltcmalloc		

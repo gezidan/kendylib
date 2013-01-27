@@ -1,14 +1,14 @@
 #include <stdio.h>
-#include "SysTime.h"
-#include "link_list.h"
+#include "util/SysTime.h"
+#include "util/link_list.h"
 #include "co_sche.h"
-#include "thread.h"
-#include "spinlock.h"
-#include "wpacket.h"
-#include "rpacket.h"
+#include "util/thread.h"
+#include "util/spinlock.h"
+#include "net/wpacket.h"
+#include "net/rpacket.h"
 #include <stdlib.h>
-#include "mq.h"
-#include "common_define.h"
+#include "util/mq.h"
+#include "net/common_define.h"
 allocator_t wpacket_allocator = NULL;
 sche_t g_sche = NULL;
 thread_t client;
@@ -107,8 +107,7 @@ void *test_coro_fun2(void *arg)
 
 static inline void  sche_idel(void *arg)
 {
-	uint32_t ms = link_list_is_empty(g_sche->active_list) ? 100 : 0;
-	rpacket_t rpk = peek_msg(msgQ2,ms);
+	rpacket_t rpk = peek_msg(msgQ2,50);
 	if(rpk)
 	{
 		coro_t co = (coro_t)rpacket_read_uint32(rpk);
@@ -122,7 +121,13 @@ void *client_routine(void *arg)
 	uint32_t tick = GetSystemMs();	
 	while(1)
 	{
-		sche_idel(NULL);
+		rpacket_t rpk;
+		while(rpk = peek_msg(msgQ2,0))
+		{
+			coro_t co = (coro_t)rpacket_read_uint32(rpk);
+			co->rpc_response = rpk;
+			coro_wakeup(co);
+		}
 		uint32_t now = GetSystemMs();
 		if(now - tick > 1000)
 		{
@@ -160,6 +165,7 @@ void *server_routine(void *arg)
 int main()
 {
 	init_system_time(10);
+	init_mq_system();
 	
 	wpacket_allocator = (allocator_t)create_block_obj_allocator(MUTIL_THREAD,sizeof(struct wpacket));
 

@@ -1,15 +1,15 @@
-#include "KendyNet.h"
-#include "Connection.h"
+#include "net/KendyNet.h"
+#include "net/Connection.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "thread.h"
-#include "SocketWrapper.h"
-#include "SysTime.h"
-#include "Acceptor.h"
+#include "util/thread.h"
+#include "net/SocketWrapper.h"
+#include "util/SysTime.h"
+#include "net/Acceptor.h"
 #include <stdint.h>
-#include "block_obj_allocator.h"
+#include "util/block_obj_allocator.h"
 #include <assert.h>
-#include "common_define.h"
+#include "net/common_define.h"
 atomic_32_t wpacket_count = 0;
 atomic_32_t rpacket_count = 0;
 atomic_32_t buf_count = 0;

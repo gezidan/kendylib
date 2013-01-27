@@ -76,6 +76,7 @@ static inline struct mem_list *central_get_memlist(block_obj_allocator_t central
 	if(!m)
 	{
 		struct memory_block *_mb = (struct memory_block *)calloc(1,sizeof(*_mb));
+		printf("alloc memory_block\n");
 		assert(_mb);
 		_mb->mem = calloc(1,DEFAULT_BLOCK_SIZE);
 		assert(_mb->mem);

@@ -1,14 +1,14 @@
 #include <stdio.h>
-#include "SocketWrapper.h"
-#include "SysTime.h"
-#include "KendyNet.h"
-#include "Connector.h"
-#include "Connection.h"
-#include "link_list.h"
+#include "net/SocketWrapper.h"
+#include "util/SysTime.h"
+#include "net/KendyNet.h"
+#include "net/Connector.h"
+#include "net/Connection.h"
+#include "util/link_list.h"
 #include "co_sche.h"
-#include "thread.h"
-#include "mq.h"
-#include "common_define.h"
+#include "util/thread.h"
+#include "util/mq.h"
+#include "net/common_define.h"
 //#include "spinlock.h"
 struct channel
 {
@@ -106,8 +106,7 @@ void *test_coro_fun2(void *arg)
 
 static inline void  sche_idel(void *arg)
 {
-	uint32_t ms = link_list_is_empty(g_sche->active_list) ? 100 : 0;
-	rpacket_t rpk = peek_msg(g_channel,ms);
+	rpacket_t rpk = peek_msg(g_channel,50);
 	if(rpk)
 	{
 		coro_t co = (coro_t)rpacket_read_uint32(rpk);
@@ -122,7 +121,13 @@ void *logic_routine(void *arg)
 	uint32_t tick = GetSystemMs();
 	while(1)
 	{
-		sche_idel(NULL);
+		rpacket_t rpk;
+		while(rpk = peek_msg(g_channel,0))
+		{
+			coro_t co = (coro_t)rpacket_read_uint32(rpk);
+			co->rpc_response = rpk;
+			coro_wakeup(co);
+		}
 		uint32_t now = GetSystemMs();
 		if(now - tick > 1000)
 		{
@@ -161,14 +166,14 @@ static inline void process_send(struct channel *c)
 
 void on_process_packet(struct connection *c,rpacket_t r)
 {
-	struct channel *_channel = (struct channel*)c->custom_ptr;
+	struct channel *_channel = (struct channel*)c->usr_data;
 	push_msg(_channel,r);	
 }
 
 
 void on_channel_disconnect(struct connection *c,int32_t reason)
 {
-	struct channel *_channel = (struct channel*)c->custom_ptr;
+	struct channel *_channel = (struct channel*)c->usr_data;
 	HANDLE sock = c->socket;
 	if(0 == connection_destroy(&c))
 	{
@@ -198,12 +203,12 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 		Bind2Engine(*engine,s,RecvFinish,SendFinish);
 		//create channel and create logic thread
 		g_channel = channel_create(c);
-		c->custom_ptr = g_channel;
+		c->usr_data = g_channel;
 		
-		g_sche = sche_create(250000,4096,sche_idel,NULL);
+		g_sche = sche_create(50000,4096,sche_idel,NULL);
 		
 		int i = 0;
-		for(; i < 250000; ++i)
+		for(; i < 50000; ++i)
 		{
 			if(i%2 == 0)
 				sche_spawn(g_sche,test_coro_fun1,NULL);
