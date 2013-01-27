@@ -21,9 +21,9 @@
 //内存分配器接口类
 typedef struct allocator
 {
-	void* (*Alloc)(struct allocator*,int32_t);
-	void (*DeAlloc)(struct allocator*,void*);
-	void (*Destroy)(struct allocator**);
+	void* (*_alloc)(struct allocator*,int32_t);
+	void (*_dealloc)(struct allocator*,void*);
+	void (*_destroy)(struct allocator**);
 }*allocator_t;
 
 #ifndef IMPLEMEMT
@@ -35,7 +35,7 @@ typedef struct allocator
    ({ void *__result;\
        do \
 	   if(ALLOCATOR)\
-	     __result = ((struct allocator*)ALLOCATOR)->Alloc(ALLOCATOR,SIZE);\
+	     __result = ((struct allocator*)ALLOCATOR)->_alloc(ALLOCATOR,SIZE);\
 	   else\
 	     __result = calloc(1,SIZE);\
 	   while(0);\
@@ -47,7 +47,7 @@ typedef struct allocator
    ({\
        do \
 	   if(ALLOCATOR)\
-	     ((struct allocator*)ALLOCATOR)->DeAlloc(ALLOCATOR,PTR);\
+	     ((struct allocator*)ALLOCATOR)->_dealloc(ALLOCATOR,PTR);\
 	   else\
 	     free(PTR);\
 	   while(0);\
@@ -56,7 +56,7 @@ typedef struct allocator
 
 #ifndef DESTROY
 #define DESTROY(ALLOCATOR)\
-	((struct allocator*)(*(ALLOCATOR)))->Destroy((ALLOCATOR))
+	((struct allocator*)(*(ALLOCATOR)))->_destroy((ALLOCATOR))
 #endif
 	
 #endif

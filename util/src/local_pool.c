@@ -34,9 +34,9 @@ struct allocator* local_pool_create(void *buf,int32_t size)
 	}
 	lp->free_ptr = lp->buf_ptr;
 	lp->free_size = size;
-	lp->super_class.Alloc = local_pool_alloc;
-	lp->super_class.DeAlloc = local_pool_dealloc;
-	lp->super_class.Destroy = local_pool_destroy;
+	lp->super_class._alloc = local_pool_alloc;
+	lp->super_class._dealloc = local_pool_dealloc;
+	lp->super_class._destroy = local_pool_destroy;
 	return (struct allocator*)lp;
 }
 

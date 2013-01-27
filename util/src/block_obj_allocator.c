@@ -275,8 +275,8 @@ block_obj_allocator_t create_block_obj_allocator(uint8_t mt,uint32_t obj_size)
 	ba->_memory_blocks = LINK_LIST_CREATE();
 	double_link_clear(&ba->_free_list);
 	ba->obj_size = obj_size;
-	ba->super_class.Alloc = block_obj_al_alloc;
-	ba->super_class.DeAlloc = block_obj_al_dealloc;
-	ba->super_class.Destroy = destroy_block_obj_al;
+	ba->super_class._alloc = block_obj_al_alloc;
+	ba->super_class._dealloc = block_obj_al_dealloc;
+	ba->super_class._destroy = destroy_block_obj_al;
 	return ba;
 }
