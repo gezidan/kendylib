@@ -33,9 +33,9 @@ void clear_tls()
 			mutex_lock(tls_mtx);
 			list_iter it = list_begin(tls_list);
 			list_iter end = list_end(tls_list);
-			for( ; !IT_LIST_EQUAL(it,end); IT_LIST_NEXT(it))
+			for( ; !IT_EQ(it,end); it = IT_NEXT(list_iter,it))
 			{
-				hash_map_t h = IT_LIST_GET(hash_map_t,it);
+				hash_map_t h = IT_GET_VAL(hash_map_t,it);
 				hash_map_destroy(&h);
 			}
 			mutex_unlock(tls_mtx);

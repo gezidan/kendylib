@@ -17,11 +17,13 @@
 #ifndef _LIST_H
 #define _LIST_H
 #include <stdint.h>
+#include "iterator.h"
 typedef struct list *list_t;
 struct node;
 
 typedef struct list_iter
 {
+	struct base_iterator base;
 	struct node **next;
 	struct node *n;
 }list_iter;
@@ -51,6 +53,7 @@ extern int32_t    list_is_empty(list_t);
 	list_create(sizeof(TYPE))
 #endif
 
+
 #ifndef LIST_INSERT_BEFORE
 #define LIST_INSERT_BEFORE(TYPE,LIST,IT,VAL)\
 	{TYPE __val = VAL;list_insert_before(LIST,IT,&__val);}
@@ -60,6 +63,7 @@ extern int32_t    list_is_empty(list_t);
 #define LIST_INSERT_AFTER(TYPE,LIST,IT,VAL)\
 	{TYPE __val = VAL;list_insert_after(LIST,IT,&__val);}
 #endif
+
 
 #ifndef LIST_PUSH_BACK
 #define LIST_PUSH_BACK(TYPE,LIST,VAL)\
@@ -127,34 +131,5 @@ extern int32_t    list_remove(list_t,void*);
 #endif
 
 extern list_iter list_erase(list_t,list_iter);
-
-extern list_iter list_iter_next(list_iter);
-extern void  list_iter_get_val(list_iter,void*);
-extern void  list_iter_set_val(list_iter,void*);
-extern int32_t   list_iter_is_equal(list_iter a,list_iter b);
-
-
-#ifndef IT_LIST_NEXT
-#define IT_LIST_NEXT(ITER)\
-	list_iter_next(ITER)
-#endif
-
-#ifndef IT_LIST_EQUAL
-#define IT_LIST_EQUAL(IT1,IT2)\
-	list_iter_is_equal(IT1,IT2)
-#endif
-
-#ifndef IT_LIST_GET
-#define IT_LIST_GET(TYPE,NODE)\
-   ({ TYPE __result;\
-       do list_iter_get_val(NODE,&__result);\
-       while(0);\
-       __result;})
-#endif
-
-#ifndef IT_LIST_SET
-#define IT_LIST_SET(TYPE,NODE,VAL)\
-	{TYPE __val=VAL;iter_set_val(NODE,&__val);}
-#endif
 
 #endif
