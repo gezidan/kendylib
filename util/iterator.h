@@ -56,7 +56,7 @@ struct base_iterator
 #endif
 
 #ifndef IT_SET_VAL
-#define IT_SET_VAL(ITER,TYPE,VAL)\
+#define IT_SET_VAL(TYPE,ITER,VAL)\
 	{TYPE __val=VAL;ITER.base.set_val((struct base_iterator*)&ITER,&__val);}
 #endif
 
