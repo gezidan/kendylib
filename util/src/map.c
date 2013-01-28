@@ -84,8 +84,3 @@ inline int32_t map_empty(map_t m)
 	assert(m);
 	return m->container->empty(m->container);
 }
-
-int32_t map_iter_equal(map_iter a,map_iter b)
-{
-	return a.node == b.node;
-}

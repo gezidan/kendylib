@@ -417,47 +417,71 @@ static void delete_fix_up(RBtree_t rb,RBnode *n)
 	n->color = BLACK;
 }
 
-void rb_iter_get_first(map_iter iter,void *first)
+void rb_iter_get_key(struct base_iterator *_iter, void *key)
 {
-	RBnode *n = (RBnode*)iter.node;
-	memcpy(first,get_key(n),n->key_size);
+	map_iter *iter = (map_iter*)_iter;
+	RBnode *n = (RBnode*)iter->node;
+	memcpy(key,get_key(n),n->key_size);
 }
 
-void  rb_iter_get_second(map_iter iter,void *second)
+void rb_iter_get_val(struct base_iterator *_iter, void *val)
 {
-	RBnode *n = (RBnode*)iter.node;
-	memcpy(second,get_value(n),n->val_size);
+	map_iter *iter = (map_iter*)_iter;
+	RBnode *n = (RBnode*)iter->node;
+	memcpy(val,get_value(n),n->val_size);
 }
 
-void  rb_iter_set_second(map_iter iter,void *val)
+void rb_iter_set_val(struct base_iterator *_iter, void *val)
 {
-	RBnode *n = (RBnode*)iter.node;
+	map_iter *iter = (map_iter*)_iter;
+	RBnode *n = (RBnode*)iter->node;
 	copy_value(n,val);
 }
 
-static map_iter RB_iter_next(struct map_iter *iter)
-{
-	RBnode *n = (RBnode*)iter->node; 
+void RB_iter_init(map_iter *,RBnode *);
 
+void RB_iter_next(struct base_iterator *_iter,struct base_iterator *_next)
+{
+	map_iter *iter = (map_iter*)_iter;
+	map_iter *next = (map_iter*)_next;
+	RB_iter_init(next,NULL);
+	RBnode *n = (RBnode*)iter->node; 
 	RBtree_t rb = n->tree;
-	
 	if(iter->node == rb->nil)
-		return (*iter);
+	{
+		next->node = n;
+		return;
+	}
 	RBnode *succ = successor(rb,n);	
-	map_iter next ={0,RB_iter_next,rb_iter_get_first,rb_iter_get_second,rb_iter_set_second};
 	if(!succ)
-		next.node = rb->nil;
+		next->node = rb->nil;
 	else
-		next.node = succ;
-	return next;
+		next->node = succ;
 }
 
+int8_t RB_iter_equal(struct base_iterator *_a,struct base_iterator *_b)
+{
+	map_iter *a = (map_iter*)_a;
+	map_iter *b = (map_iter*)_b;
+	return a->node == b->node;
+}
+
+void RB_iter_init(map_iter *iter,RBnode *n)
+{
+	iter->base.next = RB_iter_next;
+	iter->base.get_key = rb_iter_get_key;
+	iter->base.get_val = rb_iter_get_val;
+	iter->base.set_val = rb_iter_set_val;
+	iter->base.is_equal = RB_iter_equal;
+	iter->node = n;
+}
 
 map_iter RBtree_begin(struct interface_map_container *_rb)
 {
 	RBtree_t rb = (RBtree_t)_rb;
 	RBnode *min = minimum(rb,rb->root);
-	map_iter begin = {0,RB_iter_next,rb_iter_get_first,rb_iter_get_second,rb_iter_set_second};
+	map_iter begin;
+	RB_iter_init(&begin,NULL);
 	begin.node = (min == 0 ? rb->nil : min);
 	return begin;
 }
@@ -465,7 +489,8 @@ map_iter RBtree_begin(struct interface_map_container *_rb)
 map_iter RBtree_end(struct interface_map_container *_rb)
 {
 	RBtree_t rb = (RBtree_t)_rb;
-	map_iter end ={rb->nil,RB_iter_next,rb_iter_get_first,rb_iter_get_second,rb_iter_set_second};
+	map_iter end;
+	RB_iter_init(&end,rb->nil);
 	return end;
 }
 
@@ -476,7 +501,8 @@ map_iter RBtree_find(struct interface_map_container *_rb,void *key)
 	if(n == rb->nil || equal(rb,key,get_key(n)) == 0)
 		return RBtree_end(_rb);
 		
-	map_iter it ={n,RB_iter_next,rb_iter_get_first,rb_iter_get_second,rb_iter_set_second};
+	map_iter it;
+	RB_iter_init(&it,n);
 	return it;
 }
 
@@ -507,7 +533,8 @@ map_iter RBtree_insert(struct interface_map_container *_rb,void *key,void *val)
 	}
 	++rb->size;
 	insert_fix_up(rb,n);
-	map_iter it ={n,RB_iter_next,rb_iter_get_first,rb_iter_get_second,rb_iter_set_second};
+	map_iter it;
+	RB_iter_init(&it,n);
 	return it;
 }
 
@@ -576,7 +603,8 @@ map_iter RBtree_erase(struct interface_map_container *_rb,map_iter it)
 	rb_delete(rb,get_key(it.node),&succ);
 	if(succ == 0)
 		return RBtree_end(_rb);
-	map_iter next ={succ,RB_iter_next,rb_iter_get_first,rb_iter_get_second,rb_iter_set_second};
+	map_iter next;
+	RB_iter_init(&next,succ);
 	return next;	
 }
 

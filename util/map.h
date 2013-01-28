@@ -17,48 +17,12 @@
 #ifndef _MAP_H
 #define _MAP_H
 #include <stdint.h>
+#include "iterator.h"
 typedef struct map_iter
 {
+	struct base_iterator base;
 	void *node;
-	struct map_iter (*next)(struct map_iter*);
-	void (*get_first)(struct map_iter,void*);
-	void (*get_second)(struct map_iter,void*);
-	void (*set_second)(struct map_iter,void*);
 }map_iter;
-
-
-extern int32_t map_iter_equal(map_iter,map_iter);
-
-#ifndef IT_MAP_EQUAL
-#define IT_MAP_EQUAL(IT1,IT2)\
-	map_iter_equal(IT1,IT2)
-#endif
-
-#ifndef IT_MAP_GETFIRST
-#define IT_MAP_GETFIRST(TYPE,ITER)\
-   ({ TYPE __result;\
-       do ITER.get_first(ITER,&__result);\
-       while(0);\
-       __result;})
-#endif
-
-#ifndef IT_MAP_GETSECOND
-#define IT_MAP_GETSECOND(TYPE,ITER)\
-   ({ TYPE __result;\
-       do ITER.get_second(ITER,&__result);\
-       while(0);\
-       __result;})
-#endif
-
-#ifndef IT_MAP_SETSECOND
-#define IT_MAP_SETSECOND(TYPE,ITER,VAL)\
-	{TYPE __val=VAL;ITER.set_second(ITER,&__val);}
-#endif
-
-#ifndef IT_MAP_NEXT
-#define IT_MAP_NEXT(ITER)\
-	ITER.next(&ITER)
-#endif
 
 //能作为map存储容器的类型都必须实现的接口
 struct interface_map_container
