@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include "common_hash_function.h"
 #include "double_link.h"
+#include "iterator.h"
 typedef struct hash_map* hash_map_t;
 
 typedef uint64_t (*hash_func)(void*);
@@ -26,6 +27,7 @@ typedef int32_t (*hash_key_eq)(void*,void*);
 
 typedef struct 
 {
+	struct  base_iterator base;
 	void    *data1;
 	void    *data2;
 }hash_map_iter;
@@ -47,15 +49,8 @@ int32_t        hash_map_is_vaild_iter(hash_map_iter);
 hash_map_iter  hash_map_find(hash_map_t,void* key); 
 void*          hash_map_erase(hash_map_t,hash_map_iter);
 hash_map_iter  hash_map_begin(hash_map_t);
-hash_map_iter  hash_map_iter_next(hash_map_iter); 
-
+hash_map_iter  hash_map_end(hash_map_t);
 int32_t        hash_map_size(hash_map_t);
-
-
-void*      hash_map_iter_get_val(hash_map_iter);
-
-void       hash_map_iter_set_val(hash_map_iter,void*);
-
 
 #ifndef HASH_MAP_INSERT
 #define HASH_MAP_INSERT(KEY_TYPE,VAL_TYPE,HASH_MAP,KEY,VAL)\
@@ -80,23 +75,4 @@ void       hash_map_iter_set_val(hash_map_iter,void*);
        while(0);\
        ret;})		
 #endif
-
-#ifndef HASH_MAP_ITER_GET
-#define HASH_MAP_ITER_GET(VALTYPE,_ITER)\
-	({ VALTYPE ret;\
-       do ret = *(VALTYPE*)hash_map_iter_get_val(_ITER);\
-       while(0);\
-       ret;})	
-#endif
-
-#ifndef HASH_MAP_ITER_SET
-#define HASH_MAP_ITER_SET(VALTYPE,_ITER,VAL)\
-	({VALTYPE __val = VAL;\
-	  hash_map_iter_set_val(_ITEM,&__val);}) 	
-#endif
-
-#ifndef HASH_MAP_ITER_VAILD
-#define HASH_MAP_ITER_VAILD(_ITER) hash_map_is_vaild_iter(_ITER)
-#endif
-
 #endif

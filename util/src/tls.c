@@ -62,14 +62,13 @@ void *get_tls_data(int32_t key)
 	if(!h)
 	{
 		h = hash_map_create(128,sizeof(key),sizeof(void*),tls_hash_func,tls_hash_key_eq);
-		return 0;
-	}
+		return NULL;
+	}	
 	hash_map_iter it = hash_map_find(h,(void*)&key);
-	if(0 == hash_map_is_vaild_iter(it))
-	{
-		return hash_map_iter_get_val(it);
-	}
-	return 0;
+	hash_map_iter end = hash_map_end(h);
+	if(!IT_EQ(it,end))
+		return IT_GET_VAL(void*,it);
+	return NULL;
 }
 void set_tls_data(int32_t key,void *data)
 {
