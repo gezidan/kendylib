@@ -440,23 +440,22 @@ void rb_iter_set_val(struct base_iterator *_iter, void *val)
 
 void RB_iter_init(map_iter *,RBnode *);
 
-void RB_iter_next(struct base_iterator *_iter,struct base_iterator *_next)
+#define CREATE_MAP_IT(IT,ARG1)\
+	map_iter IT;\
+	RB_iter_init(&IT,ARG1)
+
+void RB_iter_next(struct base_iterator *_iter)
 {
 	map_iter *iter = (map_iter*)_iter;
-	map_iter *next = (map_iter*)_next;
-	RB_iter_init(next,NULL);
 	RBnode *n = (RBnode*)iter->node; 
 	RBtree_t rb = n->tree;
 	if(iter->node == rb->nil)
-	{
-		next->node = n;
 		return;
-	}
 	RBnode *succ = successor(rb,n);	
 	if(!succ)
-		next->node = rb->nil;
+		iter->node = rb->nil;
 	else
-		next->node = succ;
+		iter->node = succ;
 }
 
 int8_t RB_iter_equal(struct base_iterator *_a,struct base_iterator *_b)
@@ -480,8 +479,7 @@ map_iter RBtree_begin(struct interface_map_container *_rb)
 {
 	RBtree_t rb = (RBtree_t)_rb;
 	RBnode *min = minimum(rb,rb->root);
-	map_iter begin;
-	RB_iter_init(&begin,NULL);
+	CREATE_MAP_IT(begin,NULL);
 	begin.node = (min == 0 ? rb->nil : min);
 	return begin;
 }
@@ -489,8 +487,7 @@ map_iter RBtree_begin(struct interface_map_container *_rb)
 map_iter RBtree_end(struct interface_map_container *_rb)
 {
 	RBtree_t rb = (RBtree_t)_rb;
-	map_iter end;
-	RB_iter_init(&end,rb->nil);
+	CREATE_MAP_IT(end,rb->nil);	
 	return end;
 }
 
@@ -500,9 +497,7 @@ map_iter RBtree_find(struct interface_map_container *_rb,void *key)
 	RBnode *n = find(rb,key);
 	if(n == rb->nil || equal(rb,key,get_key(n)) == 0)
 		return RBtree_end(_rb);
-		
-	map_iter it;
-	RB_iter_init(&it,n);
+	CREATE_MAP_IT(it,n);	
 	return it;
 }
 
@@ -533,8 +528,7 @@ map_iter RBtree_insert(struct interface_map_container *_rb,void *key,void *val)
 	}
 	++rb->size;
 	insert_fix_up(rb,n);
-	map_iter it;
-	RB_iter_init(&it,n);
+	CREATE_MAP_IT(it,n);
 	return it;
 }
 
@@ -603,8 +597,7 @@ map_iter RBtree_erase(struct interface_map_container *_rb,map_iter it)
 	rb_delete(rb,get_key(it.node),&succ);
 	if(succ == 0)
 		return RBtree_end(_rb);
-	map_iter next;
-	RB_iter_init(&next,succ);
+	CREATE_MAP_IT(next,succ);
 	return next;	
 }
 

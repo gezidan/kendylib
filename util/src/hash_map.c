@@ -89,21 +89,25 @@ void hash_map_iter_set_val(struct base_iterator *_iter, void *val)
 }
 
 void hash_map_iter_init(hash_map_iter *,void *,void *);
+#define CREATE_HASH_IT(IT,ARG1,ARG2)\
+	hash_map_iter IT;\
+	hash_map_iter_init(&IT,ARG1,ARG2)
 
-void hash_map_iter_next(struct base_iterator *_iter,struct base_iterator *_next)
+void hash_map_iter_next(struct base_iterator *_iter)
 {
 	hash_map_iter *iter = (hash_map_iter*)_iter;
-	hash_map_iter *next = (hash_map_iter*)_next;
 	
 	struct hash_item *item = iter->data2;
 	hash_map_t h = iter->data1;
-	hash_map_iter_init(next,NULL,NULL);
 	if(!item || !h)
 		return;
 	if(item == (struct hash_item*)double_link_last(&h->dlink))
+	{
+		iter->data1 = iter->data2 = NULL;
 		return;
-	next->data1 = h;
-	next->data2 = item->dnode.next;
+	}
+	iter->data1 = h;
+	iter->data2 = item->dnode.next;
 }
 
 int8_t hash_map_iter_equal(struct base_iterator *_a,struct base_iterator *_b)
@@ -186,8 +190,7 @@ hash_map_iter hash_map_insert(hash_map_t h,void *key,void *val)
 	if(h->slot_size < 0x80000000 && h->size >= h->expand_size)
 		//空间使用超过3/4扩展
 		_hash_map_expand(h);
-	hash_map_iter iter;// = {0,0};
-	hash_map_iter_init(&iter,NULL,NULL);	
+	CREATE_HASH_IT(iter,NULL,NULL);		
 	if(h->size >= h->slot_size)
 		return iter;
 	struct hash_item *item = _hash_map_insert(h,key,val,hash_code);	
@@ -202,8 +205,7 @@ hash_map_iter hash_map_insert(hash_map_t h,void *key,void *val)
 
 hash_map_iter  hash_map_begin(hash_map_t h)
 {
-	hash_map_iter iter;// = {0,0};
-	hash_map_iter_init(&iter,NULL,NULL);
+	CREATE_HASH_IT(iter,NULL,NULL);	
 	struct hash_item *item = (struct hash_item *)double_link_first(&h->dlink);
 	if( item != NULL)
 	{
@@ -215,8 +217,7 @@ hash_map_iter  hash_map_begin(hash_map_t h)
 
 hash_map_iter  hash_map_end(hash_map_t h)
 {
-	hash_map_iter iter;// = {0,0};
-	hash_map_iter_init(&iter,NULL,NULL);
+	CREATE_HASH_IT(iter,NULL,NULL);	
 	return iter;
 }
 
@@ -248,8 +249,7 @@ static struct hash_item *_hash_map_find(hash_map_t h,void *key)
 hash_map_iter hash_map_find(hash_map_t h,void* key)
 {
 	struct hash_item *item = _hash_map_find(h,key);
-	hash_map_iter iter;
-	hash_map_iter_init(&iter,NULL,NULL);
+	CREATE_HASH_IT(iter,NULL,NULL);	
 	if(item)
 	{
 		iter.data1 = h;

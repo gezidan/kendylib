@@ -21,16 +21,16 @@ int main()
 	MAP_INSERT(int,int,m,3,3);
 	MAP_INSERT(int,int,m,4,4);
 	MAP_INSERT(int,int,m,5,5);
-	
+	printf("------test iter------\n");	
 	map_iter it = map_begin(m);
 	map_iter end = map_end(m);
-	for( ; !IT_EQ(it,end); it = IT_NEXT(map_iter,it))
+	for( ; !IT_EQ(it,end); IT_NEXT(it))
 		printf("%d\n",IT_GET_VAL(int,it));
-	printf("------------\n");	
+	printf("------test remove 4------\n");	
 	MAP_REMOVE(int,m,4);
 	it = map_begin(m);
 	end = map_end(m);
-	for( ; !IT_EQ(it,end); it = IT_NEXT(map_iter,it))
+	for( ; !IT_EQ(it,end); IT_NEXT(it))
 		printf("%d\n",IT_GET_VAL(int,it));	
 	
 	

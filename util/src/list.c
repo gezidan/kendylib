@@ -22,25 +22,25 @@ struct list
 	struct node end;
 };
 
+#define CREATE_LIST_IT(IT)\
+	struct list_iter IT;\
+	list_iter_init(&IT)
+
 static inline void list_iter_init(struct list_iter *it);
 
-static inline void list_iter_next(struct base_iterator *_it,struct base_iterator *_it_next)
+static inline void list_iter_next(struct base_iterator *_it)
 {
 	struct list_iter *it = (struct list_iter *)_it;
-	struct list_iter *it_next = (struct list_iter *)_it_next;
-	list_iter_init(it_next);
 	if(it->next == NULL)
-	{
-		*it_next = *it;
 		return;
-	}
-	it_next->n = (*it->next);
+	struct node *n = (*it->next);
 	if(it->next == &it->n->next)
-		it_next->next = &(it_next->n->next);
+		it->next = &(n->next);
 	else if(it->next == &it->n->pre)
-		it_next->next = &(it_next->n->pre);
+		it->next = &(n->pre);
 	else
 		assert(0);
+	it->n = n;	
 }
 
 static inline int8_t list_iter_is_equal(struct base_iterator *_a,struct base_iterator *_b)
@@ -108,8 +108,7 @@ void   list_destroy(struct list **_list)
 inline struct list_iter list_begin(struct list *_list)
 {
 	assert(_list);
-	struct list_iter it;
-	list_iter_init(&it);
+	CREATE_LIST_IT(it);
 	it.n = _list->head.next;
 	it.next = &(it.n->next);
 	return it;
@@ -118,8 +117,7 @@ inline struct list_iter list_begin(struct list *_list)
 inline struct list_iter list_end(struct list *_list)
 {
 	assert(_list);
-	struct list_iter it;
-	list_iter_init(&it);
+	CREATE_LIST_IT(it);
 	it.n = &_list->end;
 	it.next = 0;
 	return it;
@@ -128,8 +126,7 @@ inline struct list_iter list_end(struct list *_list)
 inline struct list_iter list_rbegin(struct list *_list)
 {
 	assert(_list);
-	struct list_iter it;
-	list_iter_init(&it);
+	CREATE_LIST_IT(it);
 	it.n = _list->end.pre;
 	it.next = &(it.n->pre);
 	return it;
@@ -138,8 +135,7 @@ inline struct list_iter list_rbegin(struct list *_list)
 inline struct list_iter list_rend(struct list *_list)
 {
 	assert(_list);
-	struct list_iter it;
-	list_iter_init(&it);
+	CREATE_LIST_IT(it);
 	it.n = &_list->head;
 	it.next = 0;
 	return it;
@@ -264,8 +260,7 @@ inline int32_t list_is_empty(struct list *_list)
 struct list_iter list_find(struct list *l,void *v)
 {
 	assert(l);
-	struct list_iter it;
-	list_iter_init(&it);
+	CREATE_LIST_IT(it);
 	it.n = NULL;
 	struct node *cur = l->head.next;
 	while(cur != &l->end)
@@ -303,14 +298,14 @@ int32_t list_remove(struct list *l,void *v)
 struct list_iter list_erase(struct list *l,struct list_iter it)
 {
 	assert(l);
-	struct list_iter it_next = IT_NEXT(struct list_iter,it);
 	struct node *n = it.n;
+	IT_NEXT(it);
 	struct node *P = n->pre;
 	struct node *N = n->next;
 	P->next = N;
 	N->pre = P;
 	free(n);	
 	--l->size;
-	return it_next;	
+	return it;	
 }
 

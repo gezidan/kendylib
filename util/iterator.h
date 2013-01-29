@@ -19,19 +19,25 @@
 
 struct base_iterator
 {
-	void   (*next)(struct base_iterator*,struct base_iterator*);
+	void   (*next)(struct base_iterator*);
 	void   (*get_key)(struct base_iterator*,void*);
 	void   (*get_val)(struct base_iterator*,void*);
 	void   (*set_val)(struct base_iterator*,void*);
 	int8_t (*is_equal)(struct base_iterator*,struct base_iterator*);
 };
 
+/*
 #ifndef IT_NEXT
 #define IT_NEXT(IT_TYPE,ITER)\
    ({ IT_TYPE __result;\
        do ITER.base.next((struct base_iterator*)&ITER,(struct base_iterator*)&__result);\
        while(0);\
        __result;})
+#endif*/
+
+#ifndef IT_NEXT
+#define IT_NEXT(ITER)\
+	ITER.base.next((struct base_iterator*)&ITER)
 #endif
 
 #ifndef IT_EQ

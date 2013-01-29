@@ -23,9 +23,13 @@ log:kendy.a testlog.c
 	gcc -g -O3 -o log testlog.c kendy.a -I../include -lpthread -lrt -ltcmalloc
 systime:kendy.a testsystime.c
 	gcc -g -O3 -o systime testsystime.c kendy.a -I../include -lpthread -lrt -ltcmalloc
-hash:kendy.a testhash.c
-	gcc -g -O3 -o hash testhash.c kendy.a -I../include -lpthread -lrt -ltcmalloc
+hash:testhash.c
+	gcc -g -O3 -o hash testhash.c ../lib/util.a -I../ -lpthread
 testmq:kendy.a testmq.c
 	gcc -g -O3 -o testmq testmq.c kendy.a -I../include -lpthread -lrt -ltcmalloc
 syn_st:test_atomic_st.c
-	gcc -g -O3 -o syn_st test_atomic_st.c ../lib/util.a -I../ -lpthread								
+	gcc -g -O3 -o syn_st test_atomic_st.c ../lib/util.a -I../ -lpthread
+list:test_list.c
+	gcc -g -o list test_list.c ../lib/util.a -I../ -lpthread
+map:testmap.c
+	gcc -g -o map testmap.c ../lib/util.a -I../ -lpthread	

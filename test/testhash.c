@@ -44,7 +44,7 @@ int main()
 	{
 		hash_map_iter it = hash_map_begin(h);
 		hash_map_iter end = hash_map_end(h);
-		for( ; !IT_EQ(it,end); it = IT_NEXT(hash_map_iter,it))
+		for( ; !IT_EQ(it,end); IT_NEXT(it))
 			printf("%d\n",IT_GET_VAL(int32_t,it));	
 	}	
 	return 0;

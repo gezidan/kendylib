@@ -45,7 +45,6 @@ void           hash_map_destroy(hash_map_t*);
 hash_map_iter  hash_map_insert(hash_map_t,void *key,void *val);
 void*          hash_map_remove(hash_map_t,void* key);
 
-int32_t        hash_map_is_vaild_iter(hash_map_iter);
 hash_map_iter  hash_map_find(hash_map_t,void* key); 
 void*          hash_map_erase(hash_map_t,hash_map_iter);
 hash_map_iter  hash_map_begin(hash_map_t);

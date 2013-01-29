@@ -33,7 +33,7 @@ void clear_tls()
 			mutex_lock(tls_mtx);
 			list_iter it = list_begin(tls_list);
 			list_iter end = list_end(tls_list);
-			for( ; !IT_EQ(it,end); it = IT_NEXT(list_iter,it))
+			for( ; !IT_EQ(it,end); IT_NEXT(it))
 			{
 				hash_map_t h = IT_GET_VAL(hash_map_t,it);
 				hash_map_destroy(&h);
