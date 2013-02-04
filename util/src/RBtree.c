@@ -1,4 +1,4 @@
-#include "rbtree.h"
+#include "RBtree.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -26,17 +26,27 @@ void destroy_rbtree(rbtree_t *rb)
 	*rb = NULL;
 }
 
-inline static int32_t less(rbtree_t rb,void *left,void *right)
+uint32_t rbtree_size(rbtree_t *rb)
+{
+	return rb->size;
+}
+
+int8_t   rbtree_isempty(rbtree_t *rb)
+{
+	return rb->size == 0 ? 1:0;
+}
+
+static inline int32_t less(rbtree_t rb,void *left,void *right)
 {
 	return rb->compare_function(left,right) == -1;
 }
 
-inline static int32_t equal(rbtree_t rb,void *left,void *right)
+static inline int32_t equal(rbtree_t rb,void *left,void *right)
 {
 	return rb->compare_function(left,right) == 0;
 }
 
-inline static int32_t more(rbtree_t rb,void *left,void *right)
+static inline int32_t more(rbtree_t rb,void *left,void *right)
 {
 	return rb->compare_function(left,right) == 1;
 }

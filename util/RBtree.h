@@ -41,6 +41,8 @@ typedef struct rbtree{
 
 rbtree_t create_rbtree(cmp_function);
 void     destroy_rbtree(rbtree_t *);
+uint32_t rbtree_size(rbtree_t*);
+int8_t   rbtree_isempty(rbtree_t*);
 int8_t   rbtree_insert(rbtree_t,rbnode*);
 rbnode*  rbtree_find(rbtree_t,void *key);
 int8_t   rbtree_erase(rbnode*);
