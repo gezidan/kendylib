@@ -1,92 +1,13 @@
-#include "RBtree.h"
-#include <stdlib.h>
+#include "rbtree.h"
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
 #include <assert.h>
-#include "map.h"
-#include "list.h"
-
-typedef struct RBnode
-{
-	struct RBnode *parent;
-	struct RBnode *left;
-	struct RBnode *right;
-	RBtree_t tree;
-	uint16_t color;
-	uint16_t key_size;
-	uint16_t val_size;
-	int8_t   data[1];//key & value
-}RBnode;
-
-#ifndef IMPLEMEMT
-#define IMPLEMEMT(SUPER_CLASS) struct SUPER_CLASS super_class
-#endif
-
-struct RBtree
-{
-	IMPLEMEMT(interface_map_container);
-	RBnode *root;
-	RBnode *nil;
-	uint32_t size;
-	uint16_t key_size;
-	uint16_t val_size;
-	comp    compare_function;
-	RBnode  dummy;//nil½Úµã
-};
-
 #define RED 1
 #define BLACK 2
 
-//½ÚµãÊý¾Ý²Ù×÷
-inline static void *get_key(RBnode *n)
+rbtree_t create_rbtree(int32_t k_size,int32_t v_size,cmp_function compare_function)
 {
-	assert(n);
-	return (void*)(n->data);
-}
-
-inline static void *get_value(RBnode *n)
-{
-	assert(n);
-	return (void*)(&(n->data[n->key_size]));
-}
-
-inline static void copy_key(RBnode *n,void *key)
-{
-	memcpy(get_key(n),key,n->key_size);
-}
-
-inline static void copy_value(RBnode *n,void *value)
-{
-	memcpy(get_value(n),value,n->val_size);
-}
-
-inline static int32_t less(RBtree_t rb,void *left,void *right)
-{
-	return rb->compare_function(left,right) == -1;
-}
-
-inline static int32_t equal(RBtree_t rb,void *left,void *right)
-{
-	return rb->compare_function(left,right) == 0;
-}
-
-inline static int32_t more(RBtree_t rb,void *left,void *right)
-{
-	return rb->compare_function(left,right) == 1;
-}
-
-extern map_iter RBtree_insert(struct interface_map_container *,void*,void*);
-extern map_iter RBtree_erase(struct interface_map_container *,map_iter);
-extern void RBtree_delete(struct interface_map_container *,void*);
-extern map_iter RBtree_find(struct interface_map_container *,void *);
-extern map_iter RBtree_begin(struct interface_map_container *);
-extern map_iter RBtree_end(struct interface_map_container *);
-extern int32_t RBtree_size(struct interface_map_container *);
-extern int32_t RBtree_empty(struct interface_map_container *);
-
-RBtree_t RBtree_create(uint16_t key_size,uint16_t val_size,comp _comp)
-{
-	struct RBtree *rb = malloc(sizeof(*rb));
+	rbtree_t rb = malloc(sizeof(*rb));
 	if(rb)
 	{
 		rb->size = 0;
@@ -94,63 +15,38 @@ RBtree_t RBtree_create(uint16_t key_size,uint16_t val_size,comp _comp)
 		rb->nil = &rb->dummy;
 		rb->nil->tree = rb;
 		rb->root = rb->nil;
-		rb->key_size = key_size;
-		rb->val_size = val_size;
-		rb->compare_function = _comp;
-		rb->super_class.insert = RBtree_insert;
-		rb->super_class.erase = RBtree_erase;
-		rb->super_class.remove = RBtree_delete;
-		rb->super_class.find = RBtree_find;
-		rb->super_class.begin = RBtree_begin;
-		rb->super_class.end = RBtree_end;
-		rb->super_class.size = RBtree_size;
-		rb->super_class.empty = RBtree_empty;
-		rb->super_class.destroy = RBtree_destroy;
+		rb->key_size = k_size;
+		rb->val_size = v_size;
+		rb->compare_function = compare_function;
 	}
 	return rb;
 }
 
-void RBtree_destroy(struct interface_map_container **_rb)
+void     destroy_rbtree(rbtree_t *rb)
 {
-	struct RBtree *rb = (struct RBtree*)*_rb;
-	if(rb->size)
-	{
-		list_t stack = list_create(sizeof(RBnode*));
-		LIST_PUSH_FRONT(RBnode*,stack,rb->root);
-		for( ; !list_is_empty(stack); )
-		{
-			RBnode *cur = LIST_FRONT(RBnode*,stack);
-			if(cur->right)
-			{
-				LIST_PUSH_FRONT(RBnode*,stack,cur->right);
-				cur->right = 0;
-			}
-			if(cur->left)
-			{
-				LIST_PUSH_FRONT(RBnode*,stack,cur->left);
-				cur->left = 0;
-			}
-			if(!cur->left && !cur->right)
-			{
-				LIST_POP_FRONT(RBnode*,stack);
-				free(cur);
-				cur = 0;
-			}
-		}
-		list_destroy(&stack);
-	}
-	free(rb);
-	*_rb = 0;
-
+	
 }
 
-/*
-*   ×óÓÒÐý×ª
-*/
-static RBnode *rotate_left(RBtree_t rb,RBnode *n)
+inline static int32_t less(rbtree_t rb,void *left,void *right)
 {
-	RBnode *parent = n->parent;
-	RBnode *right  = n->right;
+	return rb->compare_function(left,right) == -1;
+}
+
+inline static int32_t equal(rbtree_t rb,void *left,void *right)
+{
+	return rb->compare_function(left,right) == 0;
+}
+
+inline static int32_t more(rbtree_t rb,void *left,void *right)
+{
+	return rb->compare_function(left,right) == 1;
+}
+
+
+static rbnode *rotate_left(rbtree_t rb,rbnode *n)
+{
+	rbnode *parent = n->parent;
+	rbnode *right  = n->right;
 	if(right == rb->nil)
 		return;	
 	
@@ -172,10 +68,10 @@ static RBnode *rotate_left(RBtree_t rb,RBnode *n)
 }
 
 
-static   RBnode *rotate_right(RBtree_t rb,RBnode *n)
+static   rbnode *rotate_right(rbtree_t rb,rbnode *n)
 {
-	RBnode *parent = n->parent;
-	RBnode *left  = n->left;
+	rbnode *parent = n->parent;
+	rbnode *left  = n->left;
 	if(left == rb->nil)
 		return;	
 	n->left = left->right;
@@ -195,7 +91,7 @@ static   RBnode *rotate_right(RBtree_t rb,RBnode *n)
 	left->right = n;
 } 
 
-inline static void color_flip(RBnode *n)
+inline static void color_flip(rbnode *n)
 {
 	if(n->left && n->right)
 	{
@@ -204,18 +100,17 @@ inline static void color_flip(RBnode *n)
 	}
 }
 
-static void insert_fix_up(RBtree_t rb,RBnode *n)
+static void insert_fix_up(rbtree_t rb,rbnode *n)
 {
 	while(n->parent->color == RED)
 	{
-		RBnode *parent = n->parent;
-		RBnode *grand_parent = parent->parent;
+		rbnode *parent = n->parent;
+		rbnode *grand_parent = parent->parent;
 		if(parent == grand_parent->left)
 		{
-			RBnode *ancle = grand_parent->right;
+			rbnode *ancle = grand_parent->right;
 			if(ancle->color == RED)
 			{
-				//ÊåÊå½ÚµãÊÇºìÉ«£¬Ö´ÐÐÒ»´ÎÑÕÉ«·­×ª
 				color_flip(grand_parent);
 				n = grand_parent;
 			}
@@ -234,10 +129,9 @@ static void insert_fix_up(RBtree_t rb,RBnode *n)
 		}
 		else
 		{
-			RBnode *ancle = grand_parent->left;
+			rbnode *ancle = grand_parent->left;
 			if(ancle->color == RED)
 			{
-				//ÊåÊå½ÚµãÊÇºìÉ«£¬Ö´ÐÐÒ»´ÎÑÕÉ«·­×ª
 				color_flip(grand_parent);
 				n = grand_parent;
 			}
@@ -257,57 +151,73 @@ static void insert_fix_up(RBtree_t rb,RBnode *n)
 	rb->root->color = BLACK;
 }
 
-static RBnode *find(RBtree_t rb,void *key)
+rbnode*  rbtree_find(rbtree_t rb,void *key)
 {
 	if(rb->root == rb->nil)
-		return rb->nil;
-	RBnode *cur = rb->root;
-	RBnode *pre;
+		return NULL;
+	rbnode *cur = rb->root;
+	rbnode *pre = NULL;
 	while(cur != rb->nil)
 	{
 		pre = cur;
-		if(equal(rb,key,get_key(cur)))
+		if(equal(rb,key,cur->key))
 			return cur;
-		if(less(rb,key,get_key(cur)))
+		if(less(rb,key,cur->key))
 			cur = cur->left;
 		else
 			cur = cur->right;
 	}
-	return pre;
+	return pre == rb->nil? NULL:pre;
 }
 
-RBnode *create_node(RBtree_t rb,void *key,void *value)
+int8_t rbtree_insert(rbtree_t rb,rbnode *n)
 {
-	
-	RBnode *n = malloc(sizeof(*n) + rb->key_size + rb->val_size - 1);
-	n->key_size = rb->key_size;
-	n->val_size = rb->val_size;	
-	copy_key(n,key);
-	copy_value(n,value);
-	return n;
+	assert(rb);	
+	rbnode *x = rbtree_find(rb,n->key);
+	if(x != NULL && equal(rb,n->key,x->key))
+		return -1;
+	n->color = RED;
+	n->left = n->right = rb->nil;
+	n->tree = rb;	
+	if(x == NULL)
+	{
+		n->parent = rb->nil;
+		rb->root = n;
+	}
+	else
+	{
+		n->parent = x;
+		if(less(rb,n->key,x->key))
+			x->left = n;
+		else 
+			x->right = n;
+	}
+	++rb->size;
+	insert_fix_up(rb,n);
+	return 0;
 }
 
-inline static RBnode *minimum(RBtree_t rb,RBnode *n)
+static inline rbnode *minimum(rbtree_t rb,rbnode *n)
 {
 	while(n->left != rb->nil)
 		n = n->left;
 	return n;
 }
 
-inline static RBnode *maxmum(RBtree_t rb,RBnode *n)
+static inline rbnode *maxmum(rbtree_t rb,rbnode *n)
 {
 	while(n->right != rb->nil)
 		n = n->right;
 	return n;
 }
 
-//»ñµÃnµÄºó¼Ì½Úµã,Îª¸ù½ÚµãµÄÇé¿öÏÂ·µ»Ønil
-static RBnode *successor(RBtree_t rb,RBnode *n)
+
+static inline rbnode *successor(rbtree_t rb,rbnode *n)
 {
 	assert(rb);
 	if(n->right != rb->nil)
 		return minimum(rb,n->right);
-	RBnode *y = n->parent;
+	rbnode *y = n->parent;
 	while(y != rb->nil && n == y->right)
 	{
 		n = y;
@@ -316,23 +226,21 @@ static RBnode *successor(RBtree_t rb,RBnode *n)
 	return y;	
 }
 
-//»ñµÃnµÄÇ°Çý½Úµã,Îª¸ù½ÚµãµÄÇé¿öÏÂ·µ»Ønil
-static RBnode *predecessor(RBtree_t rb,RBnode *n)
+static inline rbnode *predecessor(rbtree_t rb,rbnode *n)
 {
 	assert(rb);
 	if(n->left != rb->nil)
 		return maxmum(rb,n->left);
-	RBnode *y = n->parent;
+	rbnode *y = n->parent;
 	while(y != rb->nil && n == y->left)
 	{
 		n = y;
 		y = y->parent;
 	}
 	return y;	
-	
 }
 
-static RBnode *get_delete_node(RBtree_t rb,RBnode *n)
+static inline rbnode *get_delete_node(rbtree_t rb,rbnode *n)
 {
 	if(n->left == rb->nil && n->right == rb->nil)
 		return n;
@@ -342,25 +250,23 @@ static RBnode *get_delete_node(RBtree_t rb,RBnode *n)
 		return maxmum(rb,n->left);
 }
 
-static void delete_fix_up(RBtree_t rb,RBnode *n)
+static void delete_fix_up(rbtree_t rb,rbnode *n)
 {
 	while(n != rb->root && n->color != RED)
 	{
-		RBnode *p = n->parent;
+		rbnode *p = n->parent;
 		if(n == p->left)
 		{
-			RBnode *w = p->right;
-			if(w->color == RED)//ÐÖµÜÎªºì
+			rbnode *w = p->right;
+			if(w->color == RED)
 			{
 				w->color = BLACK;
 				p->color = RED;
 				rotate_left(rb,p);
 				w = p->right;
 			}
-			//ÐÖµÜÎªºÚ
 			if(w->left->color == BLACK && w->right->color == BLACK)
 			{
-				//ÐÖµÜµÄÁ½¶ù×ÓÎªºÚ
 				w->color = RED;
 				n = p;
 			}
@@ -368,13 +274,11 @@ static void delete_fix_up(RBtree_t rb,RBnode *n)
 			{
 				if(w->right->color == BLACK)
 				{
-					//ÐÖµÜµÄÓÒº¢×ÓÎªºÚ
 					w->left->color == BLACK;
 					w->color = RED;
 					rotate_right(rb,w);
 					w = p->right;
 				}
-				//ÐÖµÜµÄÓÒº¢×ÓÎªºì
 				w->color = p->color;
 				p->color = BLACK;
 				w->right->color = BLACK;
@@ -384,7 +288,7 @@ static void delete_fix_up(RBtree_t rb,RBnode *n)
 		}
 		else
 		{
-			RBnode *w = p->left;
+			rbnode *w = p->left;
 			if(w->color == RED)
 			{
 				w->color = BLACK;
@@ -417,204 +321,112 @@ static void delete_fix_up(RBtree_t rb,RBnode *n)
 	n->color = BLACK;
 }
 
-void rb_iter_get_key(struct base_iterator *_iter, void *key)
-{
-	map_iter *iter = (map_iter*)_iter;
-	RBnode *n = (RBnode*)iter->node;
-	memcpy(key,get_key(n),n->key_size);
-}
-
-void rb_iter_get_val(struct base_iterator *_iter, void *val)
-{
-	map_iter *iter = (map_iter*)_iter;
-	RBnode *n = (RBnode*)iter->node;
-	memcpy(val,get_value(n),n->val_size);
-}
-
-void rb_iter_set_val(struct base_iterator *_iter, void *val)
-{
-	map_iter *iter = (map_iter*)_iter;
-	RBnode *n = (RBnode*)iter->node;
-	copy_value(n,val);
-}
-
-void RB_iter_init(map_iter *,RBnode *);
-
-#define CREATE_MAP_IT(IT,ARG1)\
-	map_iter IT;\
-	RB_iter_init(&IT,ARG1)
-
-void RB_iter_next(struct base_iterator *_iter)
-{
-	map_iter *iter = (map_iter*)_iter;
-	RBnode *n = (RBnode*)iter->node; 
-	RBtree_t rb = n->tree;
-	if(iter->node == rb->nil)
-		return;
-	RBnode *succ = successor(rb,n);	
-	if(!succ)
-		iter->node = rb->nil;
+//å°†nä»Žrbtreeä¸­å‰¥ç¦»,å¹¶è¿”å›žå…¶åŽç»§èŠ‚ç‚¹
+static rbnode* rb_delete(rbtree_t rb,rbnode *n)
+{	
+	rbnode *x = get_delete_node(rb,n);
+	if(!x)
+		return NULL;
+	rbnode *succ;
+	if(x == n || less(rb,x->key,n->key))
+		succ = successor(rb,x);
 	else
-		iter->node = succ;
-}
-
-int8_t RB_iter_equal(struct base_iterator *_a,struct base_iterator *_b)
-{
-	map_iter *a = (map_iter*)_a;
-	map_iter *b = (map_iter*)_b;
-	return a->node == b->node;
-}
-
-void RB_iter_init(map_iter *iter,RBnode *n)
-{
-	iter->base.next = RB_iter_next;
-	iter->base.get_key = rb_iter_get_key;
-	iter->base.get_val = rb_iter_get_val;
-	iter->base.set_val = rb_iter_set_val;
-	iter->base.is_equal = RB_iter_equal;
-	iter->node = n;
-}
-
-map_iter RBtree_begin(struct interface_map_container *_rb)
-{
-	RBtree_t rb = (RBtree_t)_rb;
-	RBnode *min = minimum(rb,rb->root);
-	CREATE_MAP_IT(begin,NULL);
-	begin.node = (min == 0 ? rb->nil : min);
-	return begin;
-}
-
-map_iter RBtree_end(struct interface_map_container *_rb)
-{
-	RBtree_t rb = (RBtree_t)_rb;
-	CREATE_MAP_IT(end,rb->nil);	
-	return end;
-}
-
-map_iter RBtree_find(struct interface_map_container *_rb,void *key)
-{
-	RBtree_t rb = (RBtree_t)_rb;
-	RBnode *n = find(rb,key);
-	if(n == rb->nil || equal(rb,key,get_key(n)) == 0)
-		return RBtree_end(_rb);
-	CREATE_MAP_IT(it,n);	
-	return it;
-}
-
-map_iter RBtree_insert(struct interface_map_container *_rb,void *key,void *val)
-{
-	RBtree_t rb = (RBtree_t)_rb;
-	assert(rb);	
-	RBnode *x = find(rb,key);
-	if(x != rb->nil && equal(rb,key,get_key(x)))
-		return RBtree_end(_rb);//²»ÔÊÐí²åÈëÖØ¸´½Úµã
-	RBnode *n = create_node(rb,key,val);
-	n->color = RED;
-	n->left = n->right = rb->nil;
-	n->tree = rb;
-	
-	if(x == rb->nil)
+		succ = n;
+	/*å°†xä»Žrbtreeä¸­å‰¥ç¦»*/	
+	rbnode *parent = x->parent;
+	rbnode **link = (x == parent->left)? &(parent->left):&(parent->right);
+	rbnode *z = rb->nil;	
+	if(x->left != rb->nil || x->right != rb->nil)
 	{
-		n->parent = rb->nil;
-		rb->root = n;
-	}
-	else
-	{
-		n->parent = x;
-		if(less(rb,key,get_key(x)))
-			x->left = n;
-		else 
-			x->right = n;
-	}
-	++rb->size;
-	insert_fix_up(rb,n);
-	CREATE_MAP_IT(it,n);
-	return it;
-}
-
-static void rb_delete(RBtree_t rb,void *key,RBnode **succ)
-{
-	assert(rb);
-	RBnode *n = find(rb,key);
-	if(equal(rb,key,get_key(n)))
-	{		
-		RBnode *x = get_delete_node(rb,n);//»ñµÃÊµ¼Ê±»É¾³ýµÄ½Úµã
-		
-		if(succ)
-		{
-			if(x == n || less(rb,get_key(x),get_key(n)))
-				*succ = successor(rb,x);
-			else
-			{	
-				//±»É¾³ý½ÚµãÊÇ×Ô¼ºµÄºó¼Ì,ºó¼ÌµÄÊý¾Ý»Ø±»¿½±´µ½µ±Ç°½Úµã
-				//ËùÒÔÉ¾³ýÒÔºó,µ±Ç°½Úµã¾ÍÊÇºó¼Ì½Úµã.
-				*succ = n;
-			}
-		}
-		RBnode *parent = x->parent;
-		RBnode **link = (x == parent->left)? &(parent->left):&(parent->right);
-		RBnode *z = rb->nil;	
-		if(x->left != rb->nil || x->right != rb->nil)
-		{
-			if(x->left != rb->nil)
-				*link = x->left;
-			else
-				*link = x->right;
-			z = *link;
-		}
+		if(x->left != rb->nil)
+			*link = x->left;
 		else
-			*link = rb->nil;
-		
-		z->parent = parent;
-		if(n != x)
+			*link = x->right;
+		z = *link;
+	}
+	else
+		*link = rb->nil;
+	z->parent = parent;
+	/*åˆ°è¿™é‡Œxå·²ç»ä»Žrbtreeä¸­å‰¥ç¦»,çŽ°åœ¨è¦ç”¨xæ›¿æ¢næ‰€åœ¨çš„ä½ç½®
+	* æŠŠxæ”¾å›žrbtreeä¸­,å°†nå‰¥ç¦»
+	*/
+	uint8_t x_old_color = x->color;
+	if(n != x)
+	{
+		rbnode *n_left = n->left;
+		rbnode *n_right = n->right;
+		rbnode *n_parent = n->parent;
+		if(n_left)
+			n_left->parent = x;
+		if(n_right)
+			n_right->parent = x;
+		if(n_parent)
 		{
-			//¿½±´Êý¾Ý
-			copy_key(n,get_key(x));
-			copy_value(n,get_value(x));
+			if(n == n_parent->left)
+				n_parent->left = x;
+			else
+				n_parent->right = x;
 		}
-		if(x != rb->root && x->color == BLACK)
-			delete_fix_up(rb,z);
-		if(x == rb->root)
-			rb->root = rb->nil;
-		free(x);		
-	    --rb->size;
-	}	
+		x->color = n->color;
+	}
+	if(n != rb->root && x_old_color == BLACK)
+		delete_fix_up(rb,z);
+	if(n == rb->root)
+		rb->root = rb->nil;
+	--rb->size;
+	return succ;
 }
 
-void  RBtree_delete(struct interface_map_container *_rb,void *key)
+//å°†nä»Žrbtreeä¸­å‰¥ç¦»,å¹¶è¿”å›žå…¶åŽç»§èŠ‚ç‚¹
+rbnode* rbtree_erase(rbtree_t rb,rbnode *n)
 {
-	RBtree_t rb = (RBtree_t)_rb;
-	rb_delete(rb,key,0);
+	if(rb != n->tree)
+		return NULL;
+	return rb_delete(rb,n);		
 }
 
-/*
-* É¾³ýµ±Ç°½Úµã·µ»Øºó¼Ì½ÚµãµÄµü´úÆ÷
-*/
-map_iter RBtree_erase(struct interface_map_container *_rb,map_iter it) 
+rbnode* rbtree_remove(rbtree_t rb,void *key)
 {
-	RBtree_t rb = (RBtree_t)_rb;
-	RBnode *succ = 0;
-	rb_delete(rb,get_key(it.node),&succ);
-	if(succ == 0)
-		return RBtree_end(_rb);
-	CREATE_MAP_IT(next,succ);
-	return next;	
+	rbnode *n = rbtree_find(rb,key);
+	if(n)
+	{
+		rbtree_erase(rb,n);
+		return n;
+	}
+	return NULL;
 }
 
-RBtree_size(struct interface_map_container *_rb)
+rbnode*  rbtree_first(rbtree_t rb)
 {
-	RBtree_t rb = (RBtree_t)_rb;
-	return rb->size;
+	if(rb->size == 0)
+		return NULL;
+	return minimum(rb,rb->root);
 }
 
-RBtree_empty(struct interface_map_container *_rb)
+rbnode*  rbtree_last(rbtree_t rb)
 {
-	RBtree_t rb = (RBtree_t)_rb;
-	return rb->size == 0;
+	if(rb->size == 0)
+		return NULL;
+	return maxmum(rb,rb->root);
 }
 
+rbnode*  rbnode_next(rbtree_t rb,rbnode *n)
+{
+	rbnode *succ = successor(rb,n);	
+	if(succ == rb->nil)
+		return NULL;
+	return succ;
+}
 
-static int32_t check(RBtree_t rb,RBnode *n,int32_t level,int32_t black_level,int32_t *max_black_level,int32_t *max_level)
+rbnode*  rbnode_pre(rbtree_t rb,rbnode*n)
+{
+	rbnode *presucc = predecessor(rb,n);
+	if(presucc == rb->nil)
+		return NULL;
+	return presucc;	
+}
+
+static int32_t check(rbtree_t rb,rbnode *n,int32_t level,int32_t black_level,int32_t *max_black_level,int32_t *max_level)
 {
 	if(n == rb->nil)
 		return 1;
@@ -624,14 +436,14 @@ static int32_t check(RBtree_t rb,RBnode *n,int32_t level,int32_t black_level,int
 	{
 		if(n->parent->color == RED)
 		{
-			printf("¸¸½ÚµãÑÕÉ«ÎªRED\n");
+			printf("çˆ¶èŠ‚ç‚¹é¢œè‰²ä¸ºRED\n");
 			return 0;
 		}
 	}
 	++level;
 	if(n->left == rb->nil && n->right == rb->nil)
 	{
-		//µ½´ïÒ¶½Úµã
+		//åˆ°è¾¾å¶èŠ‚ç‚¹
 		if(level > *max_level)
 			*max_level = level;		
 		if(*max_black_level == 0)
@@ -639,7 +451,7 @@ static int32_t check(RBtree_t rb,RBnode *n,int32_t level,int32_t black_level,int
 		else
 			if(*max_black_level != black_level)
 			{
-				printf("ºÚÉ«½ÚµãÊýÄ¿²»Ò»ÖÂ\n");
+				printf("é»‘è‰²èŠ‚ç‚¹æ•°ç›®ä¸ä¸€è‡´\n");
 				return 0;
 			}
 		return 1;
@@ -653,7 +465,7 @@ static int32_t check(RBtree_t rb,RBnode *n,int32_t level,int32_t black_level,int
 	}
 }
 
-void RBtree_check_vaild(RBtree_t rb)
+void rbtree_check_vaild(rbtree_t rb)
 {
 	assert(rb);
 	if(rb->root != rb->nil)

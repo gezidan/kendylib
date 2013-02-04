@@ -17,15 +17,40 @@
 #ifndef _RBTREE_H
 #define _RBTREE_H
 #include <stdint.h>
-#include "map.h"
+typedef struct rbtree *rbtree_t;
 
-typedef struct RBtree *RBtree_t;
-extern RBtree_t RBtree_create(uint16_t,uint16_t,comp _comp);
+typedef struct rbnode{
+	struct rbnode *parent;
+	struct rbnode *left;
+	struct rbnode *right;
+	void   *key;
+	void   *val;
+	rbtree_t tree;
+	uint8_t color;	
+}rbnode;
 
+typedef int32_t (*cmp_function)(void*,void*);
 
-struct interface_map_container;
-extern void     RBtree_destroy(struct interface_map_container**);
+typedef struct rbtree{
+	rbnode *root;
+	rbnode *nil;
+	uint32_t size;
+	uint16_t key_size;
+	uint16_t val_size;	
+	cmp_function compare_function;
+	rbnode  dummy;
+}rbtree;
 
-///检查是否有违反红黑树性质
-extern void      RBtree_check_vaild(RBtree_t);
+rbtree_t create_rbtree(int32_t k_size,int32_t v_size,cmp_function);
+void     destroy_rbtree(rbtree_t *);
+int8_t   rbtree_insert(rbtree_t,rbnode*);
+rbnode*  rbtree_find(rbtree_t,void *key);
+rbnode*  rbtree_erase(rbtree_t,rbnode*);
+rbnode*  rbtree_remove(rbtree_t,void *key);
+void     rbtree_check_vaild(rbtree_t rb);
+rbnode*  rbtree_first(rbtree_t);
+rbnode*  rbtree_last(rbtree_t);
+rbnode*  rbnode_next(rbtree_t,rbnode*);
+rbnode*  rbnode_pre(rbtree_t,rbnode*);
 #endif
+
