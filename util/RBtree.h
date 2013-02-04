@@ -35,17 +35,15 @@ typedef struct rbtree{
 	rbnode *root;
 	rbnode *nil;
 	uint32_t size;
-	uint16_t key_size;
-	uint16_t val_size;	
 	cmp_function compare_function;
 	rbnode  dummy;
 }rbtree;
 
-rbtree_t create_rbtree(int32_t k_size,int32_t v_size,cmp_function);
+rbtree_t create_rbtree(cmp_function);
 void     destroy_rbtree(rbtree_t *);
 int8_t   rbtree_insert(rbtree_t,rbnode*);
 rbnode*  rbtree_find(rbtree_t,void *key);
-rbnode*  rbtree_erase(rbtree_t,rbnode*);
+int8_t   rbtree_erase(rbnode*);
 rbnode*  rbtree_remove(rbtree_t,void *key);
 void     rbtree_check_vaild(rbtree_t rb);
 rbnode*  rbtree_first(rbtree_t);

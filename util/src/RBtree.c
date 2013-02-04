@@ -5,7 +5,7 @@
 #define RED 1
 #define BLACK 2
 
-rbtree_t create_rbtree(int32_t k_size,int32_t v_size,cmp_function compare_function)
+rbtree_t create_rbtree(cmp_function compare_function)
 {
 	rbtree_t rb = malloc(sizeof(*rb));
 	if(rb)
@@ -15,16 +15,15 @@ rbtree_t create_rbtree(int32_t k_size,int32_t v_size,cmp_function compare_functi
 		rb->nil = &rb->dummy;
 		rb->nil->tree = rb;
 		rb->root = rb->nil;
-		rb->key_size = k_size;
-		rb->val_size = v_size;
 		rb->compare_function = compare_function;
 	}
 	return rb;
 }
 
-void     destroy_rbtree(rbtree_t *rb)
+void destroy_rbtree(rbtree_t *rb)
 {
-	
+	free(*rb);
+	*rb = NULL;
 }
 
 inline static int32_t less(rbtree_t rb,void *left,void *right)
@@ -321,17 +320,12 @@ static void delete_fix_up(rbtree_t rb,rbnode *n)
 	n->color = BLACK;
 }
 
-//将n从rbtree中剥离,并返回其后继节点
-static rbnode* rb_delete(rbtree_t rb,rbnode *n)
+//将n从rbtree中剥离
+static int8_t rb_delete(rbtree_t rb,rbnode *n)
 {	
 	rbnode *x = get_delete_node(rb,n);
 	if(!x)
-		return NULL;
-	rbnode *succ;
-	if(x == n || less(rb,x->key,n->key))
-		succ = successor(rb,x);
-	else
-		succ = n;
+		return -1;
 	/*将x从rbtree中剥离*/	
 	rbnode *parent = x->parent;
 	rbnode **link = (x == parent->left)? &(parent->left):&(parent->right);
@@ -374,15 +368,14 @@ static rbnode* rb_delete(rbtree_t rb,rbnode *n)
 	if(n == rb->root)
 		rb->root = rb->nil;
 	--rb->size;
-	return succ;
+	return 0;
 }
 
-//将n从rbtree中剥离,并返回其后继节点
-rbnode* rbtree_erase(rbtree_t rb,rbnode *n)
+int8_t rbtree_erase(rbnode *n)
 {
-	if(rb != n->tree)
-		return NULL;
-	return rb_delete(rb,n);		
+	if(!n->tree)
+		return -1;
+	return rb_delete(n->tree,n);		
 }
 
 rbnode* rbtree_remove(rbtree_t rb,void *key)
@@ -390,7 +383,7 @@ rbnode* rbtree_remove(rbtree_t rb,void *key)
 	rbnode *n = rbtree_find(rb,key);
 	if(n)
 	{
-		rbtree_erase(rb,n);
+		rbtree_erase(n);
 		return n;
 	}
 	return NULL;
@@ -426,7 +419,7 @@ rbnode*  rbnode_pre(rbtree_t rb,rbnode*n)
 	return presucc;	
 }
 
-static int32_t check(rbtree_t rb,rbnode *n,int32_t level,int32_t black_level,int32_t *max_black_level,int32_t *max_level)
+int32_t check(rbtree_t rb,rbnode *n,int32_t level,int32_t black_level,int32_t *max_black_level,int32_t *max_level)
 {
 	if(n == rb->nil)
 		return 1;

@@ -75,7 +75,7 @@ int main()
 	n10.base.key = &n10.key;
 	n10.base.val = &n10.val;
 	
-	rbtree_t rb = create_rbtree(sizeof(int),sizeof(int),_comp);
+	rbtree_t rb = create_rbtree(_comp);
 	rbtree_insert(rb,(rbnode*)&n1);
 	rbtree_insert(rb,(rbnode*)&n2);
 	rbtree_insert(rb,(rbnode*)&n3);
