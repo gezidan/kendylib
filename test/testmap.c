@@ -1,6 +1,5 @@
 #include <stdio.h>
-//#include "util/map.h"
-
+#include "util/map.h"
 #include "util/RBtree.h"
 
 int32_t _comp(void *_a,void *_b)
@@ -24,7 +23,7 @@ typedef struct mmnode
 
 int main()
 {
-	
+	/*
 	mmnode n1;
 	n1.key = n1.val = 1;
 	n1.base.key = &n1.key;
@@ -81,11 +80,11 @@ int main()
 	rbtree_insert(rb,(rbnode*)&n3);
 	rbtree_insert(rb,(rbnode*)&n4);
 	rbtree_insert(rb,(rbnode*)&n5);
-	rbtree_insert(rb,(rbnode*)&n6);
-	rbtree_insert(rb,(rbnode*)&n7);
-	rbtree_insert(rb,(rbnode*)&n8);
-	rbtree_insert(rb,(rbnode*)&n9);
-	rbtree_insert(rb,(rbnode*)&n10);
+	//rbtree_insert(rb,(rbnode*)&n6);
+	//rbtree_insert(rb,(rbnode*)&n7);
+	//rbtree_insert(rb,(rbnode*)&n8);
+	//rbtree_insert(rb,(rbnode*)&n9);
+	//rbtree_insert(rb,(rbnode*)&n10);
 	{
 		mmnode *n = (mmnode*)rbtree_first(rb);
 		while(n)
@@ -96,7 +95,7 @@ int main()
 	}	
 	rbtree_check_vaild(rb);
 	
-	mmnode *succ = (mmnode*)rbtree_remove(rb,(void*)&n3.key);
+	mmnode *succ = (mmnode*)rbtree_remove(rb,(void*)&n4.key);
 	printf("%d\n",succ->key);
 	rbtree_check_vaild(rb);
 	{
@@ -115,9 +114,8 @@ int main()
 			printf("%d\n",n->key);
 			n = (mmnode*)rbnode_pre(rb,(rbnode*)n);
 		}
-	}		
-	
-/*
+	}
+	*/
 	map_t m = MAP_CREATE(int,int,_comp,NULL);
 	MAP_INSERT(int,int,m,1,1);
 	MAP_INSERT(int,int,m,2,2);
@@ -135,7 +133,7 @@ int main()
 	end = map_end(m);
 	for( ; !IT_EQ(it,end); IT_NEXT(it))
 		printf("%d\n",IT_GET_VAL(int,it));	
-*/	
+	
 	
 	return 0;
 }

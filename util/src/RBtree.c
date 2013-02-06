@@ -26,12 +26,12 @@ void destroy_rbtree(rbtree_t *rb)
 	*rb = NULL;
 }
 
-uint32_t rbtree_size(rbtree_t *rb)
+uint32_t rbtree_size(rbtree_t rb)
 {
 	return rb->size;
 }
 
-int8_t   rbtree_isempty(rbtree_t *rb)
+int8_t   rbtree_isempty(rbtree_t rb)
 {
 	return rb->size == 0 ? 1:0;
 }
@@ -361,15 +361,22 @@ static int8_t rb_delete(rbtree_t rb,rbnode *n)
 		rbnode *n_right = n->right;
 		rbnode *n_parent = n->parent;
 		if(n_left)
+		{
 			n_left->parent = x;
+			x->left = n_left;
+		}
 		if(n_right)
+		{
 			n_right->parent = x;
+			x->right = n_right;
+		}
 		if(n_parent)
 		{
 			if(n == n_parent->left)
 				n_parent->left = x;
 			else
 				n_parent->right = x;
+			x->parent = n_parent;	
 		}
 		x->color = n->color;
 	}
@@ -413,16 +420,22 @@ rbnode*  rbtree_last(rbtree_t rb)
 	return maxmum(rb,rb->root);
 }
 
-rbnode*  rbnode_next(rbtree_t rb,rbnode *n)
+rbnode*  rbnode_next(rbnode *n)
 {
+	if(!n)
+		return NULL;
+	rbtree_t rb = nb->tree;
 	rbnode *succ = successor(rb,n);	
 	if(succ == rb->nil)
 		return NULL;
 	return succ;
 }
 
-rbnode*  rbnode_pre(rbtree_t rb,rbnode*n)
+rbnode*  rbnode_pre(rbnode*n)
 {
+	if(!n)
+		return NULL;
+	rbtree_t rb = nb->tree;
 	rbnode *presucc = predecessor(rb,n);
 	if(presucc == rb->nil)
 		return NULL;
