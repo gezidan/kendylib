@@ -13,11 +13,11 @@ static socket_t socket_pool[MAX_SOCKET];
 static int32_t current_socket_count = 0;
 
 int32_t InitHandleMgr()
-{	
+{
 	engine_mtx = mutex_create();
 	socket_mtx = mutex_create();
 	return 0;
-	
+
 }
 
 inline socket_t GetSocketByHandle(HANDLE handle)
@@ -31,7 +31,7 @@ inline engine_t GetEngineByHandle(HANDLE handle)
 {
 	if(handle >= 0 && handle < current_engine_count && engine_pool[handle]->status != 0)
 		return engine_pool[handle];
-	return 0;	
+	return 0;
 }
 
 HANDLE	NewSocketWrapper()
@@ -84,14 +84,22 @@ int32_t  ReleaseSocketWrapper(HANDLE handle)
 			double_link_remove((struct double_link_node*)socket_pool[handle]);
 			RemoveBinding(socket_pool[handle]->engine,socket_pool[handle]);
 			close(socket_pool[handle]->fd);
+            if(socket_pool[handle]->OnClear_pending_io)
+            {
+                list_node *tmp;
+                while(tmp = link_list_pop(socket_pool[handle]->pending_send))
+                    socket_pool[handle]->OnClear_pending_io((st_io*)tmp);
+                while(tmp = link_list_pop(socket_pool[handle]->pending_recv))
+                    socket_pool[handle]->OnClear_pending_io((st_io*)tmp);
+            }
 			socket_pool[handle]->status = 0;
-			ret = 0;			
+			ret = 0;
 		}
-		//mutex_unlock(socket_pool[handle]->mtx);	
+		//mutex_unlock(socket_pool[handle]->mtx);
 	}
 	mutex_unlock(socket_mtx);
 	return ret;
-} 
+}
 
 HANDLE	NewEngine()
 {
@@ -106,7 +114,7 @@ HANDLE	NewEngine()
 			break;
 		}
 	}
-	
+
 	if(i == current_engine_count && current_engine_count < MAX_ENGINE)
 	{
 		//还没到达上限,新产生一个engine
@@ -117,9 +125,9 @@ HANDLE	NewEngine()
 			cur_engine_count = ++current_engine_count;
 		}
 	}
-    	
+
 	mutex_unlock(engine_mtx);
-	
+
 	if(i < cur_engine_count)
 		return i;
 	return -1;
@@ -133,4 +141,4 @@ void  ReleaseEngine(HANDLE handle)
 		engine_pool[handle]->status = 0;
 	}
 	mutex_unlock(engine_mtx);
-} 
+}

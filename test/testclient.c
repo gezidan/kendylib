@@ -51,7 +51,7 @@ void remove_client(struct connection *c,int32_t reason)
 	if(0 == connection_destroy(&c))
 	{
 		ReleaseSocketWrapper(sock);
-	}	
+	}
 }
 
 connector_t con = NULL;
@@ -69,14 +69,14 @@ void on_process_packet(struct connection *c,rpacket_t r)
 		ava_interval /= 2;
 	}
 	++packet_recv;
-	rpacket_destroy(&r);	
+	rpacket_destroy(&r);
 	/*wpacket_t wpk = wpacket_create(SINGLE_THREAD,wpacket_allocator,64,0);
 	wpacket_write_uint32(wpk,c->socket);
 	uint32_t sys_t = GetSystemMs();
 	wpacket_write_uint32(wpk,sys_t);
 	wpacket_write_string(wpk,"hello kenny");
 	connection_send(c,wpk,NULL);
-	++send_request;*/	
+	++send_request;*/
 }
 
 void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
@@ -91,12 +91,12 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 	}
 	else
 	{
-		
+
 		setNonblock(s);
 		c = connection_create(s,0,SINGLE_THREAD,on_process_packet,remove_client);
 		printf("%d,连接到:%s,%d,成功\n",s,ip,port);
 		add_client(c);
-		Bind2Engine(*engine,s,RecvFinish,SendFinish);
+		Bind2Engine(*engine,s,RecvFinish,SendFinish,NULL);
 		wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
 		wpacket_write_uint32(wpk,(uint32_t)s);
 		uint32_t sys_t = GetSystemMs();
@@ -108,9 +108,9 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 }
 
 int32_t main(int32_t argc,char **argv)
-{	
+{
 	HANDLE engine;
-	
+
 	const char *ip = argv[1];
 	uint32_t port = atoi(argv[2]);
 	int32_t client_count = atoi(argv[3]);
@@ -121,8 +121,8 @@ int32_t main(int32_t argc,char **argv)
 		printf("Init error\n");
 		return 0;
 	}
-	wpacket_allocator = (allocator_t)create_block_obj_allocator(SINGLE_THREAD,sizeof(struct wpacket));		
-	
+	wpacket_allocator = (allocator_t)create_block_obj_allocator(SINGLE_THREAD,sizeof(struct wpacket));
+
 	int32_t ret;
 	int32_t i = 0;
 	uint32_t send_interval = 200;
@@ -169,9 +169,9 @@ int32_t main(int32_t argc,char **argv)
 						}
 					}
 			}
-				
+
 		}
-		
+
 	}
 	return 0;
 }

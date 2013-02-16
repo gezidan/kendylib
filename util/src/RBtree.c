@@ -330,13 +330,13 @@ static void delete_fix_up(rbtree_t rb,rbnode *n)
 	n->color = BLACK;
 }
 
-//Â∞Ün‰ªérbtree‰∏≠Ââ•Á¶ª
+//Å0ä2°„Å0Å6nÅ0ä1Å0Ü3Å0Ç4rbtreeÅ0ä1Å0Ü0Å0Ö2Å0ä2Å0Å9Å0Ñ6Å0ä4Å0Ñ7Å0Ü3
 static int8_t rb_delete(rbtree_t rb,rbnode *n)
 {	
 	rbnode *x = get_delete_node(rb,n);
 	if(!x)
 		return -1;
-	/*Â∞Üx‰ªérbtree‰∏≠Ââ•Á¶ª*/	
+	/*Å0ä2°„Å0Å6xÅ0ä1Å0Ü3Å0Ç4rbtreeÅ0ä1Å0Ü0Å0Ö2Å0ä2Å0Å9Å0Ñ6Å0ä4Å0Ñ7Å0Ü3*/	
 	rbnode *parent = x->parent;
 	rbnode **link = (x == parent->left)? &(parent->left):&(parent->right);
 	rbnode *z = rb->nil;	
@@ -351,8 +351,8 @@ static int8_t rb_delete(rbtree_t rb,rbnode *n)
 	else
 		*link = rb->nil;
 	z->parent = parent;
-	/*Âà∞ËøôÈáåxÂ∑≤Áªè‰ªérbtree‰∏≠Ââ•Á¶ª,Áé∞Âú®Ë¶ÅÁî®xÊõøÊç¢nÊâÄÂú®ÁöÑ‰ΩçÁΩÆ
-	* ÊääxÊîæÂõûrbtree‰∏≠,Â∞ÜnÂâ•Á¶ª
+	/*Å0ä2Å0Å8°„®®Å0Ü7Å0É5®¶Å0Å7Å0Ç2xÅ0ä2°§Å0Ö5Å0ä4Å0Ü3Å0Ç5Å0ä1Å0Ü3Å0Ç4rbtreeÅ0ä1Å0Ü0Å0Ö2Å0ä2Å0Å9Å0Ñ6Å0ä4Å0Ñ7Å0Ü3,Å0ä4Å0Ç4°„Å0ä2Å0É8°ß®®Å0Ñ7Å0Å1Å0ä4Å0É0°ßxÅ0ä3Å0É7Å0Ü7Å0ä3Å0Ç3Å0Ñ4nÅ0ä3Å0Å9Å0Å0Å0ä2Å0É8°ßÅ0ä4Å0É6Å0Å4Å0ä1Å0Ü5Å0Ç3Å0ä4Å0Ü5Å0Ö3
+	* Å0ä3Å0Ç0Å0Ç0xÅ0ä3Å0É0Å0Ü6Å0ä2Å0É7Å0Ñ0rbtreeÅ0ä1Å0Ü0Å0Ö2,Å0ä2°„Å0Å6nÅ0ä2Å0Å9Å0Ñ6Å0ä4Å0Ñ7Å0Ü3
 	*/
 	uint8_t x_old_color = x->color;
 	if(n != x)
@@ -452,14 +452,14 @@ int32_t check(rbtree_t rb,rbnode *n,int32_t level,int32_t black_level,int32_t *m
 	{
 		if(n->parent->color == RED)
 		{
-			printf("Áà∂ËäÇÁÇπÈ¢úËâ≤‰∏∫RED\n");
+			printf("Å0ä4Å0Å8Å0Ö9®®Å0Ç0Å0Å2Å0ä4Å0Å2Å0Ü1®¶Å0Ñ4Å0É8®®Å0Å9Å0Ö5Å0ä1Å0Ü0Å0Ü2RED\n");
 			return 0;
 		}
 	}
 	++level;
 	if(n->left == rb->nil && n->right == rb->nil)
 	{
-		//Âà∞ËææÂè∂ËäÇÁÇπ
+		//Å0ä2Å0Å8°„®®Å0Ü6Å0Ü6Å0ä2Å0Ç5Å0Ö9®®Å0Ç0Å0Å2Å0ä4Å0Å2Å0Ü1
 		if(level > *max_level)
 			*max_level = level;		
 		if(*max_black_level == 0)
@@ -467,7 +467,7 @@ int32_t check(rbtree_t rb,rbnode *n,int32_t level,int32_t black_level,int32_t *m
 		else
 			if(*max_black_level != black_level)
 			{
-				printf("ÈªëËâ≤ËäÇÁÇπÊï∞ÁõÆ‰∏ç‰∏ÄËá¥\n");
+				printf("®¶Å0Ü3Å0Ç7®®Å0Å9Å0Ö5®®Å0Ç0Å0Å2Å0ä4Å0Å2Å0Ü1Å0ä3Å0É1°„Å0ä4Å0É7Å0Ö3Å0ä1Å0Ü0Å0Ç3Å0ä1Å0Ü0Å0Å0®®Å0Å7Å0Ö7\n");
 				return 0;
 			}
 		return 1;

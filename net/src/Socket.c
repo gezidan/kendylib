@@ -25,6 +25,14 @@ socket_t create_socket()
 void free_socket(socket_t *s)
 {
 	assert(s);assert(*s);
+	if((*s)->OnClear_pending_io)
+	{
+        list_node *tmp;
+        while(tmp = link_list_pop((*s)->pending_send))
+            (*s)->OnClear_pending_io((st_io*)tmp);
+        while(tmp = link_list_pop((*s)->pending_recv))
+            (*s)->OnClear_pending_io((st_io*)tmp);
+	}
 	destroy_link_list(&(*s)->pending_send);
 	destroy_link_list(&(*s)->pending_recv);
 	free(*s);
@@ -48,7 +56,7 @@ void on_write_active(socket_t s)
 	{
 		s->isactived = 1;
 		double_link_push(s->engine->actived,(struct double_link_node*)s);
-	}	
+	}
 }
 
 
@@ -88,7 +96,7 @@ static inline void _recv(socket_t s)
 		{
 			ret = raw_recv(s,io_req,&bytes_transfer,&io_req->err_code);
 			if(io_req->err_code != EAGAIN)
-				s->OnRead(bytes_transfer,io_req);		
+				s->OnRead(bytes_transfer,io_req);
 		}
 	}
 }
@@ -120,17 +128,17 @@ static inline void _send(socket_t s)
 {
 	assert(s);
 	int32_t ret = -1;
-	int32_t bytes_transfer = 0;	
+	int32_t bytes_transfer = 0;
 	st_io* io_req = 0;
 	if(s->writeable)
 	{
 		if(io_req = LINK_LIST_POP(st_io*,s->pending_send))
-		{	
+		{
 			ret = raw_send(s,io_req,&bytes_transfer,&io_req->err_code);
 			if(io_req->err_code != EAGAIN)
 				s->OnWrite(bytes_transfer,io_req);
 		}
-	}	
+	}
 }
 
 int32_t  Process(socket_t s)

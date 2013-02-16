@@ -18,7 +18,7 @@ int32_t EngineRun(HANDLE engine,int32_t timeout)
 	engine_t e = GetEngineByHandle(engine);
 	if(!e)
 		return -1;
-	return e->Loop(e,timeout);	
+	return e->Loop(e,timeout);
 }
 
 HANDLE CreateEngine()
@@ -46,7 +46,7 @@ void CloseEngine(HANDLE handle)
 	ReleaseEngine(handle);
 }
 
-int32_t Bind2Engine(HANDLE e,HANDLE s,OnRead _OnRead,OnWrite _OnWrite)
+int32_t Bind2Engine(HANDLE e,HANDLE s,OnRead _OnRead,OnWrite _OnWrite,OnClear_pending _OnClear_pending)
 {
 	engine_t engine = GetEngineByHandle(e);
 	socket_t sock   = GetSocketByHandle(s);
@@ -54,6 +54,7 @@ int32_t Bind2Engine(HANDLE e,HANDLE s,OnRead _OnRead,OnWrite _OnWrite)
 		return -1;
 	sock->OnRead = _OnRead;
 	sock->OnWrite = _OnWrite;
+	sock->OnClear_pending_io = _OnClear_pending;
 	sock->engine = engine;
 	if(engine->Register(engine,sock) == 0)
 		return 0;
@@ -105,7 +106,7 @@ int32_t WSARecv(HANDLE sock,st_io *io,int32_t flag,uint32_t *err_code)
 		if(s->engine && s->readable && !s->isactived)
 		{
 			s->isactived = 1;
-			double_link_push(s->engine->actived,(struct double_link_node*)s);	
+			double_link_push(s->engine->actived,(struct double_link_node*)s);
 		}
 		*err_code = EAGAIN;
 		return -1;

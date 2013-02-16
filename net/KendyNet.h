@@ -1,4 +1,4 @@
-/*	
+/*
     Copyright (C) <2012>  <huangweilook@21cn.com>
 
     This program is free software: you can redistribute it and/or modify
@@ -13,7 +13,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/	
+*/
 #ifndef _KENDYNET_H
 #define _KENDYNET_H
 #include <stdint.h>
@@ -38,13 +38,17 @@ int32_t      InitNetSystem();
 typedef int32_t HANDLE;
 struct block_queue;
 
+//recv请求完成时callback
 typedef void (*OnRead)(int32_t,st_io*);
+//send请求完成时callback
 typedef void (*OnWrite)(int32_t,st_io*);
+//连接关闭时,对所有未完成的请求执行的callback
+typedef void (*OnClear_pending)(st_io*);
 
 HANDLE   CreateEngine();
 void     CloseEngine(HANDLE);
-int32_t  EngineRun(HANDLE,int32_t timeout);	
-int32_t  Bind2Engine(HANDLE,HANDLE,OnRead,OnWrite);
+int32_t  EngineRun(HANDLE,int32_t timeout);
+int32_t  Bind2Engine(HANDLE,HANDLE,OnRead,OnWrite,OnClear_pending);
 
 enum
 {

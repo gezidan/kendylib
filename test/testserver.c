@@ -71,7 +71,7 @@ void remove_client(struct connection *c,int32_t reason)
 			clients[i] = 0;
 			break;
 		}
-	}	
+	}
 	HANDLE sock = c->socket;
 	if(0 == connection_destroy(&c))
 	{
@@ -83,24 +83,24 @@ void on_process_packet(struct connection *c,rpacket_t r)
 {
 	send2_all_client(r);
 	//wpacket_t w = wpacket_create_by_rpacket(wpacket_allocator,r);
-	//connection_send(c,w,NULL);	
+	//connection_send(c,w,NULL);
 	//++send_request;
-	
+
 	total_bytes_recv += rpacket_len(r);
 	rpacket_destroy(&r);
-	++packet_recv;	
+	++packet_recv;
 }
 
 void accept_callback(HANDLE s,void *ud)
 {
-	HANDLE *engine = (HANDLE*)ud;	
+	HANDLE *engine = (HANDLE*)ud;
 	struct connection *c = connection_create(s,0,SINGLE_THREAD,on_process_packet,remove_client);
 	add_client(c);
 	printf("cli fd:%d\n",s);
 	setNonblock(s);
 	//发出第一个读请求
 	connection_start_recv(c);
-	Bind2Engine(*engine,s,RecvFinish,SendFinish);
+	Bind2Engine(*engine,s,RecvFinish,SendFinish,NULL);
 }
 
 
@@ -116,7 +116,7 @@ void *_Listen(void *arg)
 		acceptor_run(a,100);
 	return 0;
 }
-uint32_t iocp_count = 0; 
+uint32_t iocp_count = 0;
 int main(int argc,char **argv)
 {
 
@@ -131,7 +131,7 @@ int main(int argc,char **argv)
 		printf("Init error\n");
 		return 0;
 	}
-	wpacket_allocator = (allocator_t)create_block_obj_allocator(SINGLE_THREAD,sizeof(struct wpacket));	
+	wpacket_allocator = (allocator_t)create_block_obj_allocator(SINGLE_THREAD,sizeof(struct wpacket));
 	uint32_t i = 0;
 	init_clients();
 	engine = CreateEngine();
@@ -164,7 +164,7 @@ int main(int argc,char **argv)
 				}
 			}
 		}*/
-		
+
 	}
 	return 0;
 }
