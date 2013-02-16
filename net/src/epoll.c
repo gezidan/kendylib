@@ -19,7 +19,7 @@ int32_t epoll_register(engine_t e, socket_t s)
 	int32_t ret = -1;	
 	struct epoll_event ev;	
 	ev.data.ptr = s;
-	ev.events = EV_IN | EV_OUT | EV_ET;
+	ev.events = EV_IN | EV_OUT | EV_ET | EPOLLRDHUP;
 	TEMP_FAILURE_RETRY(ret = epoll_ctl(e->poller_fd,EPOLL_CTL_ADD,s->fd,&ev));
 	return ret;
 }
@@ -42,6 +42,7 @@ int32_t epoll_loop(engine_t n,int32_t ms)
 	uint32_t sleep_ms;
 	uint32_t timeout = GetSystemMs() + ms;
 	uint32_t current_tick;
+	uint32_t read_event = EV_IN | EPOLLRDHUP | EPOLLERR | EPOLLHUP;
 	do{		
 		while(!double_link_empty(n->actived))
 		{
@@ -67,12 +68,10 @@ int32_t epoll_loop(engine_t n,int32_t ms)
 			socket_t sock = (socket_t)n->events[i].data.ptr;
 			if(sock)
 			{
-				if(n->events[i].events & EPOLLIN)
+				if(n->events[i].events & read_event)
 					on_read_active(sock);
 				if(n->events[i].events & EPOLLOUT)
 					on_write_active(sock);	
-				if(n->events[i].events & EPOLLERR)
-					on_read_active(sock);
 			}
 		}	
 		current_tick = GetSystemMs();
