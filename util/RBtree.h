@@ -1,4 +1,4 @@
-/*	
+/*
     Copyright (C) <2012>  <huangweilook@21cn.com>
 
     This program is free software: you can redistribute it and/or modify
@@ -13,7 +13,7 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/	
+*/
 #ifndef _RBTREE_H
 #define _RBTREE_H
 #include <stdint.h>
@@ -24,9 +24,9 @@ typedef struct rbnode{
 	struct rbnode *left;
 	struct rbnode *right;
 	void   *key;
-	void   *val;
+//	void   *val;
 	rbtree_t tree;
-	uint8_t color;	
+	uint8_t color;
 }rbnode;
 
 typedef int32_t (*cmp_function)(void*,void*);

@@ -10,10 +10,13 @@ struct RBtree;
 typedef struct RBnode
 {
 	rbnode base;
+	void   *val;
+#define __key base.key
+#define __val val
 	struct RBtree *tree;
 	uint16_t key_size;
 	uint16_t val_size;
-	int8_t   data[1];//key & value	
+	int8_t   data[1];//key & value
 }RBnode;
 
 #ifndef IMPLEMEMT
@@ -63,13 +66,13 @@ void RBtree_destroy(struct interface_map_container **_rb)
 	struct RBtree *rb = (struct RBtree*)*_rb;
 	if(rb->_rb->size)
 	{
-		RBnode *cur = rbtree_first(rb->_rb);
-		RBnode *next = rbnode_next((rbnode*)cur);
+		RBnode *cur = (RBnode *)rbtree_first(rb->_rb);
+		RBnode *next = (RBnode *)rbnode_next((rbnode*)cur);
 		while(cur)
 		{
 			free(cur);
 			cur = next;
-			next = rbnode_next((rbnode*)cur);
+			next = (RBnode*)rbnode_next((rbnode*)cur);
 		}
 	}
 	free(rb);
@@ -78,15 +81,15 @@ void RBtree_destroy(struct interface_map_container **_rb)
 
 RBnode *create_node(RBtree_t rb,void *key,void *value)
 {
-	
+
 	RBnode *n = malloc(sizeof(*n) + rb->key_size + rb->val_size - 1);
-	n->base.key = &n->data[0];
-	n->base.val = &n->data[rb->key_size];
+	n->__key = &n->data[0];
+	n->__val = &n->data[rb->key_size];
 	n->key_size = rb->key_size;
 	n->val_size = rb->val_size;
 	n->tree = rb;
-	memcpy(n->base.key,key,rb->key_size);
-	memcpy(n->base.val,value,rb->val_size);
+	memcpy(n->__key,key,rb->key_size);
+	memcpy(n->__val,value,rb->val_size);
 	return n;
 }
 
@@ -94,21 +97,21 @@ void rb_iter_get_key(struct base_iterator *_iter, void *key)
 {
 	map_iter *iter = (map_iter*)_iter;
 	RBnode *n = (RBnode*)iter->node;
-	memcpy(key,n->base.key,n->key_size);
+	memcpy(key,n->__key,n->key_size);
 }
 
 void rb_iter_get_val(struct base_iterator *_iter, void *val)
 {
 	map_iter *iter = (map_iter*)_iter;
 	RBnode *n = (RBnode*)iter->node;
-	memcpy(val,n->base.val,n->val_size);
+	memcpy(val,n->__val,n->val_size);
 }
 
 void rb_iter_set_val(struct base_iterator *_iter, void *val)
 {
 	map_iter *iter = (map_iter*)_iter;
 	RBnode *n = (RBnode*)iter->node;
-	memcpy(n->base.val,val,n->val_size);
+	memcpy(n->__val,val,n->val_size);
 }
 
 void RB_iter_init(map_iter *,RBnode *);
@@ -120,11 +123,11 @@ void RB_iter_init(map_iter *,RBnode *);
 void RB_iter_next(struct base_iterator *_iter)
 {
 	map_iter *iter = (map_iter*)_iter;
-	RBnode *n = (RBnode*)iter->node; 
+	RBnode *n = (RBnode*)iter->node;
 	RBtree_t rb = n->tree;
 	if(iter->node == rb->_rb->nil)
 		return;
-	RBnode *succ = (RBnode*)rbnode_next(rb->_rb,(rbnode*)n);
+	RBnode *succ = (RBnode*)rbnode_next((rbnode*)n);
 	if(!succ)
 		iter->node = rb->_rb->nil;
 	else
@@ -160,14 +163,14 @@ map_iter RBtree_begin(struct interface_map_container *_rb)
 map_iter RBtree_end(struct interface_map_container *_rb)
 {
 	RBtree_t rb = (RBtree_t)_rb;
-	CREATE_MAP_IT(end,(RBnode*)rb->_rb->nil);	
+	CREATE_MAP_IT(end,(RBnode*)rb->_rb->nil);
 	return end;
 }
 
 map_iter RBtree_find(struct interface_map_container *_rb,void *key)
 {
 	RBtree_t rb = (RBtree_t)_rb;
-	CREATE_MAP_IT(it,(RBnode*)rbtree_find(rb->_rb,key));	
+	CREATE_MAP_IT(it,(RBnode*)rbtree_find(rb->_rb,key));
 	return it;
 }
 
@@ -192,17 +195,17 @@ void  RBtree_delete(struct interface_map_container *_rb,void *key)
 		free(n);
 }
 
-map_iter RBtree_erase(struct interface_map_container *_rb,map_iter it) 
+map_iter RBtree_erase(struct interface_map_container *_rb,map_iter it)
 {
 	RBtree_t rb = (RBtree_t)_rb;
 	RBnode *n = it.node;
 	if(n == (RBnode*)rb->_rb->nil)
 		return it;
-	RBnode *succ = (RBnode*)rbnode_next(rb->_rb,(rbnode*)n);
+	RBnode *succ = (RBnode*)rbnode_next((rbnode*)n);
 	if(!succ)
 		return RBtree_end(_rb);
 	CREATE_MAP_IT(next,succ);
-	return next;	
+	return next;
 }
 
 RBtree_size(struct interface_map_container *_rb)

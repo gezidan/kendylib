@@ -57,11 +57,11 @@ static rbnode *rotate_left(rbtree_t rb,rbnode *n)
 	rbnode *parent = n->parent;
 	rbnode *right  = n->right;
 	if(right == rb->nil)
-		return;	
-	
+		return;
+
 	n->right = right->left;
 	right->left->parent = n;
-	
+
 	if(n == rb->root)
 		rb->root = right;
 	else
@@ -73,7 +73,7 @@ static rbnode *rotate_left(rbtree_t rb,rbnode *n)
 	}
 	right->parent = parent;
 	n->parent = right;
-	right->left = n;	
+	right->left = n;
 }
 
 
@@ -82,10 +82,10 @@ static   rbnode *rotate_right(rbtree_t rb,rbnode *n)
 	rbnode *parent = n->parent;
 	rbnode *left  = n->left;
 	if(left == rb->nil)
-		return;	
+		return;
 	n->left = left->right;
 	left->right->parent = n;
-	
+
 	if(n == rb->root)
 		rb->root = left;
 	else
@@ -98,7 +98,7 @@ static   rbnode *rotate_right(rbtree_t rb,rbnode *n)
 	left->parent = parent;
 	n->parent = left;
 	left->right = n;
-} 
+}
 
 inline static void color_flip(rbnode *n)
 {
@@ -130,7 +130,7 @@ static void insert_fix_up(rbtree_t rb,rbnode *n)
 					n = parent;
 					rotate_left(rb,n);
 				}
-				
+
 				n->parent->color = BLACK;
 				n->parent->parent->color = RED;
 				rotate_right(rb,n->parent->parent);
@@ -162,13 +162,11 @@ static void insert_fix_up(rbtree_t rb,rbnode *n)
 
 rbnode*  rbtree_find(rbtree_t rb,void *key)
 {
-	if(rb->root == rb->nil)
+    if(rb->root == rb->nil)
 		return NULL;
 	rbnode *cur = rb->root;
-	rbnode *pre = NULL;
 	while(cur != rb->nil)
 	{
-		pre = cur;
 		if(equal(rb,key,cur->key))
 			return cur;
 		if(less(rb,key,cur->key))
@@ -176,32 +174,40 @@ rbnode*  rbtree_find(rbtree_t rb,void *key)
 		else
 			cur = cur->right;
 	}
-	return pre == rb->nil? NULL:pre;
+	return NULL;
 }
 
 int8_t rbtree_insert(rbtree_t rb,rbnode *n)
 {
-	assert(rb);	
-	rbnode *x = rbtree_find(rb,n->key);
-	if(x != NULL && equal(rb,n->key,x->key))
-		return -1;
-	n->color = RED;
+	assert(rb);
+    rbnode *cur = rb->root;
+    rbnode *parent = rb->nil;
+    rbnode **child_link = NULL;
+	while(cur != rb->nil)
+	{
+        parent = cur;
+		if(equal(rb,n->key,cur->key))
+			return -1;
+		if(less(rb,n->key,cur->key))
+		{
+            child_link = &cur->left;
+			cur = cur->left;
+		}
+		else
+		{
+		    child_link = &cur->right;
+			cur = cur->right;
+		}
+	}
+
+    n->color = RED;
 	n->left = n->right = rb->nil;
-	n->tree = rb;	
-	if(x == NULL)
-	{
-		n->parent = rb->nil;
-		rb->root = n;
-	}
-	else
-	{
-		n->parent = x;
-		if(less(rb,n->key,x->key))
-			x->left = n;
-		else 
-			x->right = n;
-	}
-	++rb->size;
+    n->parent = parent;
+    n->tree = rb;
+    if(child_link)
+        *child_link = n;
+	if(++rb->size == 1)
+        rb->root = n;
 	insert_fix_up(rb,n);
 	return 0;
 }
@@ -232,7 +238,7 @@ static inline rbnode *successor(rbtree_t rb,rbnode *n)
 		n = y;
 		y = y->parent;
 	}
-	return y;	
+	return y;
 }
 
 static inline rbnode *predecessor(rbtree_t rb,rbnode *n)
@@ -246,7 +252,7 @@ static inline rbnode *predecessor(rbtree_t rb,rbnode *n)
 		n = y;
 		y = y->parent;
 	}
-	return y;	
+	return y;
 }
 
 static inline rbnode *get_delete_node(rbtree_t rb,rbnode *n)
@@ -310,7 +316,7 @@ static void delete_fix_up(rbtree_t rb,rbnode *n)
 				w->color = RED;
 				n = p;
 			}
-			else 
+			else
 			{
 				if(w->left->color == BLACK)
 				{
@@ -324,67 +330,61 @@ static void delete_fix_up(rbtree_t rb,rbnode *n)
 				w->left->color = BLACK;
 				rotate_right(rb,p);
 				n = rb->root;
-			}				
+			}
 		}
 	}
 	n->color = BLACK;
 }
 
-//å°nä»rbtreeä¸­å¥ç¦»
 static int8_t rb_delete(rbtree_t rb,rbnode *n)
-{	
+{
 	rbnode *x = get_delete_node(rb,n);
 	if(!x)
 		return -1;
-	/*å°xä»rbtreeä¸­å¥ç¦»*/	
 	rbnode *parent = x->parent;
 	rbnode **link = (x == parent->left)? &(parent->left):&(parent->right);
-	rbnode *z = rb->nil;	
-	if(x->left != rb->nil || x->right != rb->nil)
-	{
-		if(x->left != rb->nil)
-			*link = x->left;
-		else
-			*link = x->right;
-		z = *link;
-	}
-	else
-		*link = rb->nil;
-	z->parent = parent;
-	/*å°è¿éxå·²ç»ä»rbtreeä¸­å¥ç¦»,ç°å¨è¦ç¨xæ¿æ¢næå¨çä½ç½®
-	* æxæ¾årbtreeä¸­,å°nå¥ç¦»
-	*/
+	rbnode *z;
+	if(x->left != rb->nil)
+        *link = x->left;
+    else if(x->right != rb->nil)
+        *link = x->right;
+    else
+        *link = rb->nil;
+	if((z = *link) != rb->nil)
+        z->parent = parent;
+    x->parent = x->left = x->right = rb->nil;
 	uint8_t x_old_color = x->color;
 	if(n != x)
 	{
 		rbnode *n_left = n->left;
 		rbnode *n_right = n->right;
 		rbnode *n_parent = n->parent;
-		if(n_left)
+		if(n_left != rb->nil)
 		{
 			n_left->parent = x;
 			x->left = n_left;
 		}
-		if(n_right)
+		if(n_right != rb->nil)
 		{
 			n_right->parent = x;
 			x->right = n_right;
 		}
-		if(n_parent)
+		if(n_parent != rb->nil)
 		{
 			if(n == n_parent->left)
 				n_parent->left = x;
 			else
 				n_parent->right = x;
-			x->parent = n_parent;	
+			x->parent = n_parent;
 		}
 		x->color = n->color;
+        if(n == rb->root)
+            rb->root = x;//if n is the old root,now the new root is x
 	}
-	if(n != rb->root && x_old_color == BLACK)
-		delete_fix_up(rb,z);
-	if(n == rb->root)
-		rb->root = rb->nil;
-	--rb->size;
+	if(--rb->size == 0)
+        rb->root = rb->nil;
+    else if(z != rb->nil && x_old_color == BLACK)
+            delete_fix_up(rb,z);
 	return 0;
 }
 
@@ -392,7 +392,7 @@ int8_t rbtree_erase(rbnode *n)
 {
 	if(!n->tree)
 		return -1;
-	return rb_delete(n->tree,n);		
+	return rb_delete(n->tree,n);
 }
 
 rbnode* rbtree_remove(rbtree_t rb,void *key)
@@ -424,8 +424,8 @@ rbnode*  rbnode_next(rbnode *n)
 {
 	if(!n)
 		return NULL;
-	rbtree_t rb = nb->tree;
-	rbnode *succ = successor(rb,n);	
+	rbtree_t rb = n->tree;
+	rbnode *succ = successor(rb,n);
 	if(succ == rb->nil)
 		return NULL;
 	return succ;
@@ -435,11 +435,11 @@ rbnode*  rbnode_pre(rbnode*n)
 {
 	if(!n)
 		return NULL;
-	rbtree_t rb = nb->tree;
+	rbtree_t rb = n->tree;
 	rbnode *presucc = predecessor(rb,n);
 	if(presucc == rb->nil)
 		return NULL;
-	return presucc;	
+	return presucc;
 }
 
 int32_t check(rbtree_t rb,rbnode *n,int32_t level,int32_t black_level,int32_t *max_black_level,int32_t *max_level)
@@ -452,22 +452,22 @@ int32_t check(rbtree_t rb,rbnode *n,int32_t level,int32_t black_level,int32_t *m
 	{
 		if(n->parent->color == RED)
 		{
-			printf("ç¶èç¹é¢è²ä¸ºRED\n");
+			printf("聛0聤4聛0聛8聛0聟9篓篓聛0聜0聛0聛2聛0聤4聛0聛2聛0聠1篓娄聛0聞4聛0聝8篓篓聛0聛9聛0聟5聛0聤1聛0聠0聛0聠2RED\n");
 			return 0;
 		}
 	}
 	++level;
 	if(n->left == rb->nil && n->right == rb->nil)
 	{
-		//å°è¾¾å¶èç¹
+		//聛0聤2聛0聛8隆茫篓篓聛0聠6聛0聠6聛0聤2聛0聜5聛0聟9篓篓聛0聜0聛0聛2聛0聤4聛0聛2聛0聠1
 		if(level > *max_level)
-			*max_level = level;		
+			*max_level = level;
 		if(*max_black_level == 0)
 			*max_black_level = black_level;
 		else
 			if(*max_black_level != black_level)
 			{
-				printf("é»è²èç¹æ°ç®ä¸ä¸è´\n");
+				printf("篓娄聛0聠3聛0聜7篓篓聛0聛9聛0聟5篓篓聛0聜0聛0聛2聛0聤4聛0聛2聛0聠1聛0聤3聛0聝1隆茫聛0聤4聛0聝7聛0聟3聛0聤1聛0聠0聛0聜3聛0聤1聛0聠0聛0聛0篓篓聛0聛7聛0聟7\n");
 				return 0;
 			}
 		return 1;
