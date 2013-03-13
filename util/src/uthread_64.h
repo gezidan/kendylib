@@ -34,6 +34,8 @@ void* __attribute__((regparm(3))) uthread_switch(uthread_t from,uthread_t to,voi
 	from->reg[7] = r15;
 	if(to->first_run)
 	{
+	   if(!to->parent)
+            to->parent = from;
 	   to->first_run = 0;
 	   rsp = to->reg[0];
 	   //use rcx to pass arg
@@ -97,6 +99,8 @@ void* __attribute__((regparm(3))) uthread_switch(uthread_t from,uthread_t to,voi
 	);
 	if(to->first_run)
 	{
+	   if(!to->parent)
+            to->parent = from;
 	   to->first_run = 0;
 	   //change stack
 	   //the order is important
