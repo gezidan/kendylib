@@ -17,8 +17,8 @@ spin:testspinlock.c
 	gcc -g -o spin testspinlock.c ../lib/util.a -I../ -lpthread
 ut:testuthread.c
 	gcc -g -O3 -o ut testuthread.c ../lib/util.a -I../ -lpthread
-ut-debug:kendy.a testuthread.c
-	gcc -g -o ut testuthread.c kendy.a -I../include -lpthread -lrt -ltcmalloc	 
+ut-debug:testuthread.c
+	gcc -g -o ut testuthread.c ../lib/util.a -I../ -lpthread	 
 log:kendy.a testlog.c
 	gcc -g -O3 -o log testlog.c kendy.a -I../include -lpthread -lrt -ltcmalloc
 systime:kendy.a testsystime.c

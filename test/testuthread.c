@@ -13,6 +13,7 @@ void* ufun2(void *arg)
 	{
 		ptr = uthread_switch(self,parent,NULL);
 	}
+	printf("ufun2 end\n");
 	return NULL;
 }
 
@@ -22,7 +23,7 @@ char *stack2;
 void* ufun1(void *arg)
 {
 	uthread_t self = (uthread_t)arg;
-	uthread_t u = uthread_create(self,stack2,4096,ufun2);
+	uthread_t u = uthread_create(self,stack2,65536,ufun2);
 	char* _arg[2];
 	_arg[0] = (char*)u;
 	_arg[1] = (char*)self;
@@ -34,20 +35,21 @@ void* ufun1(void *arg)
 	}
 	printf("%d\n",GetSystemMs()-tick);
 	uthread_switch(self,u,NULL);
+	printf("ufun1 end\n");
 	return arg;
 }
 
 int main()
 {
-	stack1 = (char*)malloc(4096);
-	stack2 = (char*)malloc(4096);
+	stack1 = (char*)malloc(65536);
+	stack2 = (char*)malloc(65536);
 	/*
 	if use ucontext version
 	char dummy_stack[4096];
 	uthread_t p = uthread_create(NULL,dummy_stack,0,NULL);
 	*/
 	uthread_t p = uthread_create(NULL,NULL,0,NULL);
-	uthread_t u = uthread_create(p,stack1,4096,ufun1);
+	uthread_t u = uthread_create(p,stack1,65536,ufun1);
 	uthread_switch(p,u,u);
 	printf("main end\n");
 	return 0;

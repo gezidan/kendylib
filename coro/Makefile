@@ -10,5 +10,5 @@ testheap:
 	gcc -g -o testheap testheap.c coro.a ../lib/util.a ../lib/net.a -I../ -lpthread -lrt
 	rm -f *.o
 testcoro:testcoro.c coro.a
-	gcc -O3 -g -o testcoro testcoro.c coro.a ../lib/util.a ../lib/net.a -I../ -lpthread -lrt
+	gcc -O3 -g -o testcoro testcoro.c coro.a ../lib/util.a -I../ -lpthread -lrt
 	rm -f *.o
