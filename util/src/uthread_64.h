@@ -99,14 +99,13 @@ void* __attribute__((regparm(3))) uthread_switch(uthread_t from,uthread_t to,voi
 	{
 	   to->first_run = 0;
 	   rsp = to->reg[0];
-	   //use eax to pass arg
-	   rax = (int64_t)to;
+	   //use rcx to pass arg
 		__asm__ volatile (
-			"movq %1,%%rax\t\n"
+			"movq %1,%%rcx\t\n"
 			"movq %0,%%rbp\t\n"
 			"movq %%rbp,%%rsp\t\n"
 			:
-			:"m"(rsp),"m"(rax)
+			:"m"(rsp),"m"(to)
 		);	   
 	   uthread_main_function();
 	}
