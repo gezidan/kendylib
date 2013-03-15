@@ -125,7 +125,7 @@ int32_t main(int32_t argc,char **argv)
 
 	int32_t ret;
 	int32_t i = 0;
-	uint32_t send_interval = 200;
+	uint32_t send_interval = 20;
 	uint32_t send_tick = 0;
 	wpacket_t wpk;
 

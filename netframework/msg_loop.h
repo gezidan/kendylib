@@ -1,4 +1,4 @@
-/*	
+/*
     Copyright (C) <2012>  <huangweilook@21cn.com>
 
     This program is free software: you can redistribute it and/or modify
@@ -44,10 +44,4 @@ typedef struct msg_loop
 msg_loop_t create_msg_loop(on_packet,on_new_connection,on_connection_disconnect,on_send_block);
 void msg_loop_once(msg_loop_t,netservice_t,uint32_t ms);
 void destroy_msg_loop(msg_loop_t*);
-
-
-
-
-
-
 #endif

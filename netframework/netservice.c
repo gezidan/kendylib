@@ -24,13 +24,13 @@ int32_t init_net_service()
 {
 	if(0 == is_init)
 	{
-		
+
 		if(InitNetSystem() != 0)
 			return -1;
 		is_init = 1;
 		init_system_time(SYS_TICKER);
 		signal(SIGPIPE,SIG_IGN);
-		init_mq_system();		
+		init_mq_system();
 		rpacket_allocator = (allocator_t)create_block_obj_allocator(MUTIL_THREAD,sizeof(struct rpacket));
 		wpacket_allocator = (allocator_t)create_block_obj_allocator(MUTIL_THREAD,sizeof(struct wpacket));
 		return 0;
@@ -58,7 +58,8 @@ static inline void on_process_packet(struct connection *c,rpacket_t r)
 {
 	datasocket_t s = (datasocket_t)c->usr_data;
 	r->usr_data = (uint64_t)s;
-	mq_push(s->e->service->mq_out,(list_node*)r);	
+	mq_push(s->e->service->mq_out,(list_node*)r);
+	//printf("recv packet\n");
 }
 
 static void on_socket_disconnect(struct connection *c,int32_t reason);
@@ -80,7 +81,7 @@ static struct connection *get_free_connection(struct engine_struct *e,connd_t *c
 		e->con_free_size = new_size - e->con_pool_size;
 		e->con_pool_size = new_size;
 	}
-		
+
 	for( ; i < e->con_pool_size; ++i)
 	{
 		if(e->con_pool[i].c && 0 == e->con_pool[i].timestamp)
@@ -92,7 +93,7 @@ static struct connection *get_free_connection(struct engine_struct *e,connd_t *c
 			--e->con_free_size;
 			return e->con_pool[i].c;
 		}
-	}	
+	}
 	return NULL;
 }
 
@@ -109,7 +110,7 @@ static inline void free_connection(struct engine_struct *e,connd_t connd)
 	struct st_connd *tmp = (struct st_connd*)&connd;
 	if(tmp->idx >= 1 && tmp->idx < e->con_pool_size && tmp->timestamp == e->con_pool[tmp->idx].timestamp)
 	{
-		struct connection *c = e->con_pool[tmp->idx].c;	
+		struct connection *c = e->con_pool[tmp->idx].c;
 		ReleaseSocketWrapper(c->socket);
 		wpacket_t w;
 		while(w = LINK_LIST_POP(wpacket_t,c->send_list))
@@ -138,20 +139,20 @@ static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 	if(NULL == c)
 		return;
 	if(c->recv_timeout > 0 && now > c->last_recv && now - c->last_recv >= c->recv_timeout)
-	{		
+	{
 		//超时了,关闭套接口
 		free_connection(s->e,s->c);
 		//通知上层，连接超时关闭
 		s->close_reason = -3;
 		s->is_close = 1;
-		msg_t _msg = create_msg((uint64_t)s,MSG_DISCONNECTED);		
+		msg_t _msg = create_msg((uint64_t)s,MSG_DISCONNECTED);
 		mq_push(s->e->service->mq_out,(list_node*)_msg);
 		return;
 	}else
 	{
 		RegisterTimer(t,c->wheelitem,WHEEL_TICK);
 	}
-	
+
 	//检测是否有发送阻塞
 	if(c->send_timeout > 0)
 	{
@@ -159,7 +160,7 @@ static void timeout_check(TimingWheel_t t,void *arg,uint32_t now)
 		if(w)
 		{
 			if(now > w->send_tick && now - w->send_tick >= c->send_timeout)
-			{				
+			{
 				//发送队列队首包超过了15秒任然没有发出去,通知上层,发送阻塞
 				msg_t _msg = create_msg((uint64_t)s,MSG_SEND_BLOCK);
 				mq_push(s->e->service->mq_out,(list_node*)_msg);
@@ -195,13 +196,13 @@ static void on_process_msg(struct engine_struct *e,msg_t _msg)
 					exit(0);
 					return;
 				}
-				if(0!=Bind2Engine(e->engine,s,RecvFinish,SendFinish))
+				if(0!=Bind2Engine(e->engine,s,RecvFinish,SendFinish,NULL))
 				{
 					ReleaseSocketWrapper(s);
 					connection_destroy(&c);
 				}
 				else
-				{				
+				{
 					c->rpacket_allocator = rpacket_allocator;
 					c->socket = s;
 					datasocket_t data_s = create_datasocket(e,con,e->mq_in);
@@ -220,7 +221,7 @@ static void on_process_msg(struct engine_struct *e,msg_t _msg)
 				}
 			}
 			break;
-			
+
 		case MSG_SET_RECV_TIMEOUT:
 		case MSG_SET_SEND_TIMEOUT:
 			{
@@ -261,7 +262,7 @@ static void on_socket_disconnect(struct connection *c,int32_t reason)
 	free_connection(s->e,s->c);
 	if(reason == -1)
 	{
-		
+
 		//通知上层，连接被动断开
 		s->close_reason = reason;
 		s->is_close = 1;
@@ -274,7 +275,7 @@ static void on_socket_disconnect(struct connection *c,int32_t reason)
 
 
 static void *mainloop(void *arg)
-{	
+{
 	printf("start io thread\n");
 	struct engine_struct *e = (struct engine_struct*)arg;
 	uint32_t last_sync = GetCurrentMs();
@@ -294,7 +295,7 @@ static void *mainloop(void *arg)
 				on_process_msg(e,_msg);
 				destroy_msg(&_msg);
 			}
-		}		
+		}
 		//执行超时检测
 		UpdateWheel(e->timingwheel,GetCurrentMs());
 		//////////
@@ -312,7 +313,7 @@ static void new_connection(netservice_t service,HANDLE s)
 	int32_t index = rand()%service->engine_count;
 	struct engine_struct *e = &(service->engines[index]);
 	msg_t _msg = create_msg((uint64_t)s,MSG_NEW_CONNECTION);
-	mq_push(e->mq_in,(list_node*)_msg);	
+	mq_push(e->mq_in,(list_node*)_msg);
 	mq_flush();
 }
 
@@ -348,14 +349,14 @@ netservice_t create_net_service(uint32_t thread_count)
 		thread_count = 1;
 	if(thread_count > MAX_IO_THREADS)
 		thread_count = MAX_IO_THREADS;
-	
+
 	netservice_t s = (netservice_t)calloc(1,sizeof(*s));
-	
+
 	s->engine_count = thread_count;
 	s->mq_out = create_mq(MQ_SYNC_SIZE,mq_item_destroyer);
 	s->thread_listen = create_thread(THREAD_JOINABLE);//joinable
 	s->_acceptor = create_acceptor();
-	
+
 	uint32_t i = 0;
 	for( ;i < thread_count; ++i)
 	{
@@ -370,12 +371,12 @@ netservice_t create_net_service(uint32_t thread_count)
 		uint32_t j = 1;
 		for( ; j < INIT_CON_POOL_SIZE; ++j)
 		{
-			s->engines[i].con_pool[j].c = connection_create(-1,0,MUTIL_THREAD,on_process_packet,on_socket_disconnect);		
+			s->engines[i].con_pool[j].c = connection_create(-1,0,MUTIL_THREAD,on_process_packet,on_socket_disconnect);
 		}
 		thread_run(mainloop,&s->engines[i]);//启动线程
 	}
 	thread_run(_Listen,s);//启动listener线程
-	return s;	
+	return s;
 }
 
 void stop_net_service(netservice_t s)
@@ -434,7 +435,7 @@ void net_rem_listener(netservice_t s,HANDLE h)
 static void connect_callback(HANDLE s,const char *ip,int32_t port,void*ud)
 {
 	netservice_t service = (netservice_t)ud;
-	new_connection(service,s);	
+	new_connection(service,s);
 }
 
 int32_t net_connect(netservice_t s,const char *ip,uint32_t port)
@@ -443,5 +444,5 @@ int32_t net_connect(netservice_t s,const char *ip,uint32_t port)
 	connector_t con = connector_create();
 	ret = connector_connect(con,ip,port,connect_callback,(void*)s,0);
 	connector_destroy(&con);
-	return ret;	
+	return ret;
 }
