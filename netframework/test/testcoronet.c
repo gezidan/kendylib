@@ -135,7 +135,7 @@ int main(int argc,char **argv)
     coronet_init_coro(cn,4096,65536,NULL,NULL);
     coronet_init_net(cn,server_process_packet,process_new_connection,process_connection_disconnect,process_send_block);
     coronet_add_listener(cn,ip,port);
-    sche_spawn(cn->coro_sche,test_coro_fun,(void*)cn);
+    coronet_spawn(test_coro_fun,(void*)cn);
     coronet_run(cn);
 	return 0;
 }

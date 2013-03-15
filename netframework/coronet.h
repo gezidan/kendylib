@@ -38,6 +38,7 @@ void      coronet_init_net(coronet_t,on_packet,on_new_connection,on_connection_d
 void      coronet_init_coro(coronet_t,int32_t max_coro,int32_t stack_size,void (*)(void*),void*);
 void      coronet_run(coronet_t coron);
 void      coronet_stop(coronet_t);
+int32_t   coronet_spawn(coronet_t,void*(*fun)(void*),void*arg);
 
 int32_t coronet_add_timer(coronet_t,coronet_timer_callback,void *ud,uint32_t timeout);
 
