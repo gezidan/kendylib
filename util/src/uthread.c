@@ -18,7 +18,7 @@ struct uthread
 
 void __attribute__((regparm(1))) uthread_main_function(void *arg)
 {
-	uthread_t u = (uthread_t)arg;
+	volatile uthread_t u = (uthread_t)arg;
 	void *ret = u->main_fun(u->para);
 	if(u->parent)
 		uthread_switch(u,u->parent,ret);
