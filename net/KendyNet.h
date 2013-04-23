@@ -35,7 +35,7 @@ typedef struct
 //初始化网络系统
 int32_t      InitNetSystem();
 
-typedef int32_t HANDLE;
+typedef void* HANDLE;
 struct block_queue;
 
 //recv请求完成时callback

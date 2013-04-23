@@ -8,9 +8,9 @@ accept_connect:
 	gcc -g -o test_connect test_connector.c network.a -I../include -lpthread -lrt
 	gcc -g -o test_accept test_acceptor.c network.a -I../include -lpthread -lrt
 server:../lib/util.a ../lib/net.a testserver.c
-	gcc -O3 -g -o server testserver.c ../lib/net.a ../lib/util.a -I../ -lpthread -lrt -ltcmalloc
+	gcc -O3 -g -o server testserver.c ../lib/net.a ../lib/util.a -I../ -lpthread -lrt
 client:../lib/util.a ../lib/net.a testclient.c
-	gcc -O3 -g -o client testclient.c ../lib/net.a ../lib/util.a -I../ -I../include -lpthread -lrt -ltcmalloc
+	gcc -O3 -g -o client testclient.c ../lib/net.a ../lib/util.a -I../ -I../include -lpthread -lrt
 objpool:kendy.a
 	gcc -O3 -g -o objpool testobjpool.c kendy.a -I../include -lpthread -lrt -ltcmalloc
 spin:testspinlock.c

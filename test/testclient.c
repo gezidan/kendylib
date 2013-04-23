@@ -59,9 +59,9 @@ uint32_t iocp_count = 0;
 
 void on_process_packet(struct connection *c,rpacket_t r)
 {
-	uint32_t s = rpacket_read_uint32(r);
+	uint64_t s = rpacket_read_uint64(r);
 	uint32_t t;
-	if(s == c->socket)
+	if(s == (uint64_t)c->socket)
 	{
 		t = rpacket_read_uint32(r);
 		uint32_t sys_t = GetSystemMs();
@@ -85,7 +85,7 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 	struct connection *c;
 	wpacket_t wpk;
 	++connect_count;
-	if(s == -1)
+	if(s == NULL)
 	{
 		printf("%d,Á¬½Óµ½:%s,%d,Ê§°Ü\n",s,ip,port);
 	}
@@ -98,7 +98,7 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 		add_client(c);
 		Bind2Engine(*engine,s,RecvFinish,SendFinish,NULL);
 		wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
-		wpacket_write_uint32(wpk,(uint32_t)s);
+		wpacket_write_uint64(wpk,(uint64_t)s);
 		uint32_t sys_t = GetSystemMs();
 		wpacket_write_uint32(wpk,sys_t);
 		wpacket_write_string(wpk,"hello kenny");
@@ -161,7 +161,7 @@ int32_t main(int32_t argc,char **argv)
 						for( ; j < 1; ++j)
 						{
 						wpk = wpacket_create(SINGLE_THREAD,wpacket_allocator,64,0);
-						wpacket_write_uint32(wpk,clients[i]->socket);
+						wpacket_write_uint64(wpk,(uint64_t)clients[i]->socket);
 						uint32_t sys_t = GetSystemMs();
 						wpacket_write_uint32(wpk,sys_t);
 						wpacket_write_string(wpk,"hello kenny");

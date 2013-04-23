@@ -48,7 +48,6 @@ void uthread_destroy(uthread_t *u)
 	free(*u);
 	*u = NULL;
 }
-
 #ifdef _X64
 #include "uthread_64.h"
 #else

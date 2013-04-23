@@ -118,7 +118,7 @@ void connector_run(connector_t c,uint32_t ms)
 	{
 		if(c->fd_seisize >= FD_SETSIZE)
 		{
-			pc->call_back(-1,pc->ip,pc->port,pc->ud);
+			pc->call_back(NULL,pc->ip,pc->port,pc->ud);
 			free(pc);
 		}
 		else
@@ -164,7 +164,7 @@ void connector_run(connector_t c,uint32_t ms)
 			pc = LINK_LIST_POP(struct pending_connect*,c->_pending_connect);
 			if(tick >= pc->timeout)
 			{
-				pc->call_back(-1,pc->ip,pc->port,pc->ud);
+				pc->call_back(NULL,pc->ip,pc->port,pc->ud);
 				free(pc);
 				--c->fd_seisize;
 			}

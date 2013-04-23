@@ -30,7 +30,7 @@ HANDLE CreateEngine()
 		if(0 != e->Init(e))
 		{
 			CloseEngine(engine);
-			engine = -1;
+			engine = NULL;
 		}
 		else
 		{
