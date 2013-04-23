@@ -10,7 +10,7 @@
 void init_buff_allocator();
 int32_t InitNetSystem()
 {
-	return InitHandleMgr();
+	return 0;
 }
 
 int32_t EngineRun(HANDLE engine,int32_t timeout)

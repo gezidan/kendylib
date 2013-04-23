@@ -6,10 +6,16 @@
 struct socket_wrapper;
 struct engine;
 
-extern int32_t     InitHandleMgr();
+inline socket_t GetSocketByHandle(HANDLE handle)
+{
+	return (socket_t)handle;
+}
 
-inline extern struct socket_wrapper* GetSocketByHandle(HANDLE);
-inline extern struct engine* GetEngineByHandle(HANDLE);
+inline engine_t GetEngineByHandle(HANDLE handle)
+{
+	return (engine_t)handle;
+}
+
 
 extern HANDLE   NewEngine();
 extern void     ReleaseEngine(HANDLE);
