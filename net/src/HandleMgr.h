@@ -2,16 +2,19 @@
 #define _HANDLEMGR_H
 
 #include "KendyNet.h"
+#include "epoll.h"
+#include "Socket.h"
+#include "Engine.h"
 #include <stdint.h>
 struct socket_wrapper;
 struct engine;
 
-inline socket_t GetSocketByHandle(HANDLE handle)
+static inline socket_t GetSocketByHandle(HANDLE handle)
 {
 	return (socket_t)handle;
 }
 
-inline engine_t GetEngineByHandle(HANDLE handle)
+static inline engine_t GetEngineByHandle(HANDLE handle)
 {
 	return (engine_t)handle;
 }

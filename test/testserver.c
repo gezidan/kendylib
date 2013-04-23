@@ -1,4 +1,3 @@
-
 #include "net/KendyNet.h"
 #include "net/Connection.h"
 #include <stdio.h>
@@ -96,9 +95,8 @@ void accept_callback(HANDLE s,void *ud)
 	HANDLE *engine = (HANDLE*)ud;
 	struct connection *c = connection_create(s,0,SINGLE_THREAD,on_process_packet,remove_client);
 	add_client(c);
-	printf("cli fd:%d\n",s);
 	setNonblock(s);
-	//发出第一个读请求
+	//路垄鲁枚碌脷脪禄赂枚露脕脟毛脟贸
 	connection_start_recv(c);
 	Bind2Engine(*engine,s,RecvFinish,SendFinish,NULL);
 }
