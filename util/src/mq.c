@@ -12,7 +12,8 @@ struct per_thread_struct
 {
 	list_node   next;
 	struct double_link_node block;
-	struct link_list *local_q;
+	struct link_list *local_push_q;
+	struct link_list *local_pop_q;
 	condition_t cond;
 	//标记是否已经被添加到thread_mq中，当一个线程第一次执行mq_push的时候，会将此mq添加到thread_mq中，并设置此标记
 	int8_t      is_associate;
@@ -68,14 +69,16 @@ void init_mq_system()
 static struct per_thread_struct *per_thread_create()
 {
 	struct per_thread_struct *pts = calloc(1,sizeof(*pts));
-	pts->local_q = LINK_LIST_CREATE();
+	pts->local_push_q = LINK_LIST_CREATE();
+	pts->local_pop_q = LINK_LIST_CREATE();
 	pts->cond = condition_create();
 	return pts;
 }
 
 static void per_thread_destroy(struct per_thread_struct **pts)
 {
-	LINK_LIST_DESTROY(&(*pts)->local_q);
+	LINK_LIST_DESTROY(&(*pts)->local_push_q);
+	LINK_LIST_DESTROY(&(*pts)->local_pop_q);
 	condition_destroy(&(*pts)->cond);
 	free(*pts);
 	*pts = NULL;
@@ -120,7 +123,8 @@ void destroy_mq(mq_t *m)
 	while(l)
 	{
 		struct per_thread_struct *pts = (struct per_thread_struct*)l;
-		destroy_q_item(pts->local_q,(*m)->_item_destroyer);
+		destroy_q_item(pts->local_push_q,(*m)->_item_destroyer);
+		destroy_q_item(pts->local_pop_q,(*m)->_item_destroyer);
 		l = l->next;
 		per_thread_destroy(&pts);
 	}	
@@ -133,7 +137,7 @@ static inline mq_sync_push(mq_t m,struct per_thread_struct *pts)
 {
 	mutex_lock(m->mtx);
 	uint8_t empty = link_list_is_empty(m->share_list);
-	link_list_swap(m->share_list,pts->local_q);
+	link_list_swap(m->share_list,pts->local_push_q);
 	if(empty)
 	{
 		struct double_link_node *l = double_link_pop(&m->blocks);
@@ -167,7 +171,7 @@ static inline mq_sync_pop(mq_t m,struct per_thread_struct *pts,uint32_t timeout)
 			}
 		}
 	}
-	link_list_swap(pts->local_q,m->share_list);
+	link_list_swap(pts->local_pop_q,m->share_list);
 	mutex_unlock(m->mtx);
 }
 
@@ -200,14 +204,14 @@ struct per_thread_struct* mq_push_local(mq_t m,struct list_node *msg)
 		LINK_LIST_PUSH_BACK(tmq->mqs,ele);
 		pts->is_associate = 1;
 	}
-	LINK_LIST_PUSH_BACK(pts->local_q,msg);
+	LINK_LIST_PUSH_BACK(pts->local_push_q,msg);
 	return pts;
 }
 
 void mq_push(mq_t m,struct list_node *msg)
 {
 	struct per_thread_struct *pts = mq_push_local(m,msg);
-	if(link_list_size(pts->local_q) >= m->push_size)
+	if(link_list_size(pts->local_push_q) >= m->push_size)
 		mq_sync_push(m,pts);			
 }
 
@@ -227,11 +231,10 @@ struct list_node* mq_pop(mq_t m,uint32_t timeout)
 		LINK_LIST_PUSH_BACK(m->local_lists,pts);
 		pthread_setspecific(m->t_key,(void*)pts);
 	}
-	if(link_list_is_empty(pts->local_q))
+	if(link_list_is_empty(pts->local_pop_q))
 		mq_sync_pop(m,pts,timeout);
-	return LINK_LIST_POP(struct list_node*,pts->local_q);
+	return LINK_LIST_POP(struct list_node*,pts->local_pop_q);
 }
-
 
 void   mq_swap(mq_t m,struct link_list *l,uint32_t timeout)
 {
@@ -242,16 +245,16 @@ void   mq_swap(mq_t m,struct link_list *l,uint32_t timeout)
 		LINK_LIST_PUSH_BACK(m->local_lists,pts);
 		pthread_setspecific(m->t_key,(void*)pts);
 	}
-	if(link_list_is_empty(pts->local_q))
+	if(link_list_is_empty(pts->local_pop_q))
 		mq_sync_pop(m,pts,timeout);
-	link_list_swap(l,pts->local_q);
+	link_list_swap(l,pts->local_pop_q);
 }
 
 
 static inline void mq_force_sync(mq_t m)
 {
 	struct per_thread_struct *pts = (struct per_thread_struct*)pthread_getspecific(m->t_key);
-	if(link_list_is_empty(pts->local_q) == 0)
+	if(link_list_is_empty(pts->local_push_q) == 0)
 		mq_sync_push(m,pts);
 }
 
