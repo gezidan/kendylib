@@ -57,6 +57,9 @@ TimingWheel_t CreateTimingWheel(uint32_t precision,uint32_t max)
 	TimingWheel_t t = malloc(sizeof(*t) + (slot_size*sizeof(WheelItem_t)));
 	if(!t)
 		return 0;
+	uint32_t i = 0;
+	for(; i < slot_size; ++i)
+		t->slot[i] = NULL;
 	t->slot_size = slot_size;
 	t->precision = precision;
 	t->current = 0;
@@ -84,7 +87,6 @@ void DestroyTimingWheel(TimingWheel_t *t)
 
 inline static void Add(TimingWheel_t t,uint32_t slot,WheelItem_t item)
 {
-	//printf("add :%d\n",slot);
 	if(t->slot[slot])
 	{
 		t->slot[slot]->pre = item;
