@@ -23,12 +23,32 @@ typedef struct mmnode
 int main()
 {
 	mmnode ns[10];
+	ns[0].key = 1;
+	ns[1].key = 4;
+	ns[2].key = 5;
+	ns[3].key = 11;
+	ns[4].key = 15;
+	ns[5].key = 8;
+	ns[6].key = 2;
+	ns[7].key = 3;
+	ns[8].key = 6;	
+	ns[9].key = 7;
+	ns[0].base.key = &ns[0].key;
+	ns[1].base.key = &ns[1].key;
+	ns[2].base.key = &ns[2].key;
+	ns[3].base.key = &ns[3].key;
+	ns[4].base.key = &ns[4].key;
+	ns[5].base.key = &ns[5].key;
+	ns[6].base.key = &ns[6].key;
+	ns[7].base.key = &ns[7].key;
+	ns[8].base.key = &ns[8].key;
+	ns[9].base.key = &ns[9].key;
 	int i = 0;
-	for( ; i < 10; ++i)
-	{
-		ns[i].key = i+1;
-		ns[i].base.key = &ns[i].key;
-	}
+	//for( ; i < 10; ++i)
+	//{
+	//	ns[i].key = i+1;
+	//	ns[i].base.key = &ns[i].key;
+	//}
 
 	rbtree_t rb = create_rbtree(_comp);
 	for(i = 0; i < 10; ++i)
@@ -43,7 +63,8 @@ int main()
 	}
 	rbtree_check_vaild(rb);
 
-	mmnode *succ = (mmnode*)rbtree_remove(rb,(void*)&ns[3].key);
+	mmnode *succ = (mmnode*)rbtree_remove(rb,(void*)&ns[5].key);
+	succ = (mmnode*)rbtree_remove(rb,(void*)&ns[8].key);
 	printf("%d\n",succ->key);
 	rbtree_check_vaild(rb);
 	{

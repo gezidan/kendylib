@@ -44,7 +44,8 @@ static rbnode *rotate_left(rbtree_t rb,rbnode *n)
 		return;
 
 	n->right = right->left;
-	right->left->parent = n;
+	if(right->left != rb->nil)
+		right->left->parent = n;
 
 	if(n == rb->root)
 		rb->root = right;
@@ -55,7 +56,8 @@ static rbnode *rotate_left(rbtree_t rb,rbnode *n)
 		else
 			parent->right = right;
 	}
-	right->parent = parent;
+	if(right != rb->nil)
+		right->parent = parent;
 	n->parent = right;
 	right->left = n;
 }
@@ -68,7 +70,8 @@ static   rbnode *rotate_right(rbtree_t rb,rbnode *n)
 	if(left == rb->nil)
 		return;
 	n->left = left->right;
-	left->right->parent = n;
+	if(left->right != rb->nil)
+		left->right->parent = n;
 
 	if(n == rb->root)
 		rb->root = left;
@@ -79,7 +82,8 @@ static   rbnode *rotate_right(rbtree_t rb,rbnode *n)
 		else
 			parent->right = left;
 	}
-	left->parent = parent;
+	if(left != rb->nil)
+		left->parent = parent;
 	n->parent = left;
 	left->right = n;
 }
@@ -152,7 +156,7 @@ rbnode*  rbtree_find(rbtree_t rb,void *key)
 	while(cur != rb->nil)
 	{
 		char ret = rb->compare_function(key,cur->key);
-		if(ret == 0) cur;
+		if(ret == 0) return cur;
 		else if(ret == -1)cur = cur->left;
 		else cur = cur->right;
 	}
@@ -170,7 +174,7 @@ int8_t rbtree_insert(rbtree_t rb,rbnode *n)
         parent = cur;
 		
 		char ret = rb->compare_function(n->key,cur->key);
-		if(ret == 0) -1;
+		if(ret == 0) return -1;
 		else if(ret == -1)
 		{
             child_link = &cur->left;
