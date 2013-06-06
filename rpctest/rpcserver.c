@@ -50,7 +50,7 @@ void accept_callback(HANDLE s,void *ud)
 	setNonblock(s);
 	//·¢³öµÚÒ»¸ö¶ÁÇëÇó
 	connection_start_recv(c);
-	Bind2Engine(*engine,s,RecvFinish,SendFinish);
+	Bind2Engine(*engine,s,RecvFinish,SendFinish,NULL);
 }
 
 

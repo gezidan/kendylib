@@ -159,7 +159,7 @@ static inline void push_msg(struct channel *c,rpacket_t r)
 
 static inline void process_send(struct channel *c)
 {
-	mq_swap(c->send_list,c->c->send_list,0);
+	mq_pop_all(c->send_list,c->c->send_list,0);
 	connection_send(c->c,NULL,NULL);
 }
 
@@ -200,7 +200,7 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 		setNonblock(s);
 		c = connection_create(s,0,MUTIL_THREAD,on_process_packet,on_channel_disconnect);
 		printf("connect successed\n");
-		Bind2Engine(*engine,s,RecvFinish,SendFinish);
+		Bind2Engine(*engine,s,RecvFinish,SendFinish,NULL);
 		//create channel and create logic thread
 		g_channel = channel_create(c);
 		c->usr_data = g_channel;

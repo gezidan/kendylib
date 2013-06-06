@@ -96,7 +96,7 @@ void time_greenlet_switch_to(long count)
 {
 	uthread_t p = uthread_create(NULL,NULL,0,NULL);
 	gr2 = uthread_create(NULL,stack2,65536,_greenlet_func2);
-	gr1 = uthread_create(NULL,stack1,65536,_greenlet_func1);
+	gr1 = uthread_create(p,stack1,65536,_greenlet_func1);
     counter = count;
     uthread_switch(p,gr1,NULL);
     uthread_destroy(&p);
