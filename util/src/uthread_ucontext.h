@@ -18,16 +18,17 @@ void uthread_main_function(void *arg)
 
 uthread_t uthread_create(uthread_t parent,void*stack,uint32_t stack_size,void*(*fun)(void*))
 {
-	uthread_t u = (uthread_t)calloc(1,sizeof(*u));
-	
-	u->ucontext.uc_stack.ss_sp = stack;
-	u->ucontext.uc_stack.ss_size = stack_size;
-	u->ucontext.uc_link = NULL;
-	u->parent = parent;
-	u->main_fun = fun;
-	getcontext(&(u->ucontext));
+	uthread_t u = (uthread_t)calloc(1,sizeof(*u));	
 	if(stack && stack_size && fun)
+	{
+		getcontext(&(u->ucontext));
+		u->ucontext.uc_stack.ss_sp = stack;
+		u->ucontext.uc_stack.ss_size = stack_size;
+		u->ucontext.uc_link = NULL;
+		u->parent = parent;
+		u->main_fun = fun;
 		makecontext(&(u->ucontext),(void(*)())uthread_main_function,1,u);	
+	}
 	return u;
 }
 
