@@ -36,7 +36,7 @@ int8_t   rbtree_isempty(rbtree_t rb)
 	return rb->size == 0 ? 1:0;
 }
 
-static rbnode *rotate_left(rbtree_t rb,rbnode *n)
+static void rotate_left(rbtree_t rb,rbnode *n)
 {
 	rbnode *parent = n->parent;
 	rbnode *right  = n->right;
@@ -63,7 +63,7 @@ static rbnode *rotate_left(rbtree_t rb,rbnode *n)
 }
 
 
-static   rbnode *rotate_right(rbtree_t rb,rbnode *n)
+static   void rotate_right(rbtree_t rb,rbnode *n)
 {
 	rbnode *parent = n->parent;
 	rbnode *left  = n->left;
@@ -276,7 +276,7 @@ static void delete_fix_up(rbtree_t rb,rbnode *n)
 			{
 				if(w->right->color == BLACK)
 				{
-					w->left->color == BLACK;
+					w->left->color = BLACK;
 					w->color = RED;
 					rotate_right(rb,w);
 					w = p->right;
@@ -307,7 +307,7 @@ static void delete_fix_up(rbtree_t rb,rbnode *n)
 			{
 				if(w->left->color == BLACK)
 				{
-					w->right->color == BLACK;
+					w->right->color = BLACK;
 					w->color = RED;
 					rotate_left(rb,w);
 					w = p->left;
@@ -466,6 +466,7 @@ int32_t check(rbtree_t rb,rbnode *n,int32_t level,int32_t black_level,int32_t *m
 		if(0 == check(rb,n->right,level,black_level,max_black_level,max_level))
 			return 0;
 	}
+	return 1;
 }
 
 void rbtree_check_vaild(rbtree_t rb)

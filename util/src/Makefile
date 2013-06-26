@@ -1,10 +1,10 @@
 all:
-	gcc -g -O2 -c *.c -I../ -D _USE_UCONTEXT
+	gcc -g -O2 -c *.c -I../
 	ar -rc util.a *.o
 	mv util.a ../../lib
 	rm -f *.o
 debug:
-	gcc -g -c *.c -I../ -D _DEBUG
+	gcc -g -c *.c -I../ -D _DEBUG -Wall
 	ar -rc util.a *.o
 	mv util.a ../../lib
 	rm -f *.o

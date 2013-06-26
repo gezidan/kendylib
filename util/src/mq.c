@@ -130,7 +130,7 @@ static inline void destroy_q_item(struct link_list *l,item_destroyer _item_destr
 	if(_item_destroyer == NULL)
 		return;
 	list_node *n;//link_list_head((*m)->local_lists);
-	while(n = LINK_LIST_POP(list_node*,l))
+	while((n = LINK_LIST_POP(list_node*,l))!=NULL)
 		_item_destroyer((void*)n);
 }
 
@@ -153,7 +153,7 @@ void destroy_mq(mq_t *m)
 	*m = NULL;		
 }
 
-static inline mq_sync_push(mq_t m,struct per_thread_struct *pts)
+static inline void mq_sync_push(mq_t m,struct per_thread_struct *pts)
 {
 	mutex_lock(m->mtx);
 	uint8_t empty = link_list_is_empty(m->share_list);
@@ -173,7 +173,7 @@ static inline mq_sync_push(mq_t m,struct per_thread_struct *pts)
 	mutex_unlock(m->mtx);
 }
 
-static inline mq_sync_pop(mq_t m,struct per_thread_struct *pts,uint32_t timeout)
+static inline void mq_sync_pop(mq_t m,struct per_thread_struct *pts,uint32_t timeout)
 {
 	mutex_lock(m->mtx);
 	if(link_list_is_empty(m->share_list))

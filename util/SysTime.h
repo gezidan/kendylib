@@ -26,7 +26,7 @@ struct system_time_mgr
 
 extern struct system_time_mgr *stm;
 
-static inline sleepms(uint32_t ms)
+static inline void sleepms(uint32_t ms)
 {
 	usleep(ms*1000);
 }

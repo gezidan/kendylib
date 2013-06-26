@@ -30,6 +30,7 @@ static void *_thread_routine(void *arg)
 		sleepms(stm->sleep_time);
 		_update();
 	}
+	return NULL;
 }
 
 void init_system_time(uint32_t sleep_time)

@@ -208,13 +208,13 @@ map_iter RBtree_erase(struct interface_map_container *_rb,map_iter it)
 	return next;
 }
 
-RBtree_size(struct interface_map_container *_rb)
+int32_t RBtree_size(struct interface_map_container *_rb)
 {
 	RBtree_t rb = (RBtree_t)_rb;
 	return rb->_rb->size;
 }
 
-RBtree_empty(struct interface_map_container *_rb)
+int32_t RBtree_empty(struct interface_map_container *_rb)
 {
 	RBtree_t rb = (RBtree_t)_rb;
 	return rb->_rb->size == 0;

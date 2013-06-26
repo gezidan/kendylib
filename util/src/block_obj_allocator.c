@@ -166,7 +166,7 @@ static inline void thread_allocator_dealloc(struct thread_allocator *a,void *ptr
 static void release_memlist(struct double_link *mlist)
 {
 	struct double_link_node *n;
-	while(n = double_link_pop(mlist))
+	while((n = double_link_pop(mlist)) != NULL)
 		free(n);
 }
 
@@ -238,12 +238,12 @@ static void destroy_block_obj_al(struct allocator **a)
 	block_obj_allocator_t ba = (block_obj_allocator_t)*a;
     //销毁所有的thread_cache
 	struct thread_allocator *ta;
-	while(ta = LINK_LIST_POP(struct thread_allocator *,ba->_thread_allocators))
+	while((ta = LINK_LIST_POP(struct thread_allocator *,ba->_thread_allocators))!=NULL)
 		destroy_thread_allocator(ta);
 	LINK_LIST_DESTROY(&ba->_thread_allocators);
     
 	struct memory_block *mb;
-	while(mb = LINK_LIST_POP(struct memory_block*,ba->_memory_blocks))
+	while((mb = LINK_LIST_POP(struct memory_block*,ba->_memory_blocks))!=NULL)
 	{
 		free(mb->mem);
 		free(mb);

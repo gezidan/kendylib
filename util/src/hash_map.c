@@ -64,8 +64,6 @@ hash_map_t hash_map_create(uint32_t slot_size,uint32_t key_size,
 
 void hash_map_destroy(hash_map_t *h)
 {
-	uint32_t i = 0;
-	struct hash_item *item;
 	free((*h)->_items);
 	free(*h);
 	*h = 0;
