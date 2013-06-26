@@ -6,10 +6,10 @@
 #include <sys/time.h>
 #include "SocketWrapper.h"
 #include "HandleMgr.h" 
-#include "util/SysTime.h"
+#include "SysTime.h"
 #include "Acceptor.h"
 #include "Socket.h"
-#include "util/link_list.h"
+#include "link_list.h"
 #include "epoll.h"
 
 struct st_listen

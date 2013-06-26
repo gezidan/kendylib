@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "rpacket.h"
 #include "common_define.h"
-#include "util/atomic.h"
+#include "atomic.h"
 
 
 inline int32_t is_pow_of_2(uint32_t size)

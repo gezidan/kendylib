@@ -17,7 +17,7 @@
 #ifndef _KENDYNET_H
 #define _KENDYNET_H
 #include <stdint.h>
-#include "util/link_list.h"
+#include "link_list.h"
 //定义系统支持的最大套接字和engine的数量
 #define MAX_ENGINE 64
 #define MAX_SOCKET 4096

@@ -17,7 +17,7 @@
 #ifndef _SOCKETWRAPPER_H
 #define _SOCKETWRAPPER_H
 #include <stdint.h>
-#include "util/double_link.h"
+#include "double_link.h"
 #include "KendyNet.h"
 typedef struct socket_wrapper
 {

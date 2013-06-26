@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/timerfd.h> 
-#include "../../net/SocketWrapper.h"
+#include "SocketWrapper.h"
 #include "timer.h"
-#include "../../net/src/epoll.h"
+#include "epoll.h"
 
 struct TimerMgr
 {

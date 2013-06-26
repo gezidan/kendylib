@@ -5,8 +5,8 @@
 #include "rpacket.h"
 #include "SocketWrapper.h"
 #include <stdint.h>
-#include "util/timing_wheel.h"
-#include "util/allocator.h"
+#include "timing_wheel.h"
+#include "allocator.h"
 struct connection;
 struct OVERLAPCONTEXT
 {

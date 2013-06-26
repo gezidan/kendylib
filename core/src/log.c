@@ -1,18 +1,18 @@
 #include "log.h"
-#include "util/link_list.h"
-#include "util/sync.h"
+#include "link_list.h"
+#include "sync.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
 #include "SocketWrapper.h"
-#include "util/atomic.h"
-#include "util/thread.h"
+#include "atomic.h"
+#include "thread.h"
 #include <assert.h>
-#include "util/SysTime.h"
+#include "SysTime.h"
 #include <stdio.h>
 #include <errno.h>
-#include "util/allocator.h"
+#include "allocator.h"
 #include "wpacket.h"
 #define max_write_buf 1024
 static const uint32_t max_log_filse_size = 1024*1024*100;

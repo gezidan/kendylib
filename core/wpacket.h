@@ -17,10 +17,10 @@
 #ifndef _WPACKET_H
 #define _WPACKET_H
 #include "buffer.h"
-#include "util/link_list.h"
+#include "link_list.h"
 #include <stdint.h>
-#include "util/allocator.h"
-#include "util/sync.h"
+#include "allocator.h"
+#include "sync.h"
 
 struct wpacket;
 typedef void (*packet_send_finish)(void*,struct wpacket*);

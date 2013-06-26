@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "common_define.h"
-#include "util/atomic.h"
+#include "atomic.h"
 
 rpacket_t rpacket_create(uint8_t mt,allocator_t _alloc,buffer_t b,uint32_t pos,uint32_t pk_len,uint8_t is_raw)
 {

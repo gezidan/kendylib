@@ -1,14 +1,14 @@
 #include <stdio.h>
-#include "util/link_list.h"
+#include "link_list.h"
 #include <sys/select.h>
 #include <sys/time.h>
 #include "KendyNet.h"
 #include "SocketWrapper.h"
 #include "Socket.h"
 #include "HandleMgr.h" 
-#include "util/SysTime.h"
+#include "SysTime.h"
 #include "Connector.h"
-#include "util/sync.h"
+#include "sync.h"
 
 typedef struct pending_connect
 {

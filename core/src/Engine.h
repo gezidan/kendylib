@@ -1,9 +1,9 @@
 #ifndef _ENGINE_H
 #define _ENGINE_H
 
-#include "util/sync.h"
-#include "util/link_list.h"
-#include "util/double_link.h"
+#include "sync.h"
+#include "link_list.h"
+#include "double_link.h"
 #include <stdint.h>
 #include "KendyNet.h"
 struct socket_wrapper;

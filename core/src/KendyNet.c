@@ -2,11 +2,11 @@
 #include "epoll.h"
 #include "Engine.h"
 #include "Socket.h"
-#include "util/link_list.h"
+#include "link_list.h"
 #include "HandleMgr.h"
 #include "SocketWrapper.h"
 #include <assert.h>
-#include "util/double_link.h"
+#include "double_link.h"
 void init_buff_allocator();
 int32_t InitNetSystem()
 {

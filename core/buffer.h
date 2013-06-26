@@ -22,10 +22,10 @@
 
 #include "KendyNet.h"
 #include <stdint.h>
-#include "util/refbase.h"
-#include "util/sync.h"
-#include "util/link_list.h"
-#include "util/spinlock.h"
+#include "refbase.h"
+#include "sync.h"
+#include "link_list.h"
+#include "spinlock.h"
 typedef struct buffer
 {
 	struct refbase _refbase;

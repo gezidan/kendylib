@@ -5,8 +5,8 @@ all:
 	rm -f *.o
 debug:
 	gcc -g -c *.c -I../ -D _DEBUG -Wall
-	ar -rc util.a *.o
-	mv util.a ../../lib
+	ar -rc kendylib.a *.o
+	mv kendylib.a ../../lib
 	rm -f *.o
 all-mingw:
 	gcc -g -O3 -c *.c -I../  -D _MINGW_ -march=i686
