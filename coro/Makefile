@@ -4,7 +4,7 @@ all:
 	cp coro.a ../lib
 	rm -f *.o
 debug:
-	gcc -g -c co_sche.c -I../
+	gcc -g -c co_sche.c -I../ -Wall
 	ar -rc coro.a *.o
 	rm -f *.o
 testheap:

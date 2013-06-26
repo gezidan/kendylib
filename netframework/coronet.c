@@ -15,7 +15,7 @@ struct per_thread_struct* mq_push_local(mq_t m,struct list_node *msg);
 static inline void timeout_callback(TimingWheel_t t,void *ud,uint32_t now)
 {
 	struct coronet_timer *_timer = (struct coronet_timer*)ud;
-	msg_t _msg = create_msg(_timer,MSG_USER_TIMER_TIMEOUT);
+	msg_t _msg = create_msg((uint64_t)_timer,MSG_USER_TIMER_TIMEOUT);
 	netservice_t nets = _timer->coron->nets;
 	mq_push_local(nets->mq_out,(struct list_node *)_msg);
 }

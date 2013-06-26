@@ -113,7 +113,7 @@ static inline void free_connection(struct engine_struct *e,connd_t connd)
 		struct connection *c = e->con_pool[tmp->idx].c;
 		ReleaseSocketWrapper(c->socket);
 		wpacket_t w;
-		while(w = LINK_LIST_POP(wpacket_t,c->send_list))
+		while((w = LINK_LIST_POP(wpacket_t,c->send_list))!=NULL)
 			wpacket_destroy(&w);
 		buffer_release(&c->unpack_buf);
 		buffer_release(&c->next_recv_buf);
@@ -278,11 +278,11 @@ static void *mainloop(void *arg)
 {
 	printf("start io thread\n");
 	struct engine_struct *e = (struct engine_struct*)arg;
-	uint32_t last_sync = GetCurrentMs();
+	//uint32_t last_sync = GetCurrentMs();
 	while(0 == e->service->stop)
 	{
 		msg_t _msg = NULL;
-		while(_msg = (msg_t)mq_pop(e->mq_in,0))
+		while((_msg = (msg_t)mq_pop(e->mq_in,0))!=NULL)
 		{
 			if(_msg->type == MSG_WPACKET)
 			{
@@ -302,8 +302,8 @@ static void *mainloop(void *arg)
 		EngineRun(e->engine,ENGINE_RUN_TIME);
 		//冲刷mq
 		mq_flush();
-
 	}
+	return NULL;
 }
 
 

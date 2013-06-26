@@ -24,6 +24,6 @@ extern HANDLE   NewEngine();
 extern void     ReleaseEngine(HANDLE);
 
 extern HANDLE   NewSocketWrapper();
-extern int32_t      ReleaseSocketWrapper(HANDLE);
+extern void     ReleaseSocketWrapper(HANDLE);
 
 #endif

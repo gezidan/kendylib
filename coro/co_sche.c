@@ -24,7 +24,7 @@ void* coro_fun(void *arg)
 	void *ret = co->fun(co->arg);
 	co->status = CORO_DIE;
 	uthread_switch(co->ut,co->_sche->co->ut,co);
-	return NULL;
+	return ret;
 }
 
 static inline coro_t coro_create(struct sche *_sche,uint32_t stack_size,void*(*fun)(void*))
@@ -209,7 +209,7 @@ sche_t sche_create(int32_t max_coro,int32_t stack_size,void (*idel)(void*),void 
 void sche_destroy(sche_t *s)
 {
 	struct double_link_node *dlnode = NULL;
-	while(dlnode = double_link_pop(&(*s)->coros))
+	while((dlnode = double_link_pop(&(*s)->coros))!=NULL)
 	{
 		coro_t co = (coro_t)dlnode+sizeof(struct list_node);
 		coro_destroy(&co);
