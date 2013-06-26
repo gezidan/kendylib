@@ -103,7 +103,6 @@ uint32_t  rpacket_data_remain(rpacket_t r)
 
 static int rpacket_read(rpacket_t r,int8_t *out,uint32_t size)
 {
-	buffer_t _next = 0;
 	if(r->data_remain < size)
 		return -1;
 	while(size>0)

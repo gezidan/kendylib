@@ -24,13 +24,13 @@ int32_t EngineRun(HANDLE engine,int32_t timeout)
 HANDLE CreateEngine()
 {
 	HANDLE engine = NewEngine();
-	if(engine >= 0)
+	if(engine != INVAILD_HANDLE)
 	{
 		engine_t e = GetEngineByHandle(engine);
 		if(0 != e->Init(e))
 		{
 			CloseEngine(engine);
-			engine = NULL;
+			engine = INVAILD_HANDLE;
 		}
 		else
 		{

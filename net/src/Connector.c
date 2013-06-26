@@ -2,6 +2,7 @@
 #include "util/link_list.h"
 #include <sys/select.h>
 #include <sys/time.h>
+#include "KendyNet.h"
 #include "SocketWrapper.h"
 #include "Socket.h"
 #include "HandleMgr.h" 
@@ -44,9 +45,9 @@ connector_t connector_create()
 void connector_destroy(connector_t *c)
 {
 	struct pending_connect *pc;
-	while(pc = LINK_LIST_POP(struct pending_connect*,(*c)->_pending_connect))
+	while((pc = LINK_LIST_POP(struct pending_connect*,(*c)->_pending_connect))!=NULL)
 		free(pc);
-	while(pc = LINK_LIST_POP(struct pending_connect*,(*c)->extern_pending_connect))
+	while((pc = LINK_LIST_POP(struct pending_connect*,(*c)->extern_pending_connect))!=NULL)
 		free(pc);
 	mutex_destroy(&((*c)->lock));	
 	free(*c);
@@ -114,11 +115,11 @@ void connector_run(connector_t c,uint32_t ms)
 	mutex_lock(c->lock);
 	link_list_swap(_l,c->extern_pending_connect);
 	mutex_unlock(c->lock);
-	while(pc = LINK_LIST_POP(struct pending_connect*,_l))
+	while((pc = LINK_LIST_POP(struct pending_connect*,_l))!=NULL)
 	{
 		if(c->fd_seisize >= FD_SETSIZE)
 		{
-			pc->call_back(NULL,pc->ip,pc->port,pc->ud);
+			pc->call_back(INVAILD_HANDLE,pc->ip,pc->port,pc->ud);
 			free(pc);
 		}
 		else
@@ -164,7 +165,7 @@ void connector_run(connector_t c,uint32_t ms)
 			pc = LINK_LIST_POP(struct pending_connect*,c->_pending_connect);
 			if(tick >= pc->timeout)
 			{
-				pc->call_back(NULL,pc->ip,pc->port,pc->ud);
+				pc->call_back(INVAILD_HANDLE,pc->ip,pc->port,pc->ud);
 				free(pc);
 				--c->fd_seisize;
 			}

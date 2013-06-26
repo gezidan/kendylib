@@ -91,7 +91,6 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 {
 	struct OVERLAPCONTEXT *OVERLAP = (struct OVERLAPCONTEXT *)io;
 	struct connection *c = OVERLAP->c;
-	rpacket_t r;
 	uint32_t recv_size;
 	uint32_t free_buffer_size;
 	buffer_t buf;
@@ -242,11 +241,8 @@ static inline void update_send_list(struct connection *c,int32_t bytestransfer)
 
 int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish callback)
 {
-
-	int32_t bytestransfer = 0;
 	uint32_t err_code = 0;
 	st_io *O;
-	int32_t ret = 1;
 	if(w)
 	{
 		w->send_tick = GetCurrentMs();
@@ -345,7 +341,7 @@ int connection_destroy(struct connection** c)
 	if(!(*c)->recv_overlap.isUsed && !(*c)->send_overlap.isUsed)
 	{ 
 		wpacket_t w;
-		while(w = LINK_LIST_POP(wpacket_t,(*c)->send_list))
+		while((w = LINK_LIST_POP(wpacket_t,(*c)->send_list))!=NULL)
 			wpacket_destroy(&w);
 		LINK_LIST_DESTROY(&(*c)->send_list);
 		buffer_release(&(*c)->unpack_buf);

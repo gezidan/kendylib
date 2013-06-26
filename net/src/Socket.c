@@ -28,9 +28,9 @@ void free_socket(socket_t *s)
 	if((*s)->OnClear_pending_io)
 	{
         list_node *tmp;
-        while(tmp = link_list_pop((*s)->pending_send))
+        while((tmp = link_list_pop((*s)->pending_send))!=NULL)
             (*s)->OnClear_pending_io((st_io*)tmp);
-        while(tmp = link_list_pop((*s)->pending_recv))
+        while((tmp = link_list_pop((*s)->pending_recv))!=NULL)
             (*s)->OnClear_pending_io((st_io*)tmp);
 	}
 	destroy_link_list(&(*s)->pending_send);
@@ -87,14 +87,13 @@ int32_t raw_recv(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_
 static inline void _recv(socket_t s)
 {
 	assert(s);
-	int32_t ret = -1;
 	int32_t bytes_transfer = 0;
 	st_io* io_req = 0;
 	if(s->readable)
 	{
-		if(io_req = LINK_LIST_POP(st_io*,s->pending_recv))
+		if((io_req = LINK_LIST_POP(st_io*,s->pending_recv))!=NULL)
 		{
-			ret = raw_recv(s,io_req,&bytes_transfer,&io_req->err_code);
+			raw_recv(s,io_req,&bytes_transfer,&io_req->err_code);
 			if(io_req->err_code != EAGAIN)
 				s->OnRead(bytes_transfer,io_req);
 		}
@@ -127,14 +126,13 @@ int32_t raw_send(socket_t s,st_io *io_req,int32_t *bytes_transfer,uint32_t *err_
 static inline void _send(socket_t s)
 {
 	assert(s);
-	int32_t ret = -1;
 	int32_t bytes_transfer = 0;
 	st_io* io_req = 0;
 	if(s->writeable)
 	{
-		if(io_req = LINK_LIST_POP(st_io*,s->pending_send))
+		if((io_req = LINK_LIST_POP(st_io*,s->pending_send))!=NULL)
 		{
-			ret = raw_send(s,io_req,&bytes_transfer,&io_req->err_code);
+			raw_send(s,io_req,&bytes_transfer,&io_req->err_code);
 			if(io_req->err_code != EAGAIN)
 				s->OnWrite(bytes_transfer,io_req);
 		}

@@ -143,7 +143,6 @@ static void wpacket_write(wpacket_t w,int8_t *addr,uint32_t size)
 	int8_t *ptr = addr;
 	uint32_t copy_size;
 	buffer_t tmp;
-	uint8_t k;
 	if(!w->writebuf)
 	{
 		/*wpacket是由rpacket构造的，这里执行写时拷贝，
@@ -184,27 +183,27 @@ static void wpacket_write(wpacket_t w,int8_t *addr,uint32_t size)
 
 void wpacket_write_uint8(wpacket_t w,uint8_t value)
 {
-	wpacket_write(w,(uint8_t*)&value,sizeof(value));
+	wpacket_write(w,(int8_t*)&value,sizeof(value));
 }
 
 void wpacket_write_uint16(wpacket_t w,uint16_t value)
 {
-	wpacket_write(w,(uint8_t*)&value,sizeof(value));
+	wpacket_write(w,(int8_t*)&value,sizeof(value));
 }
 
 void wpacket_write_uint32(wpacket_t w,uint32_t value)
 {
-	wpacket_write(w,(uint8_t*)&value,sizeof(value));
+	wpacket_write(w,(int8_t*)&value,sizeof(value));
 }
 
 void wpacket_write_uint64(wpacket_t w,uint64_t value)
 {
-	wpacket_write(w,(uint8_t*)&value,sizeof(value));
+	wpacket_write(w,(int8_t*)&value,sizeof(value));
 }
 
 void wpacket_write_double(wpacket_t w ,double value)
 {
-	wpacket_write(w,(uint8_t*)&value,sizeof(value));
+	wpacket_write(w,(int8_t*)&value,sizeof(value));
 }
 
 static void wpacket_rewrite(write_pos *wp,int8_t *addr,uint32_t size)
@@ -232,27 +231,27 @@ static void wpacket_rewrite(write_pos *wp,int8_t *addr,uint32_t size)
 
 void wpacket_rewrite_uint8(write_pos *wp,uint8_t value)
 {
-	wpacket_rewrite(wp,(uint8_t*)&value,sizeof(value));
+	wpacket_rewrite(wp,(int8_t*)&value,sizeof(value));
 }
 
 void wpacket_rewrite_uint16(write_pos *wp,uint16_t value)
 {
-	wpacket_rewrite(wp,(uint8_t*)&value,sizeof(value));
+	wpacket_rewrite(wp,(int8_t*)&value,sizeof(value));
 }
 
 void wpacket_rewrite_uint32(write_pos *wp,uint32_t value)
 {
-	wpacket_rewrite(wp,(uint8_t*)&value,sizeof(value));
+	wpacket_rewrite(wp,(int8_t*)&value,sizeof(value));
 }
 
 void wpacket_rewrite_uint64(write_pos *wp,uint64_t value)
 {
-	wpacket_rewrite(wp,(uint8_t*)&value,sizeof(value));
+	wpacket_rewrite(wp,(int8_t*)&value,sizeof(value));
 }
 
 void wpacket_rewrite_double(write_pos *wp,double value)
 {
-	wpacket_rewrite(wp,(uint8_t*)&value,sizeof(value));
+	wpacket_rewrite(wp,(int8_t*)&value,sizeof(value));
 }
 
 void wpacket_write_string(wpacket_t w ,const char *value)

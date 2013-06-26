@@ -11,7 +11,7 @@ inline static int RemoveBinding(engine_t e, socket_t sock)
 	return e ? e->UnRegister(e,sock) : -1;
 }
 
-int  ReleaseSocketWrapper(HANDLE handle)
+void  ReleaseSocketWrapper(HANDLE handle)
 {
 	socket_t s = (socket_t)handle;
 	double_link_remove((struct double_link_node*)s);
@@ -21,9 +21,9 @@ int  ReleaseSocketWrapper(HANDLE handle)
 	if(s->OnClear_pending_io)
 	{
 		list_node *tmp;
-		while(tmp = link_list_pop(s->pending_send))
+		while((tmp = link_list_pop(s->pending_send))!=NULL)
 			s->OnClear_pending_io((st_io*)tmp);
-		while(tmp = link_list_pop(s->pending_recv))
+		while((tmp = link_list_pop(s->pending_recv))!=NULL)
 			s->OnClear_pending_io((st_io*)tmp);
 	}	
 	free_socket(&s);

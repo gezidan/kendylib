@@ -62,7 +62,7 @@ void destroy_acceptor(acceptor_t *a)
 HANDLE    add_listener(acceptor_t a,const char *ip,uint32_t port,on_accept call_back,void *ud)
 {
 	if(!a)
-		return NULL;
+		return INVAILD_HANDLE;
 	HANDLE ListenSocket;
 	struct sockaddr_in servaddr;
 	ListenSocket = Tcp_Listen(ip,port,&servaddr,256);
@@ -83,7 +83,7 @@ HANDLE    add_listener(acceptor_t a,const char *ip,uint32_t port,on_accept call_
 		{
 			ReleaseSocket(ListenSocket);
 			printf("listen %s:%d error\n",ip,port);
-			return NULL;
+			return INVAILD_HANDLE;
 		}
 		LINK_LIST_PUSH_BACK(a->st_listens,_st);
 		return ListenSocket;
@@ -91,7 +91,7 @@ HANDLE    add_listener(acceptor_t a,const char *ip,uint32_t port,on_accept call_
 	else
 	{
 		printf("listen %s:%d error\n",ip,port);
-		return NULL;
+		return INVAILD_HANDLE;
 	}	
 }
 

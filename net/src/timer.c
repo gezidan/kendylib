@@ -61,7 +61,7 @@ void RunTimerMgr(TimerMgr_t t,int once)
 		for(i = 0 ; i < nfds ; ++i)
 		{
 			Timer_t _timer = (Timer_t)t->events[i].data.ptr;		
-			int32_t r = TEMP_FAILURE_RETRY(read(_timer->fd,&tmp,sizeof(tmp)));
+			TEMP_FAILURE_RETRY(read(_timer->fd,&tmp,sizeof(tmp)));
 			if(_timer->callback)
 				_timer->callback(_timer,_timer->arg);
 		}

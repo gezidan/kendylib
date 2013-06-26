@@ -20,13 +20,13 @@ HANDLE OpenSocket(int32_t family,int32_t type,int32_t protocol)
 	int32_t sockfd; 
 	if( (sockfd = socket(family,type,protocol)) < 0)
 	{
-		return NULL;
+		return INVAILD_HANDLE;
 	}
 	HANDLE sock = NewSocketWrapper();
 	if(sock < 0)
 	{
 		close(sockfd);
-		return NULL;
+		return INVAILD_HANDLE;
 	}
 	InitSocket(sock,sockfd);
 	return sock;
@@ -42,9 +42,9 @@ int32_t CloseSocket(HANDLE sock)
 	return -1;
 }
 
-int32_t ReleaseSocket(HANDLE sock)
+void ReleaseSocket(HANDLE sock)
 {
-	return ReleaseSocketWrapper(sock);
+	ReleaseSocketWrapper(sock);
 }
 
 int32_t Connect(HANDLE sock,const struct sockaddr *servaddr,socklen_t addrlen)
@@ -66,7 +66,7 @@ int32_t Connect(HANDLE sock,const struct sockaddr *servaddr,socklen_t addrlen)
 HANDLE Tcp_Connect(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int32_t retry)
 {
 	if(!ip)
-		return NULL;
+		return INVAILD_HANDLE;
 
 	bzero(servaddr,sizeof(*servaddr));
 	servaddr->sin_family = INET;
@@ -75,7 +75,7 @@ HANDLE Tcp_Connect(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int
 	{
 
 		printf("%s\n",strerror(errno));
-		return NULL;
+		return INVAILD_HANDLE;
 	}
 	
 	HANDLE sock = OpenSocket(INET,STREAM,TCP);
@@ -90,7 +90,7 @@ HANDLE Tcp_Connect(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int
 		}
 		CloseSocket(sock);
 	}
-	return NULL;
+	return INVAILD_HANDLE;
 }
 
 int32_t Bind(HANDLE sock,const struct sockaddr *myaddr,socklen_t addrlen)
@@ -128,7 +128,7 @@ HANDLE Tcp_Listen(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int3
 	HANDLE sock;
 	sock = OpenSocket(INET,STREAM,TCP);
 	if(sock < 0)
-		return NULL;
+		return INVAILD_HANDLE;
 
 	bzero(servaddr,sizeof(*servaddr));
 	servaddr->sin_family = INET;
@@ -138,7 +138,7 @@ HANDLE Tcp_Listen(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int3
 		{
 
 			printf("%s\n",strerror(errno));
-			return NULL;
+			return INVAILD_HANDLE;
 		}
 	}
 	else
@@ -148,7 +148,7 @@ HANDLE Tcp_Listen(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int3
 	if(Bind(sock,(struct sockaddr*)servaddr,sizeof(*servaddr)) < 0)
 	{
 		CloseSocket(sock);
-		return NULL;
+		return INVAILD_HANDLE;
 	}
 
 	if(Listen(sock,backlog) == 0) 
@@ -156,7 +156,7 @@ HANDLE Tcp_Listen(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int3
 	else
 	{
 		CloseSocket(sock);
-		return NULL;
+		return INVAILD_HANDLE;
 	}
 }
 
@@ -178,19 +178,19 @@ HANDLE Accept(HANDLE sock,struct sockaddr *sa,socklen_t *salen)
 			else
 			{
 				//printf("%s\n",strerror(errno));
-				return NULL;
+				return INVAILD_HANDLE;
 			}
 		}
 		HANDLE newsock = NewSocketWrapper();
 		if(newsock < 0)
 		{
 			close(n);
-			return NULL;
+			return INVAILD_HANDLE;
 		}
 		InitSocket(newsock,n);		
 		return newsock;
 	}
-	return NULL;
+	return INVAILD_HANDLE;
 }
 
 int32_t getLocalAddrPort(HANDLE sock,struct sockaddr_in *remoAddr,socklen_t *len,char *buf,uint16_t *port)
@@ -236,9 +236,6 @@ int32_t getRemoteAddrPort(HANDLE sock,char *buf,uint16_t *port)
 }
 
 /*
- * brief: 将文件描述符传递出去
- *
- * /
 ssize_t write_fd(int fd,void *ptr,size_t nbytes,int sendfd)
 {
 	struct msghdr msg;
@@ -273,19 +270,14 @@ ssize_t write_fd(int fd,void *ptr,size_t nbytes,int sendfd)
 	return sendmsg(fd,&msg,0);
 }
 
-/ * 
- *  创建unix domain socket并创建子进程
- * /
 int create_un_execl(const char *path,const char *child)
 {
-	/*建立unix domain socket,创建子进程执行data_worker* /
 	int fd, sockfd[2], status;
 	pid_t		childpid;
 	char		c, argsockfd[10], argmode[10];
 	socketpair(LOCAL,STREAM, 0, sockfd);
 	if ( (childpid = fork()) == 0) 
-	{		
-		/* child process * /		
+	{			
 		close(sockfd[0]);		
 		snprintf(argsockfd, sizeof(argsockfd), "%d", sockfd[1]);
 		execl(path,child, argsockfd,(char *) NULL);
@@ -296,10 +288,7 @@ int create_un_execl(const char *path,const char *child)
 
 }
 
-/*
- * brief: 读取传递过来的描述符号
- * 
- * /
+
 ssize_t read_fd(int fd,void *ptr,size_t nbytes,int *recvfd)
 {
 	struct msghdr msg;
