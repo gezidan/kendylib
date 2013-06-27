@@ -135,7 +135,7 @@ void connector_run(connector_t c,uint32_t ms)
 		_ms = _timeout - tick;
 		timeout.tv_sec = 0;
 		timeout.tv_usec = 1000*_ms;
-		size = list_size(c->_pending_connect);
+		size = link_list_size(c->_pending_connect);
 		if(size == 0)
 			return;
 		if((total = select(1024,0,&c->Set,0, &timeout)) >0 )
@@ -158,7 +158,7 @@ void connector_run(connector_t c,uint32_t ms)
 		}
 		FD_ZERO(&c->Set);
 		tick = GetSystemMs();
-		size = list_size(c->_pending_connect);
+		size = link_list_size(c->_pending_connect);
 		i = 0;
 		for(; i < (int32_t)size; ++i)
 		{

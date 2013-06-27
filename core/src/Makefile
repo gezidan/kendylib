@@ -4,7 +4,7 @@ all:
 	mv util.a ../../lib
 	rm -f *.o
 debug:
-	gcc -g -c *.c -I../ -D _DEBUG -Wall
+	gcc -g -c *.c -I../ -D _DEBUG -D _X64 -Wall
 	ar -rc kendylib.a *.o
 	mv kendylib.a ../../lib
 	rm -f *.o

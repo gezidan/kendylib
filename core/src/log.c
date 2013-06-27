@@ -151,7 +151,7 @@ static uint32_t last_tick = 0;
 static void write_to_file(log_t l,int32_t is_close)
 {
 	mutex_lock(l->mtx);
-	if(!list_is_empty(l->log_queue))
+	if(!link_list_is_empty(l->log_queue))
 		link_list_swap(l->pending_log,l->log_queue);
 	mutex_unlock(l->mtx);
 	if(is_close)
@@ -163,7 +163,7 @@ static void write_to_file(log_t l,int32_t is_close)
 		wpacket_write_binary(w,buf,str_len);	
 		LINK_LIST_PUSH_BACK(l->pending_log,w);
 	}
-	while(!list_is_empty(l->pending_log))
+	while(!link_list_is_empty(l->pending_log))
 	{
 		int32_t wbuf_count = prepare_write(l);
 		int32_t bytetransfer = TEMP_FAILURE_RETRY(writev(l->file_descriptor,l->wbuf,wbuf_count));

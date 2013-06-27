@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <sys/time.h> 
+#include <unistd.h>
 static inline uint32_t GetSystemMs()
 {
 	//struct timespec now;

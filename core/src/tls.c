@@ -78,8 +78,9 @@ void set_tls_data(int32_t key,void *data)
 		h = hash_map_create(128,sizeof(key),sizeof(void*),tls_hash_func,tls_hash_key_eq);
 	}
 	hash_map_iter it = hash_map_find(h,(void*)&key);
-	if(0 == hash_map_is_vaild_iter(it))
+	hash_map_iter end = hash_map_end(h);
+	if(IT_EQ(it,end))
 		HASH_MAP_INSERT(int32_t,void*,h,key,data);
 	else
-		hash_map_iter_set_val(it,data);
+		IT_SET_VAL(void*,it,data);
 }

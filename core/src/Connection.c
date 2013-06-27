@@ -118,7 +118,6 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 		else
 		{
 			int32_t total_size = 0;
-			int32_t flag = RECV_NOW;
 			while(bytestransfer > 0)
 			{
 				c->last_recv = GetCurrentMs();
@@ -154,8 +153,12 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 				c->recv_overlap.m_super.iovec = c->wrecvbuf;
 								 
 				if(total_size > 65536)
-					flag = RECV_POST;
-				bytestransfer = WSARecv(c->socket,&c->recv_overlap.m_super,flag,&err_code);
+				{
+					Post_Recv(c->socket,&c->recv_overlap.m_super);
+					return;
+				}
+				else
+					bytestransfer = Recv(c->socket,&c->recv_overlap.m_super,&err_code);
 			}
 		}
 	}
@@ -241,7 +244,6 @@ static inline void update_send_list(struct connection *c,int32_t bytestransfer)
 
 int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish callback)
 {
-	uint32_t err_code = 0;
 	st_io *O;
 	if(w)
 	{
@@ -255,10 +257,10 @@ int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish call
 		if(O)
 		{
 			c->send_overlap.isUsed = 1;	
-			return WSASend(c->socket,O,SEND_POST,&err_code);
+			return Post_Send(c->socket,O);
 		}
 	}
-	return -1;
+	return 0;
 }
 
 void connection_push_packet(struct connection *c,wpacket_t w,packet_send_finish callback)
@@ -310,7 +312,7 @@ void SendFinish(int32_t bytestransfer,st_io *io)
 					else
 						return;
 				}
-				bytestransfer = WSASend(c->socket,io,SEND_NOW,&err_code);
+				bytestransfer = Send(c->socket,io,&err_code);
 			}
 		}
 	}
@@ -368,8 +370,7 @@ int32_t connection_start_recv(struct connection *c)
 	c->recv_overlap.m_super.iovec_count = 1;
 	c->recv_overlap.isUsed = 1;
 	c->recv_overlap.m_super.iovec = c->wrecvbuf;
-	uint32_t err_code;
-	return WSARecv(c->socket,&c->recv_overlap.m_super,RECV_POST,&err_code);
+	return Post_Recv(c->socket,&c->recv_overlap.m_super);
 }
 
 void connection_active_close(struct connection *c)

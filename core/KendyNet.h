@@ -35,9 +35,9 @@ typedef struct
 //初始化网络系统
 int32_t      InitNetSystem();
 
-typedef int32_t HANDLE;
+typedef void* HANDLE;
 #ifndef INVAILD_HANDLE
-#define INVAILD_HANDLE -1
+#define INVAILD_HANDLE NULL
 #endif
 struct block_queue;
 
@@ -53,15 +53,20 @@ void     CloseEngine(HANDLE);
 int32_t  EngineRun(HANDLE,int32_t timeout);
 int32_t  Bind2Engine(HANDLE,HANDLE,OnRead,OnWrite,OnClear_pending);
 
-enum
-{
-	RECV_NOW = 1,
-	RECV_POST = 0,
-	SEND_NOW = 1,
-	SEND_POST = 0,
-};
+/*
+*  立即执行IO请求,如果成功返回结果,
+*  否则返回-1,err_code == EAGAIN,当套接字被激活时由网络引擎完成请求，并回调注册的函数
+*/
+int32_t Recv(HANDLE,st_io*,uint32_t *err_code);
+int32_t Send(HANDLE,st_io*,uint32_t *err_code);
 
-int32_t WSASend(HANDLE,st_io*,int32_t flag,uint32_t *err_code);
-int32_t WSARecv(HANDLE,st_io*,int32_t flag,uint32_t *err_code);
+/*
+* 投递请求，在将来的某个时刻由网络引擎完成请求，并回调注册的函数
+*/
+int32_t Post_Recv(HANDLE,st_io*);
+int32_t Post_Send(HANDLE,st_io*);
+
+//int32_t WSASend(HANDLE,st_io*,int32_t flag,uint32_t *err_code);
+//int32_t WSARecv(HANDLE,st_io*,int32_t flag,uint32_t *err_code);
 
 #endif

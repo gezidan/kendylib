@@ -63,6 +63,61 @@ int32_t Bind2Engine(HANDLE e,HANDLE s,OnRead _OnRead,OnWrite _OnWrite,OnClear_pe
 	return -1;
 }
 
+int32_t Recv(HANDLE sock,st_io *io,uint32_t *err_code)
+{
+	assert(io);
+	socket_t s = GetSocketByHandle(sock);
+	if(!s)
+	{
+		*err_code = 0;
+		return -1;
+	}
+	return raw_recv(s,io,err_code);
+}
+
+int32_t Post_Recv(HANDLE sock,st_io *io)
+{
+	assert(io);
+	socket_t s = GetSocketByHandle(sock);
+	if(!s)
+		return -1;
+	LINK_LIST_PUSH_BACK(s->pending_recv,io);
+	if(s->engine && s->readable && !s->isactived)
+	{
+		s->isactived = 1;
+		double_link_push(s->engine->actived,(struct double_link_node*)s);
+	}
+	return 0;
+}
+
+int32_t Send(HANDLE sock,st_io *io,uint32_t *err_code)
+{
+	assert(io);
+	socket_t s = GetSocketByHandle(sock);
+	if(!s)
+	{
+		*err_code = 0;
+		return -1;
+	}
+	return raw_send(s,io,err_code);
+}
+
+int32_t Post_Send(HANDLE sock,st_io *io)
+{
+	assert(io);
+	socket_t s = GetSocketByHandle(sock);
+	if(!s)
+		return -1;
+	LINK_LIST_PUSH_BACK(s->pending_send,io);
+	if(s->engine && s->writeable && !s->isactived)
+	{
+		s->isactived = 1;
+		double_link_push(s->engine->actived,(struct double_link_node*)s);
+	}
+	return 0;
+}
+
+/*
 int32_t WSASend(HANDLE sock,st_io *io,int32_t flag,uint32_t *err_code)
 {
 	assert(io);
@@ -117,3 +172,4 @@ int32_t WSARecv(HANDLE sock,st_io *io,int32_t flag,uint32_t *err_code)
 		return raw_recv(s,io,&bytes_transfer,err_code);
 	}
 }
+*/
