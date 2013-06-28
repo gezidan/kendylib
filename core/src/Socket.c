@@ -3,12 +3,6 @@
 #include <errno.h>
 #include "KendyNet.h"
 #include "SocketWrapper.h"
-#if defined(_LINUX)
-#include "epoll.h"
-#elif defined(_WIN)
-#include "iocp.h"
-#include <Winerror.h>
-#endif
 #include "Engine.h"
 #include "Socket.h"
 #include <stdio.h>

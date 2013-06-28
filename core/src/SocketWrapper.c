@@ -1,6 +1,5 @@
 #include "SocketWrapper.h"
 #if defined(_LINUX)
-#include "epoll.h"
 #include "Socket.h"
 #include "HandleMgr.h"
 

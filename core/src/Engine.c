@@ -2,10 +2,11 @@
 #include "link_list.h"
 #include <stdlib.h>
 #include <assert.h>
+#include "common.h"
+#include "Engine.h"
 
 #if defined(_LINUX)
 #include "epoll.h"
-#include "Engine.h"
 engine_t create_engine()
 {
 	engine_t e = malloc(sizeof(*e));
@@ -31,7 +32,6 @@ void   free_engine(engine_t *e)
 }
 #elif defined(_WIN)
 #include "iocp.h"
-#include "Engine.h"
 engine_t create_engine()
 {
 	engine_t e = malloc(sizeof(*e));

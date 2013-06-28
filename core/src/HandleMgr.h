@@ -2,7 +2,6 @@
 #define _HANDLEMGR_H
 
 #include "KendyNet.h"
-//#include "epoll.h"
 #include "Socket.h"
 #include "Engine.h"
 #include <stdint.h>

@@ -1,18 +1,15 @@
-//#include <winsock2.h>
-//#include <WinBase.h>
-//#include <Winerror.h>
-#if defined(_LINUX)
-#include <stdio.h>
-#include <sys/select.h>
-#include <sys/time.h>
 #include "SocketWrapper.h"
 #include "HandleMgr.h" 
 #include "SysTime.h"
 #include "Acceptor.h"
 #include "Socket.h"
 #include "link_list.h"
-#include "epoll.h"
+#include "KendyNet.h"
 
+#if defined(_LINUX)
+#include <stdio.h>
+#include <sys/select.h>
+#include <sys/time.h>
 struct st_listen
 {
     list_node next;
@@ -63,7 +60,7 @@ void destroy_acceptor(acceptor_t *a)
 SOCK    add_listener(acceptor_t a,const char *ip,uint32_t port,on_accept call_back,void *ud)
 {
 	if(!a)
-		return INVAILD_SOCKET;
+		return INVAILD_SOCK;
 	SOCK ListenSocket;
 	struct sockaddr_in servaddr;
 	ListenSocket = Tcp_Listen(ip,port,&servaddr,256);
@@ -84,7 +81,7 @@ SOCK    add_listener(acceptor_t a,const char *ip,uint32_t port,on_accept call_ba
 		{
 			ReleaseSocket(ListenSocket);
 			printf("listen %s:%d error\n",ip,port);
-			return INVAILD_SOCKET;
+			return INVAILD_SOCK;
 		}
 		LINK_LIST_PUSH_BACK(a->st_listens,_st);
 		return ListenSocket;
@@ -92,7 +89,7 @@ SOCK    add_listener(acceptor_t a,const char *ip,uint32_t port,on_accept call_ba
 	else
 	{
 		printf("listen %s:%d error\n",ip,port);
-		return INVAILD_SOCKET;
+		return INVAILD_SOCK;
 	}	
 }
 

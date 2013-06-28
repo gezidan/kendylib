@@ -5,7 +5,7 @@
 #include "link_list.h"
 #include "double_link.h"
 #include <stdint.h>
-#include "KendyNet.h"
+#include "common.h"
 struct socket_wrapper;
 
 #if defined(_LINUX)

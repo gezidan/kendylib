@@ -27,50 +27,7 @@
 #ifndef _SOCK_WRAPPER_H
 #define _SOCK_WRAPPER_H
 
-#if defined(_LINUX)
-
-#include	<sys/types.h>	/* basic system data types */
-#include	<sys/socket.h>	/* basic socket definitions */
-#include	<sys/time.h>	/* timeval{} for select() */
-#include	<time.h>		/* timespec{} for pselect() */
-#include	<netinet/in.h>	/* sockaddr_in{} and other Internet defns */
-#include	<arpa/inet.h>	/* inet(3) functions */
-#include	<errno.h>
-#include	<fcntl.h>		/* for nonblocking */
-#include	<netdb.h>
-#include	<signal.h>
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
-#include	<sys/stat.h>	/* for S_xxx file mode constants */
-#include	<sys/uio.h>		/* for iovec{} and readv/writev */
-#include	<unistd.h>
-#include	<sys/wait.h>
-#include	<sys/un.h>		/* for Unix domain sockets */
-#include    <net/if.h>
-#include    <sys/ioctl.h>
-#include    <netinet/tcp.h>
-#include    <fcntl.h>
-#include    <stdint.h>
-
-#ifndef TEMP_FAILURE_RETRY
-#define TEMP_FAILURE_RETRY(expression)\
-   ({ long int __result;\
-       do __result = (long int)(expression);\
-       while(__result == -1L&& errno == EINTR);\
-       __result;})
-#endif
-
-#elif defined(_WIN)
-#include <winsock2.h>
-#include <WinBase.h>
-#include <Winerror.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <WS2tcpip.h>
-#else
-	#error un support os!
-#endif
+#include "common.h"
 
 enum sock_family
 {
@@ -100,8 +57,7 @@ enum sock_protocol
 #endif
 };
 
-//typedef sock_wrapper *socket_t;
-#include "KendyNet.h"
+
 SOCK  OpenSocket(int32_t family,int32_t type,int32_t protocol);
 
 //close connection

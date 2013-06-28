@@ -1,9 +1,4 @@
 #include "KendyNet.h"
-#if defined(_LINUX)
-#include "epoll.h"
-#elif defined(_WIN)
-#include "iocp.h"
-#endif
 #include "Engine.h"
 #include "Socket.h"
 #include "link_list.h"
