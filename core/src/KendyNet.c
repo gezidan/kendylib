@@ -1,5 +1,9 @@
 #include "KendyNet.h"
+#if defined(_LINUX)
 #include "epoll.h"
+#elif defined(_WIN)
+#include "iocp.h"
+#endif
 #include "Engine.h"
 #include "Socket.h"
 #include "link_list.h"
@@ -13,7 +17,7 @@ int32_t InitNetSystem()
 	return 0;
 }
 
-int32_t EngineRun(HANDLE engine,int32_t timeout)
+int32_t EngineRun(ENGINE engine,int32_t timeout)
 {
 	engine_t e = GetEngineByHandle(engine);
 	if(!e)
@@ -21,32 +25,27 @@ int32_t EngineRun(HANDLE engine,int32_t timeout)
 	return e->Loop(e,timeout);
 }
 
-HANDLE CreateEngine()
+ENGINE CreateEngine()
 {
-	HANDLE engine = NewEngine();
-	if(engine != INVAILD_HANDLE)
+	ENGINE engine = NewEngine();
+	if(engine != INVAILD_ENGINE)
 	{
 		engine_t e = GetEngineByHandle(engine);
 		if(0 != e->Init(e))
 		{
 			CloseEngine(engine);
-			engine = INVAILD_HANDLE;
-		}
-		else
-		{
-			memset(e->events,0,sizeof(e->events));
-			double_link_clear(e->actived);
+			engine = INVAILD_ENGINE;
 		}
 	}
 	return engine;
 }
 
-void CloseEngine(HANDLE handle)
+void CloseEngine(ENGINE handle)
 {
 	ReleaseEngine(handle);
 }
 
-int32_t Bind2Engine(HANDLE e,HANDLE s,OnRead _OnRead,OnWrite _OnWrite,OnClear_pending _OnClear_pending)
+int32_t Bind2Engine(ENGINE e,SOCK s,OnRead _OnRead,OnWrite _OnWrite,OnClear_pending _OnClear_pending)
 {
 	engine_t engine = GetEngineByHandle(e);
 	socket_t sock   = GetSocketByHandle(s);
@@ -63,7 +62,9 @@ int32_t Bind2Engine(HANDLE e,HANDLE s,OnRead _OnRead,OnWrite _OnWrite,OnClear_pe
 	return -1;
 }
 
-int32_t Recv(HANDLE sock,st_io *io,uint32_t *err_code)
+#if defined(_LINUX)
+
+int32_t Recv(SOCK sock,st_io *io,uint32_t *err_code)
 {
 	assert(io);
 	socket_t s = GetSocketByHandle(sock);
@@ -75,7 +76,7 @@ int32_t Recv(HANDLE sock,st_io *io,uint32_t *err_code)
 	return raw_recv(s,io,err_code);
 }
 
-int32_t Post_Recv(HANDLE sock,st_io *io)
+int32_t Post_Recv(SOCK sock,st_io *io)
 {
 	assert(io);
 	socket_t s = GetSocketByHandle(sock);
@@ -90,7 +91,7 @@ int32_t Post_Recv(HANDLE sock,st_io *io)
 	return 0;
 }
 
-int32_t Send(HANDLE sock,st_io *io,uint32_t *err_code)
+int32_t Send(SOCK sock,st_io *io,uint32_t *err_code)
 {
 	assert(io);
 	socket_t s = GetSocketByHandle(sock);
@@ -102,7 +103,7 @@ int32_t Send(HANDLE sock,st_io *io,uint32_t *err_code)
 	return raw_send(s,io,err_code);
 }
 
-int32_t Post_Send(HANDLE sock,st_io *io)
+int32_t Post_Send(SOCK sock,st_io *io)
 {
 	assert(io);
 	socket_t s = GetSocketByHandle(sock);
@@ -116,7 +117,8 @@ int32_t Post_Send(HANDLE sock,st_io *io)
 	}
 	return 0;
 }
-
+#elif defined(_WIN)
+#endif
 /*
 int32_t WSASend(HANDLE sock,st_io *io,int32_t flag,uint32_t *err_code)
 {

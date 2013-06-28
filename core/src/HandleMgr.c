@@ -1,8 +1,8 @@
 #include "HandleMgr.h"
 
-HANDLE	NewSocketWrapper()
+ENGINE	NewSocketWrapper()
 {
-	return (HANDLE)create_socket();
+	return (ENGINE)create_socket();
 }
 
 
@@ -11,12 +11,13 @@ inline static int RemoveBinding(engine_t e, socket_t sock)
 	return e ? e->UnRegister(e,sock) : -1;
 }
 
-void  ReleaseSocketWrapper(HANDLE handle)
+void  ReleaseSocketWrapper(SOCK handle)
 {
 	socket_t s = (socket_t)handle;
 	double_link_remove((struct double_link_node*)s);
 	if(s->engine)
 		RemoveBinding(s->engine,s);
+#if defined(_LINUX)
 	close(s->fd);
 	if(s->OnClear_pending_io)
 	{
@@ -25,16 +26,19 @@ void  ReleaseSocketWrapper(HANDLE handle)
 			s->OnClear_pending_io((st_io*)tmp);
 		while((tmp = link_list_pop(s->pending_recv))!=NULL)
 			s->OnClear_pending_io((st_io*)tmp);
-	}	
+	}
+#elif defined(_WIN)
+	closesocket(s->fd);
+#endif
 	free_socket(&s);
 } 
 
-HANDLE	NewEngine()
+ENGINE	NewEngine()
 {
-	return (HANDLE)create_engine();
+	return (ENGINE)create_engine();
 }
 
-void  ReleaseEngine(HANDLE handle)
+void  ReleaseEngine(ENGINE handle)
 {
 	engine_t e = (engine_t)handle;
 	free_engine(&e);

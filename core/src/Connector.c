@@ -1,3 +1,4 @@
+#if defined(_LINUX)
 #include <stdio.h>
 #include "link_list.h"
 #include <sys/select.h>
@@ -15,7 +16,7 @@ typedef struct pending_connect
 	list_node  lnode;
 	const char *ip;
 	uint32_t port;
-	HANDLE   sock;
+	SOCK   sock;
 	int real_fd;
 	on_connect call_back;
 	uint32_t timeout;
@@ -57,7 +58,7 @@ void connector_destroy(connector_t *c)
 int32_t connector_connect(connector_t c,const char *ip,uint32_t port,on_connect call_back,void *ud,uint32_t ms)
 {
 	struct sockaddr_in remote;
-	HANDLE sock;
+	SOCK sock;
 	struct pending_connect *pc;	
 	sock = OpenSocket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if(sock < 0)
@@ -119,7 +120,7 @@ void connector_run(connector_t c,uint32_t ms)
 	{
 		if(c->fd_seisize >= FD_SETSIZE)
 		{
-			pc->call_back(INVAILD_HANDLE,pc->ip,pc->port,pc->ud);
+			pc->call_back(INVAILD_SOCKET,pc->ip,pc->port,pc->ud);
 			free(pc);
 		}
 		else
@@ -165,7 +166,7 @@ void connector_run(connector_t c,uint32_t ms)
 			pc = LINK_LIST_POP(struct pending_connect*,c->_pending_connect);
 			if(tick >= pc->timeout)
 			{
-				pc->call_back(INVAILD_HANDLE,pc->ip,pc->port,pc->ud);
+				pc->call_back(INVAILD_SOCKET,pc->ip,pc->port,pc->ud);
 				free(pc);
 				--c->fd_seisize;
 			}
@@ -178,3 +179,5 @@ void connector_run(connector_t c,uint32_t ms)
 		tick = GetSystemMs();
 	}while(tick < _timeout);
 }
+#elif defined(_WIN)
+#endif

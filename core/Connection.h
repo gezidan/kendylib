@@ -25,10 +25,14 @@ typedef void (*on_disconnect)(struct connection*,int32_t reason);
 
 struct connection
 {
-	HANDLE socket;
+	SOCK socket;
+#if defined(_LINUX)
 	struct iovec wsendbuf[MAX_WBAF];
 	struct iovec wrecvbuf[2];
-	
+#elif defined(_WIN)
+	WSABUF wsendbuf[MAX_WBAF];
+	WSABUF wrecvbuf[2];
+#endif
 	struct OVERLAPCONTEXT send_overlap;
 	struct OVERLAPCONTEXT recv_overlap;
 
@@ -55,7 +59,13 @@ struct connection
 	
 };
 
-struct connection *connection_create(HANDLE s,uint8_t is_raw,uint8_t mt,process_packet,on_disconnect);
+#if defined(_WIN)
+#define iov_len len
+#define iov_base buf
+#endif
+
+
+struct connection *connection_create(SOCK s,uint8_t is_raw,uint8_t mt,process_packet,on_disconnect);
 void connection_active_close(struct connection*);//active close connection
 int connection_destroy(struct connection**);
 

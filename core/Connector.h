@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 typedef struct connector *connector_t;
-typedef void (*on_connect)(HANDLE,const char *ip,int32_t port,void*ud);
+typedef void (*on_connect)(SOCK,const char *ip,int32_t port,void*ud);
 
 connector_t connector_create();
 void        connector_destroy(connector_t*);

@@ -1,3 +1,4 @@
+#if defined(_LINUX)
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/timerfd.h> 
@@ -127,3 +128,5 @@ void DestroyTimer(Timer_t *t)
 	free(*t);
 	*t = 0;
 }
+#elif defined(_WIN)
+#endif

@@ -55,7 +55,7 @@ void thread_start_run(thread_t t,thread_routine r,void *arg)
 void thread_suspend(thread_t t,int32_t ms)
 {
 	pthread_t self = pthread_self();
-#ifdef _MINGW_
+#ifdef _WIN
 	if(self.p != t->threadid.p || self.x != t->threadid.x)
 		return;
 #else	
@@ -83,7 +83,7 @@ void thread_suspend(thread_t t,int32_t ms)
 void thread_resume(thread_t t)
 {
 	pthread_t self = pthread_self();
-#ifdef _MINGW_
+#ifdef _WIN
 	if(self.p != t->threadid.p || self.x != t->threadid.x)
 		return;
 #else	

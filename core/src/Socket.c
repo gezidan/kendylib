@@ -1,12 +1,19 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
-#include "SocketWrapper.h"
 #include "KendyNet.h"
+#include "SocketWrapper.h"
+#if defined(_LINUX)
 #include "epoll.h"
+#elif defined(_WIN)
+#include "iocp.h"
+#include <Winerror.h>
+#endif
 #include "Engine.h"
 #include "Socket.h"
 #include <stdio.h>
+
+#if defined(_LINUX)
 
 socket_t create_socket()
 {
@@ -15,8 +22,7 @@ socket_t create_socket()
 	{
 		s->pending_send = LINK_LIST_CREATE();
 		s->pending_recv = LINK_LIST_CREATE();
-		s->status = 0;
-		s->engine = 0;
+		s->engine = NULL;
 		s->isactived = 0;
 	}
 	return s;
@@ -132,3 +138,60 @@ int32_t  Process(socket_t s)
 	int32_t write_active = s->writeable && !LINK_LIST_IS_EMPTY(s->pending_send);
 	return (read_active || write_active) && s->isactived == 0;
 }
+
+#elif defined(_WIN)
+
+socket_t create_socket()
+{
+	socket_t s = malloc(sizeof(*s));
+	if(s)
+		s->engine = NULL;
+	return s;
+}
+
+void free_socket(socket_t *s)
+{
+	assert(s);assert(*s);
+	free(*s);
+	*s = 0;
+}
+
+
+/* return:
+*  >  0 :bytestransfer
+*  == 0 :WSA_IO_PENDING
+*  <  0 :error or socket close
+*/
+int32_t raw_send(socket_t s,st_io *io_req,uint32_t *err_code)
+{
+	uint32_t dwFlags = 0;
+	uint32_t dwBytes = 0;
+	if(SOCKET_ERROR == WSASend(s->fd, io_req->iovec,io_req->iovec_count, 
+		(LPDWORD)&dwBytes, dwFlags, (OVERLAPPED*)io_req, NULL))
+	{
+		if(err_code)
+			*err_code = WSAGetLastError();
+		return -1;
+	}	
+	else 
+		return dwBytes;
+}
+
+int32_t raw_recv(socket_t s,st_io *io_req,uint32_t *err_code)
+{
+	uint32_t dwFlags = 0;
+	uint32_t dwBytes = 0;
+	int32_t ret = 0;
+	if(SOCKET_ERROR == WSARecv(s->fd, io_req->iovec,io_req->iovec_count, 
+		(LPDWORD)&dwBytes, (LPDWORD)&dwFlags, (OVERLAPPED*)io_req, NULL))
+	{
+		if(err_code)
+			*err_code = WSAGetLastError();
+		return -1;
+	}	
+	else 
+		return dwBytes;
+}
+
+
+#endif

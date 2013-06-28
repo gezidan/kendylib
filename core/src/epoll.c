@@ -1,3 +1,4 @@
+#ifdef _LINUX
 #include "epoll.h"
 #include "Socket.h"
 #include "SocketWrapper.h"
@@ -10,7 +11,9 @@ int32_t  epoll_init(engine_t e)
 {
 	assert(e);
 	e->poller_fd = TEMP_FAILURE_RETRY(epoll_create(MAX_SOCKET));
-    return 	e->poller_fd >= 0 ? 0:-1; 
+	memset(e->events,0,sizeof(e->events));
+	double_link_clear(e->actived);
+	return 	e->poller_fd >= 0 ? 0:-1;
 }
 
 int32_t epoll_register(engine_t e, socket_t s)
@@ -78,3 +81,4 @@ int32_t epoll_loop(engine_t n,int32_t ms)
 	}while(timeout > current_tick);
 	return 0;
 }
+#endif

@@ -1,6 +1,7 @@
 //#include <winsock2.h>
 //#include <WinBase.h>
 //#include <Winerror.h>
+#if defined(_LINUX)
 #include <stdio.h>
 #include <sys/select.h>
 #include <sys/time.h>
@@ -16,7 +17,7 @@ struct st_listen
 {
     list_node next;
    	on_accept accept_callback;
-	HANDLE    sock;
+	SOCK    sock;
 	int32_t   real_fd;
 	void *ud; 		
 };
@@ -59,11 +60,11 @@ void destroy_acceptor(acceptor_t *a)
 	*a = NULL;
 }
 
-HANDLE    add_listener(acceptor_t a,const char *ip,uint32_t port,on_accept call_back,void *ud)
+SOCK    add_listener(acceptor_t a,const char *ip,uint32_t port,on_accept call_back,void *ud)
 {
 	if(!a)
-		return INVAILD_HANDLE;
-	HANDLE ListenSocket;
+		return INVAILD_SOCKET;
+	SOCK ListenSocket;
 	struct sockaddr_in servaddr;
 	ListenSocket = Tcp_Listen(ip,port,&servaddr,256);
 	if(ListenSocket >= 0)
@@ -83,7 +84,7 @@ HANDLE    add_listener(acceptor_t a,const char *ip,uint32_t port,on_accept call_
 		{
 			ReleaseSocket(ListenSocket);
 			printf("listen %s:%d error\n",ip,port);
-			return INVAILD_HANDLE;
+			return INVAILD_SOCKET;
 		}
 		LINK_LIST_PUSH_BACK(a->st_listens,_st);
 		return ListenSocket;
@@ -91,11 +92,11 @@ HANDLE    add_listener(acceptor_t a,const char *ip,uint32_t port,on_accept call_
 	else
 	{
 		printf("listen %s:%d error\n",ip,port);
-		return INVAILD_HANDLE;
+		return INVAILD_SOCKET;
 	}	
 }
 
-void rem_listener(acceptor_t a,HANDLE l)
+void rem_listener(acceptor_t a,SOCK l)
 {
 	if(a)
 	{
@@ -124,7 +125,7 @@ void acceptor_run(acceptor_t a,int32_t timeout)
 	uint32_t ms;
 	uint32_t tick = GetSystemMs();
 	uint32_t _timeout = tick + timeout;
-	HANDLE client;
+	SOCK client;
 	struct sockaddr_in ClientAddress;
 	int32_t nClientLength = sizeof(ClientAddress);
 	do{	
@@ -159,3 +160,6 @@ void acceptor_run(acceptor_t a,int32_t timeout)
 		tick = GetSystemMs();
 	}while(tick < _timeout);
 }
+#elif defined(_WIN)
+
+#endif

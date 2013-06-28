@@ -10,8 +10,6 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <error.h>
-
-
 #define EV_IN  EPOLLIN
 #define EV_OUT EPOLLOUT
 #define EV_ERR EPOLLERR

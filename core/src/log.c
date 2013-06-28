@@ -1,4 +1,5 @@
 #include "log.h"
+#if defined(_LINUX)
 #include "link_list.h"
 #include "sync.h"
 #include <stdlib.h>
@@ -283,3 +284,5 @@ static void *worker_routine(void *arg)
 	write_all_log_file(1);
 	return 0;
 }
+#elif defined(_WIN)
+#endif

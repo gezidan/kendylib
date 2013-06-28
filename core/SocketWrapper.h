@@ -27,6 +27,8 @@
 #ifndef _SOCK_WRAPPER_H
 #define _SOCK_WRAPPER_H
 
+#if defined(_LINUX)
+
 #include	<sys/types.h>	/* basic system data types */
 #include	<sys/socket.h>	/* basic socket definitions */
 #include	<sys/time.h>	/* timeval{} for select() */
@@ -59,13 +61,24 @@
        __result;})
 #endif
 
+#elif defined(_WIN)
+#include <winsock2.h>
+#include <WinBase.h>
+#include <Winerror.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <WS2tcpip.h>
+#else
+	#error un support os!
+#endif
+
 enum sock_family
 {
 	INET = AF_INET,
 	INET6 = AF_INET6,
+#ifdef _LINUX
 	LOCAL = AF_LOCAL,
 	ROUTE = AF_ROUTE,
-#ifdef _LINUX
 	KEY = AF_KEY,
 #endif
 };
@@ -82,20 +95,22 @@ enum sock_protocol
 {
 	TCP = IPPROTO_TCP,
 	UDP = IPPROTO_UDP,
+#ifdef _LINUX
 	SCTP = IPPROTO_SCTP,
+#endif
 };
 
 //typedef sock_wrapper *socket_t;
 #include "KendyNet.h"
-HANDLE  OpenSocket(int32_t family,int32_t type,int32_t protocol);
+SOCK  OpenSocket(int32_t family,int32_t type,int32_t protocol);
 
 //close connection
-int32_t CloseSocket(HANDLE);
+int32_t CloseSocket(SOCK);
 
 //release handle
-void ReleaseSocket(HANDLE);
+void ReleaseSocket(SOCK);
 
-int32_t Connect(HANDLE sock,const struct sockaddr *servaddr,socklen_t addrlen);
+int32_t Connect(SOCK sock,const struct sockaddr *servaddr,socklen_t addrlen);
 
 /*
  * brief: 创建套接字,并与给定的对端建立连接.
@@ -106,26 +121,26 @@ int32_t Connect(HANDLE sock,const struct sockaddr *servaddr,socklen_t addrlen);
  *        retry: 如果connect失败是否重新尝试,直到连接成功才返回 
  * return: >0 套接字,-1,失败.
  */
-HANDLE Tcp_Connect(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int32_t retry);
+SOCK Tcp_Connect(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int32_t retry);
 
-int32_t Bind(HANDLE sock,const struct sockaddr *myaddr,socklen_t addrlen);
+int32_t Bind(SOCK sock,const struct sockaddr *myaddr,socklen_t addrlen);
 
-int32_t Listen(HANDLE sock,int32_t backlog);
+int32_t Listen(SOCK sock,int32_t backlog);
 
 /*
  * brief: 创建套接字,磅定,然后在此套接字上监听.
  *
  */
-HANDLE Tcp_Listen(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int32_t backlog);
+SOCK Tcp_Listen(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int32_t backlog);
 
 
-HANDLE Accept(HANDLE,struct sockaddr *sa,socklen_t *salen);
+SOCK Accept(SOCK,struct sockaddr *sa,socklen_t *salen);
 
 /*
  * brief: 获取远端连接的IP,端口号.
  */
-int32_t getRemoteAddrPort(HANDLE sock,char *buf,uint16_t *port);
-int32_t getLocalAddrPort(HANDLE sock,struct sockaddr_in *remoAddr,socklen_t *len,char *buf,uint16_t *port);
+int32_t getRemoteAddrPort(SOCK sock,char *buf,uint16_t *port);
+int32_t getLocalAddrPort(SOCK sock,struct sockaddr_in *remoAddr,socklen_t *len,char *buf,uint16_t *port);
 
 /*
 ssize_t write_fd(int fd,void *ptr,size_t nbytes,int sendfd);
@@ -137,7 +152,7 @@ ssize_t read_fd(int fd,void *ptr,size_t nbytes,int *recvfd);
 
 struct hostent *Gethostbyaddr(const char *ip,int32_t family);
 
-int32_t setNonblock(HANDLE sock);
+int32_t setNonblock(SOCK sock);
 
 #endif
 

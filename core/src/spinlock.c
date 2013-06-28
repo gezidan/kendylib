@@ -16,7 +16,7 @@ spinlock_t spin_create()
 {
 	spinlock_t sp = malloc(sizeof(*sp));
 	sp->lock_count = 0;
-#ifdef _MINGW_
+#ifdef _WIN
 	sp->owner.p = NULL;
     sp->owner.x = 0;	
 #else
@@ -33,7 +33,7 @@ void spin_destroy(spinlock_t *sp)
 
 int32_t spin_lock(spinlock_t l)
 {
-#ifdef _MINGW_
+#ifdef _WIN
 	pthread_t tid = pthread_self();
 	if(tid.p == l->owner.p)
 	{
@@ -80,7 +80,7 @@ int32_t spin_lock(spinlock_t l)
 
 int32_t spin_unlock(spinlock_t l)
 {
-#ifdef _MINGW_
+#ifdef _WIN
 	pthread_t tid = pthread_self();
 	if(tid.p == l->owner.p)
 	{

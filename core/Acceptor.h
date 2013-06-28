@@ -19,12 +19,12 @@
 #include <stdint.h>
 
 typedef struct acceptor* acceptor_t;
-typedef void (*on_accept)(HANDLE,void*ud);
+typedef void (*on_accept)(SOCK,void*ud);
 
 acceptor_t create_acceptor();
 
-HANDLE    add_listener(acceptor_t,const char *ip,uint32_t port,on_accept,void*);
-void      rem_listener(acceptor_t,HANDLE);
+SOCK    add_listener(acceptor_t,const char *ip,uint32_t port,on_accept,void*);
+void      rem_listener(acceptor_t,SOCK);
 
 void       destroy_acceptor(acceptor_t*);
 void       acceptor_run(acceptor_t,int32_t ms);
