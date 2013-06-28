@@ -77,6 +77,6 @@ int32_t connection_send(struct connection*,wpacket_t,packet_send_finish);
 
 int32_t connection_start_recv(struct connection*);
 
-void SendFinish(int32_t bytetransfer,st_io *io);
-void RecvFinish(int32_t bytetransfer,st_io *io);
+void SendFinish(int32_t bytetransfer,st_io *io,uint32_t err_code);
+void RecvFinish(int32_t bytetransfer,st_io *io,uint32_t err_code);
 #endif

@@ -128,7 +128,7 @@ SOCK Tcp_Connect(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int32
 	if(!ip)
 		return INVAILD_SOCK;
 
-	bzero(servaddr,sizeof(*servaddr));
+	memset((void*)servaddr,0,sizeof(*servaddr));
 	servaddr->sin_family = INET;
 	servaddr->sin_port = htons(port);
 	if(inet_pton(INET,ip,&servaddr->sin_addr) < 0)
@@ -190,7 +190,7 @@ SOCK Tcp_Listen(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int32_
 	if(sock < 0)
 		return INVAILD_SOCK;
 
-	bzero(servaddr,sizeof(*servaddr));
+	memset((void*)servaddr,0,sizeof(*servaddr));
 	servaddr->sin_family = INET;
 	if(ip)
 	{
@@ -306,7 +306,7 @@ struct hostent *Gethostbyaddr(const char *ip,int32_t family)
 	struct sockaddr_in servaddr;
 	struct hostent	*hptr;
 
-	bzero(&servaddr,sizeof(servaddr));
+	memset((void*)&servaddr,0,sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	if(inet_pton(family,ip,&servaddr.sin_addr) < 0)
 	{

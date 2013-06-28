@@ -31,8 +31,8 @@ typedef struct socket_wrapper
 	int32_t fd;
 	struct link_list *pending_send;//尚未处理的发请求
 	struct link_list *pending_recv;//尚未处理的读请求
-	void (*OnRead)(int32_t,st_io*);
-	void (*OnWrite)(int32_t,st_io*);
+	void (*OnRead)(int32_t,st_io*,uint32_t err_code);
+	void (*OnWrite)(int32_t,st_io*,uint32_t err_code);
 	void (*OnClear_pending_io)(st_io*);
 }*socket_t;
 
@@ -47,8 +47,10 @@ typedef struct socket_wrapper
 {
 	struct engine  *engine;
 	SOCKET fd;
-	void (*OnRead)(int32_t,st_io*);
-	void (*OnWrite)(int32_t,st_io*);
+	struct link_list *pending_send;//尚未处理的发请求
+	struct link_list *pending_recv;//尚未处理的读请求	
+	void (*OnRead)(int32_t,st_io*,uint32_t err_code);
+	void (*OnWrite)(int32_t,st_io*,uint32_t err_code);
 	void (*OnClear_pending_io)(st_io*);
 }*socket_t;
 

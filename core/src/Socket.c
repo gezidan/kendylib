@@ -82,13 +82,14 @@ static inline void _recv(socket_t s)
 {
 	assert(s);
 	st_io* io_req = 0;
+	uint32_t err_code = 0;
 	if(s->readable)
 	{
 		if((io_req = LINK_LIST_POP(st_io*,s->pending_recv))!=NULL)
 		{
-			int32_t bytes_transfer = raw_recv(s,io_req,&io_req->err_code);
-			if(io_req->err_code != EAGAIN)
-				s->OnRead(bytes_transfer,io_req);
+			int32_t bytes_transfer = raw_recv(s,io_req,&err_code);
+			if(err_code != EAGAIN)
+				s->OnRead(bytes_transfer,io_req,err_code);
 		}
 	}
 }
@@ -113,13 +114,14 @@ static inline void _send(socket_t s)
 {
 	assert(s);
 	st_io* io_req = 0;
+	uint32_t err_code = 0;
 	if(s->writeable)
 	{
 		if((io_req = LINK_LIST_POP(st_io*,s->pending_send))!=NULL)
 		{
-			int32_t bytes_transfer = raw_send(s,io_req,&io_req->err_code);
-			if(io_req->err_code != EAGAIN)
-				s->OnWrite(bytes_transfer,io_req);
+			int32_t bytes_transfer = raw_send(s,io_req,&err_code);
+			if(err_code != EAGAIN)
+				s->OnWrite(bytes_transfer,io_req,err_code);
 		}
 	}
 }
@@ -138,14 +140,27 @@ int32_t  Process(socket_t s)
 socket_t create_socket()
 {
 	socket_t s = malloc(sizeof(*s));
-	if(s)
+	if(s){
 		s->engine = NULL;
+		s->pending_send = LINK_LIST_CREATE();
+		s->pending_recv = LINK_LIST_CREATE();
+	}
 	return s;
 }
 
 void free_socket(socket_t *s)
 {
 	assert(s);assert(*s);
+	if((*s)->OnClear_pending_io)
+	{
+        list_node *tmp;
+        while((tmp = link_list_pop((*s)->pending_send))!=NULL)
+            (*s)->OnClear_pending_io((st_io*)tmp);
+        while((tmp = link_list_pop((*s)->pending_recv))!=NULL)
+            (*s)->OnClear_pending_io((st_io*)tmp);
+	}
+	destroy_link_list(&(*s)->pending_send);
+	destroy_link_list(&(*s)->pending_recv);	
 	free(*s);
 	*s = 0;
 }
@@ -160,6 +175,8 @@ int32_t raw_send(socket_t s,st_io *io_req,uint32_t *err_code)
 {
 	uint32_t dwFlags = 0;
 	uint32_t dwBytes = 0;
+	io_req->m_Type = IO_SENDFINISH;
+	ZeroMemory(io_req, sizeof(OVERLAPPED));
 	if(SOCKET_ERROR == WSASend(s->fd, io_req->iovec,io_req->iovec_count, 
 		(LPDWORD)&dwBytes, dwFlags, (OVERLAPPED*)io_req, NULL))
 	{
@@ -175,7 +192,9 @@ int32_t raw_recv(socket_t s,st_io *io_req,uint32_t *err_code)
 {
 	uint32_t dwFlags = 0;
 	uint32_t dwBytes = 0;
-	int32_t ret = 0;
+	int32_t  ret = 0;
+	io_req->m_Type = IO_RECVFINISH;
+	ZeroMemory(io_req, sizeof(OVERLAPPED));
 	if(SOCKET_ERROR == WSARecv(s->fd, io_req->iovec,io_req->iovec_count, 
 		(LPDWORD)&dwBytes, (LPDWORD)&dwFlags, (OVERLAPPED*)io_req, NULL))
 	{

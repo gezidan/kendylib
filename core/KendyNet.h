@@ -36,7 +36,6 @@ typedef struct
 	LIST_NODE;
 	struct     iovec *iovec;
 	int32_t    iovec_count;
-	uint32_t   err_code;
 }st_io;
 
 #elif defined(_WIN)
@@ -46,17 +45,29 @@ typedef struct
 
 enum
 {
-	IO_RECV =  1,
-	IO_SEND =  2,
+	IO_RECVREQUEST = 1<<1,   //应用层接收请求
+	IO_SENDREQUEST = 1<<3,   //应用层发送请求
+	IO_RECVFINISH =  1<<2,//接收完成
+	IO_SENDFINISH =  1<<4,   //发送完成
+};
+
+
+enum
+{
+	IO_RECV = (1<<1) + (1<<2),
+	IO_SEND = (1<<3) + (1<<4),
+	IO_REQUEST = (1<<1) + (1<<3),
 };
 
 typedef struct
 {
-	OVERLAPPED    m_overLapped;
+	union{
+		LIST_NODE;
+		OVERLAPPED    m_overLapped;
+	};
 	WSABUF*       iovec;
 	DWORD         iovec_count;
 	uint8_t       m_Type;
-	uint32_t   err_code;
 }st_io;
 
 #else
@@ -66,9 +77,9 @@ typedef struct
 //初始化网络系统
 int32_t      InitNetSystem();
 //recv请求完成时callback
-typedef void (*OnRead)(int32_t,st_io*);
+typedef void (*OnRead)(int32_t,st_io*,uint32_t err_code);
 //send请求完成时callback
-typedef void (*OnWrite)(int32_t,st_io*);
+typedef void (*OnWrite)(int32_t,st_io*,uint32_t err_code);
 //连接关闭时,对所有未完成的请求执行的callback
 typedef void (*OnClear_pending)(st_io*);
 

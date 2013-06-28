@@ -33,7 +33,7 @@ int32_t iocp_unregister(engine_t e,socket_t s)
 	s->engine = NULL;
 	return 0;
 }
-typedef void (*CallBack)(int32_t,st_io*);
+typedef void (*CallBack)(int32_t,st_io*,uint32_t);
 int32_t iocp_loop(engine_t n,int32_t timeout)
 {
 	assert(n);
@@ -76,13 +76,25 @@ int32_t iocp_loop(engine_t n,int32_t timeout)
 				if(FALSE == bReturn)
 					bytesTransfer = -1;
 			}
-			overLapped->err_code = lastErrno;
 		}
 		else
 		{	
-			if(overLapped->m_Type & IO_RECV)
+			if(overLapped->m_Type & IO_REQUEST)
+			{
+				overLapped->m_Type = overLapped->m_Type << 1;
+				if(overLapped->m_Type  & IO_RECVFINISH)
+					bytesTransfer = raw_Recv(socket,overLapped,&lastErrno);
+				else if(overLapped->m_Type  & IO_SENDFINISH)
+					bytesTransfer = raw_Send(socket,overLapped,&lastErrno);
+				else
+				{
+					//³ö´í
+					continue;
+				}
+			}		
+			if(overLapped->m_Type & IO_RECVFINISH)
 				call_back = socket->OnRead;
-			else if(overLapped->m_Type & IO_SEND)
+			else if(overLapped->m_Type & IO_SENDFINISH)
 				call_back = socket->OnWrite;
 			else
 			{
@@ -92,10 +104,15 @@ int32_t iocp_loop(engine_t n,int32_t timeout)
 		}
 
 		if(call_back)
-			call_back(bytesTransfer,overLapped);
+			call_back(bytesTransfer,overLapped,lastErrno);
 		tick = GetSystemMs();
 	}while(tick < _timeout);
 	return 0;
+}
+
+void     iocp_post_request(engine_t e,void *ptr,st_io *io)
+{
+	PostQueuedCompletionStatus(e->complete_port,1,(ULONG_PTR)ptr,(OVERLAPPED*)io);
 }
 
 

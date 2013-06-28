@@ -258,7 +258,7 @@ void connection_active_close(struct connection *c)
 		c->_on_disconnect(c,-2);//-2,active colse
 }
 
-void RecvFinish(int32_t bytestransfer,st_io *io)
+void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 {
 	struct OVERLAPCONTEXT *OVERLAP = (struct OVERLAPCONTEXT *)io;
 	struct connection *c = OVERLAP->c;
@@ -267,7 +267,6 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 	buffer_t buf;
 	uint32_t pos;
 	int32_t i = 0;
-	uint32_t err_code = io->err_code;
 	for(;;)
 	{
 		if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN))
@@ -335,11 +334,10 @@ void RecvFinish(int32_t bytestransfer,st_io *io)
 	}
 }
 
-void SendFinish(int32_t bytestransfer,st_io *io)
+void SendFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 {
 	struct OVERLAPCONTEXT *OVERLAP = (struct OVERLAPCONTEXT *)io;
 	struct connection *c = OVERLAP->c;
-	uint32_t err_code = io->err_code;
 	for(;;)
 	{
 		if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN))

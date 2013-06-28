@@ -40,6 +40,9 @@ void CloseEngine(ENGINE handle)
 	ReleaseEngine(handle);
 }
 
+
+#if defined(_LINUX)
+
 int32_t Bind2Engine(ENGINE e,SOCK s,OnRead _OnRead,OnWrite _OnWrite,OnClear_pending _OnClear_pending)
 {
 	engine_t engine = GetEngineByHandle(e);
@@ -56,8 +59,6 @@ int32_t Bind2Engine(ENGINE e,SOCK s,OnRead _OnRead,OnWrite _OnWrite,OnClear_pend
 		sock->engine = NULL;
 	return -1;
 }
-
-#if defined(_LINUX)
 
 int32_t Recv(SOCK sock,st_io *io,uint32_t *err_code)
 {
@@ -113,6 +114,110 @@ int32_t Post_Send(SOCK sock,st_io *io)
 	return 0;
 }
 #elif defined(_WIN)
+
+
+int32_t Recv(SOCK sock,st_io *io,uint32_t *err_code)
+{
+	assert(io);
+	socket_t s = GetSocketByHandle(sock);
+	if(!s)
+	{
+		*err_code = 0;
+		return -1;
+	}
+	int32_t ret = raw_recv(s,io,err_code);
+	if(ret < 0 && *err_code == WSA_IO_PENDING)
+		*err_code = EAGAIN;
+	return ret;
+}
+
+int32_t Send(SOCK sock,st_io *io,uint32_t *err_code)
+{
+	assert(io);
+	socket_t s = GetSocketByHandle(sock);
+	if(!s)
+	{
+		*err_code = 0;
+		return -1;
+	}
+	int32_t ret = raw_send(s,io,err_code);
+	if(ret < 0 && *err_code == WSA_IO_PENDING)
+		*err_code = EAGAIN;
+	return ret;
+}
+
+void     iocp_post_request(engine_t e,void *ptr,st_io *io);
+
+int32_t Post_Recv(SOCK sock,st_io *io)
+{
+	assert(io);
+	socket_t s = GetSocketByHandle(sock);
+	if(!s)
+		return -1;
+	io->m_Type = IO_RECVREQUEST;
+	if(s->engine)
+	{
+		ZeroMemory(io, sizeof(OVERLAPPED));
+		iocp_post_request(s->engine,(void*)s,io);
+	}
+	else
+	{
+		ZeroMemory(io, sizeof(list_node));
+		LINK_LIST_PUSH_BACK(s->pending_recv,io);
+	}
+	return 0;
+}
+
+int32_t Post_Send(SOCK sock,st_io *io)
+{
+	assert(io);
+	socket_t s = GetSocketByHandle(sock);
+	if(!s)
+		return -1;
+	io->m_Type = IO_SENDREQUEST;
+	if(s->engine)
+	{
+		ZeroMemory(io, sizeof(OVERLAPPED));
+		iocp_post_request(s->engine,(void*)s,io);
+	}
+	else
+	{
+		ZeroMemory(io, sizeof(list_node));
+		LINK_LIST_PUSH_BACK(s->pending_send,io);
+	}
+	return 0;
+}
+
+int32_t Bind2Engine(ENGINE e,SOCK s,OnRead _OnRead,OnWrite _OnWrite,OnClear_pending _OnClear_pending)
+{
+	engine_t engine = GetEngineByHandle(e);
+	socket_t sock   = GetSocketByHandle(s);
+	if(!engine || ! sock)
+		return -1;
+	sock->OnRead = _OnRead;
+	sock->OnWrite = _OnWrite;
+	sock->OnClear_pending_io = _OnClear_pending;
+	sock->engine = engine;
+	if(engine->Register(engine,sock) == 0)
+	{
+        list_node *tmp;
+        while((tmp = link_list_pop(sock->pending_send))!=NULL)
+		{
+			ZeroMemory(tmp, sizeof(OVERLAPPED));
+			iocp_post_request(e,(void*)sock,(st_io*)tmp);
+		}
+		while((tmp = link_list_pop(sock->pending_recv))!=NULL)
+		{    
+			ZeroMemory(tmp, sizeof(OVERLAPPED));
+			iocp_post_request(e,(void*)sock,(st_io*)tmp);
+		}
+		return 0;
+	}
+	else
+		sock->engine = NULL;
+	return -1;
+}
+
 #endif
 /*
 int32_t WSASend(HANDLE sock,st_io *io,int32_t flag,uint32_t *err_code)
