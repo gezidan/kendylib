@@ -18,10 +18,18 @@
 #define _TLS_H
 #include <pthread.h>
 #include <stdint.h>
+
+#define MAX_TLS_SLOT 128
+
+/*
+*   确保在所有线程开始之前调用init_tls,所有线程结束之后调用clear_tls
+*/
+
 void init_tls();
 void clear_tls();
-void *get_tls_data(int32_t);
-void set_tls_data(int32_t,void*);
+
+void *get_tls_data(uint32_t);
+void set_tls_data(uint32_t,void*);
 
 #endif
 	
