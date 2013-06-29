@@ -66,7 +66,7 @@ int32_t setNonblock(SOCK sock)
 	if(s)
 	{
 		uint32_t ul = 1;
-		ioctlsocket(s->fd,FIONBIO,(uint32_t*)&ul);
+		ioctlsocket(s->fd,FIONBIO,(u_long *)&ul);
 		return 0;
 	}
 	return -1;
@@ -345,7 +345,7 @@ struct hostent *Gethostbyaddr(const char *ip,int32_t family)
 	}
 #endif	
 
-	if ( (hptr = gethostbyaddr(&servaddr.sin_addr,sizeof(servaddr.sin_addr),family)) == NULL) {
+	if ( (hptr = gethostbyaddr((const char*)&servaddr.sin_addr,sizeof(servaddr.sin_addr),family)) == NULL) {
 		return NULL;
 	}
 
