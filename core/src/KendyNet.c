@@ -9,7 +9,28 @@
 void init_buff_allocator();
 int32_t InitNetSystem()
 {
+#ifdef _WIN
+	int32_t nResult;
+	WSADATA wsaData;
+	nResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+	if (NO_ERROR != nResult)
+	{
+		printf("\nError occurred while executing WSAStartup().");
+		return -1; //error
+	}
 	return 0;
+#else
+	signal(SIGPIPE,SIG_IGN);
+	return 0;
+#endif
+}
+
+
+void   CleanNetSystem()
+{
+#ifdef _WIN
+	WSACleanup();
+#endif
 }
 
 int32_t EngineRun(ENGINE engine,int32_t timeout)
@@ -23,13 +44,13 @@ int32_t EngineRun(ENGINE engine,int32_t timeout)
 ENGINE CreateEngine()
 {
 	ENGINE engine = NewEngine();
-	if(engine != INVAILD_ENGINE)
+	if(engine != INVALID_ENGINE)
 	{
 		engine_t e = GetEngineByHandle(engine);
 		if(0 != e->Init(e))
 		{
 			CloseEngine(engine);
-			engine = INVAILD_ENGINE;
+			engine = INVALID_ENGINE;
 		}
 	}
 	return engine;

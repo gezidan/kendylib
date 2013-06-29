@@ -14,11 +14,14 @@ inline static int RemoveBinding(engine_t e, socket_t sock)
 void  ReleaseSocketWrapper(SOCK handle)
 {
 	socket_t s = (socket_t)handle;
+#if defined(_LINUX)
 	double_link_remove((struct double_link_node*)s);
 	if(s->engine)
 		RemoveBinding(s->engine,s);
-#if defined(_LINUX)
 	close(s->fd);
+#elif defined(_WIN)
+	closesocket(s->fd);
+#endif
 	if(s->OnClear_pending_io)
 	{
 		list_node *tmp;
@@ -27,9 +30,6 @@ void  ReleaseSocketWrapper(SOCK handle)
 		while((tmp = link_list_pop(s->pending_recv))!=NULL)
 			s->OnClear_pending_io((st_io*)tmp);
 	}
-#elif defined(_WIN)
-	closesocket(s->fd);
-#endif
 	free_socket(&s);
 } 
 

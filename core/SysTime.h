@@ -4,14 +4,19 @@
 #include <time.h>
 #include <sys/time.h> 
 #include <unistd.h>
+#include "common.h"
 static inline uint32_t GetSystemMs()
 {
 	//struct timespec now;
     //clock_gettime(CLOCK_MONOTONIC, &now);
 	//return now.tv_sec*1000 + now.tv_nsec/(1000*1000);
+#ifdef _WIN
+	return GetTickCount();
+#else
 	struct timeval now;
 	gettimeofday(&now, NULL);
 	return now.tv_sec*1000+now.tv_usec/1000;
+#endif
 	
 }
 struct system_time_mgr
@@ -42,8 +47,12 @@ static inline time_t   GetCurrentSec()
 
 static inline uint32_t GetCurrentMs()
 {
+#ifdef _WIN
+	return GetTickCount();
+#else
 	int32_t index = stm->current_index;
 	return stm->ms[index];
+#endif
 }
 
 static inline const char *GetCurrentTimeStr()

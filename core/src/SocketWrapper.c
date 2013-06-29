@@ -2,6 +2,7 @@
 #if defined(_LINUX)
 #include "Socket.h"
 #include "HandleMgr.h"
+#include "common.h"
 
 typedef int32_t SOCKET;
 
@@ -80,13 +81,13 @@ SOCK OpenSocket(int32_t family,int32_t type,int32_t protocol)
 	SOCKET sockfd; 
 	if( (sockfd = socket(family,type,protocol)) < 0)
 	{
-		return INVAILD_SOCK;
+		return INVALID_SOCK;
 	}
 	SOCK sock = NewSocketWrapper();
 	if(sock < 0)
 	{
 		close(sockfd);
-		return INVAILD_SOCK;
+		return INVALID_SOCK;
 	}
 	InitSocket(sock,sockfd);
 	return sock;
@@ -97,7 +98,11 @@ int32_t CloseSocket(SOCK sock)
 	socket_t s = GetSocketByHandle(sock);
 	if(s)
 	{
+#ifdef _LINUX
 		return close(s->fd);
+#else
+		return closesocket(s->fd);
+#endif
 	}
 	return -1;
 }
@@ -126,18 +131,21 @@ int32_t Connect(SOCK sock,const struct sockaddr *servaddr,socklen_t addrlen)
 SOCK Tcp_Connect(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int32_t retry)
 {
 	if(!ip)
-		return INVAILD_SOCK;
+		return INVALID_SOCK;
 
 	memset((void*)servaddr,0,sizeof(*servaddr));
 	servaddr->sin_family = INET;
 	servaddr->sin_port = htons(port);
+#ifdef _WIN
+	servaddr->sin_addr.s_addr = inet_addr(ip);
+#else
 	if(inet_pton(INET,ip,&servaddr->sin_addr) < 0)
 	{
 
 		printf("%s\n",strerror(errno));
-		return INVAILD_SOCK;
+		return INVALID_SOCK;
 	}
-	
+#endif	
 	SOCK sock = OpenSocket(INET,STREAM,TCP);
 	if(sock)
 	{
@@ -150,7 +158,7 @@ SOCK Tcp_Connect(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int32
 		}
 		CloseSocket(sock);
 	}
-	return INVAILD_SOCK;
+	return INVALID_SOCK;
 }
 
 int32_t Bind(SOCK sock,const struct sockaddr *myaddr,socklen_t addrlen)
@@ -188,18 +196,22 @@ SOCK Tcp_Listen(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int32_
 	SOCK sock;
 	sock = OpenSocket(INET,STREAM,TCP);
 	if(sock < 0)
-		return INVAILD_SOCK;
+		return INVALID_SOCK;
 
 	memset((void*)servaddr,0,sizeof(*servaddr));
 	servaddr->sin_family = INET;
 	if(ip)
 	{
+#ifdef _WIN
+		servaddr->sin_addr.s_addr = inet_addr(ip);
+#else
 		if(inet_pton(INET,ip,&servaddr->sin_addr) < 0)
 		{
 
 			printf("%s\n",strerror(errno));
-			return INVAILD_SOCK;
+			return INVALID_SOCK;
 		}
+#endif	
 	}
 	else
 		servaddr->sin_addr.s_addr = htonl(INADDR_ANY);	
@@ -208,7 +220,7 @@ SOCK Tcp_Listen(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int32_
 	if(Bind(sock,(struct sockaddr*)servaddr,sizeof(*servaddr)) < 0)
 	{
 		CloseSocket(sock);
-		return INVAILD_SOCK;
+		return INVALID_SOCK;
 	}
 
 	if(Listen(sock,backlog) == 0) 
@@ -216,7 +228,7 @@ SOCK Tcp_Listen(const char *ip,uint16_t port,struct sockaddr_in *servaddr,int32_
 	else
 	{
 		CloseSocket(sock);
-		return INVAILD_SOCK;
+		return INVALID_SOCK;
 	}
 }
 
@@ -239,22 +251,22 @@ SOCK Accept(SOCK sock,struct sockaddr *sa,socklen_t *salen)
 			else
 			{
 				//printf("%s\n",strerror(errno));
-				return INVAILD_SOCK;
+				return INVALID_SOCK;
 			}
 #elif defined(_WIN)
-				return INVAILD_SOCK;
+				return INVALID_SOCK;
 #endif
 		}
 		SOCK newsock = NewSocketWrapper();
 		if(newsock < 0)
 		{
 			close(n);
-			return INVAILD_SOCK;
+			return INVALID_SOCK;
 		}
 		InitSocket(newsock,n);		
 		return newsock;
 	}
-	return INVAILD_SOCK;
+	return INVALID_SOCK;
 }
 
 int32_t getLocalAddrPort(SOCK sock,struct sockaddr_in *remoAddr,socklen_t *len,char *buf,uint16_t *port)
@@ -268,8 +280,16 @@ int32_t getLocalAddrPort(SOCK sock,struct sockaddr_in *remoAddr,socklen_t *len,c
 		int32_t ret = getsockname(s->fd, (struct sockaddr*)remoAddr,len);
 		if(ret != 0)
 			return -1;
+#ifdef _WIN
+		char *tmp = inet_ntoa(*(struct in_addr*)remoAddr);
+		if(tmp)
+			strcpy(buf,tmp);
+		else
+			return -1;
+#else
 		if(0 == inet_ntop(INET,&remoAddr->sin_addr,buf,15))
 			return -1;
+#endif
 		*port = ntohs(remoAddr->sin_port);
 		return 0;
 	}
@@ -291,8 +311,16 @@ int32_t getRemoteAddrPort(SOCK sock,char *buf,uint16_t *port)
 		int32_t ret = getpeername(s->fd,(struct sockaddr*)&remoAddr,&len);
 		if(ret != 0)
 			return -1;
+#ifdef _WIN
+		char *tmp = inet_ntoa(*(struct in_addr*)&remoAddr);
+		if(tmp)
+			strcpy(buf,tmp);
+		else
+			return -1;
+#else
 		if(0 == inet_ntop(INET,&remoAddr.sin_addr,buf,15))
 			return -1;
+#endif
 		*port = ntohs(remoAddr.sin_port);
 		return 0;
 	}
@@ -308,10 +336,17 @@ struct hostent *Gethostbyaddr(const char *ip,int32_t family)
 
 	memset((void*)&servaddr,0,sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
-	if(inet_pton(family,ip,&servaddr.sin_addr) < 0)
+#ifdef _WIN
+	servaddr.sin_addr.s_addr = inet_addr(ip);
+#else
+	if(inet_pton(INET,ip,&servaddr.sin_addr) < 0)
 	{
+
+		printf("%s\n",strerror(errno));
 		return NULL;
 	}
+#endif	
+
 	if ( (hptr = gethostbyaddr(&servaddr.sin_addr,sizeof(servaddr.sin_addr),family)) == NULL) {
 		return NULL;
 	}

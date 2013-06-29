@@ -5,6 +5,7 @@
 
 #include    <unistd.h>
 #include    <sys/epoll.h>
+#include    <sys/select.h>
 #include	<sys/types.h>	/* basic system data types */
 #include	<sys/socket.h>	/* basic socket definitions */
 #include	<sys/time.h>	/* timeval{} for select() */

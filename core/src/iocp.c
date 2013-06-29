@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include "Engine.h"
 #include "Socket.h"
+#include "SysTime.h"
+#include <assert.h>
+#include "KendyNet.h"
 
 int32_t  iocp_init(engine_t e)
 {
@@ -49,7 +52,7 @@ int32_t iocp_loop(engine_t n,int32_t timeout)
 	do
 	{
 		ms = _timeout - tick;
-		call_back = 0;
+		call_back = NULL;
 		lastErrno = 0;
 		bReturn = GetQueuedCompletionStatus(
 			n->complete_port,(PDWORD)&bytesTransfer,
@@ -83,23 +86,26 @@ int32_t iocp_loop(engine_t n,int32_t timeout)
 			{
 				overLapped->m_Type = overLapped->m_Type << 1;
 				if(overLapped->m_Type  & IO_RECVFINISH)
-					bytesTransfer = raw_Recv(socket,overLapped,&lastErrno);
+					bytesTransfer = raw_recv(socket,overLapped,&lastErrno);
 				else if(overLapped->m_Type  & IO_SENDFINISH)
-					bytesTransfer = raw_Send(socket,overLapped,&lastErrno);
+					bytesTransfer = raw_send(socket,overLapped,&lastErrno);
 				else
 				{
 					//³ö´í
 					continue;
 				}
-			}		
-			if(overLapped->m_Type & IO_RECVFINISH)
-				call_back = socket->OnRead;
-			else if(overLapped->m_Type & IO_SENDFINISH)
-				call_back = socket->OnWrite;
+			}
 			else
 			{
-				//³ö´í
-				continue;
+				if(overLapped->m_Type & IO_RECVFINISH)
+					call_back = socket->OnRead;
+				else if(overLapped->m_Type & IO_SENDFINISH)
+					call_back = socket->OnWrite;
+				else
+				{
+					//³ö´í
+					continue;
+				}
 			}
 		}
 

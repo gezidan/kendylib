@@ -1,15 +1,15 @@
-#include "net/KendyNet.h"
-#include "net/Connection.h"
+#include "core/KendyNet.h"
+#include "core/Connection.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "util/thread.h"
-#include "net/SocketWrapper.h"
-#include "util/SysTime.h"
-#include "net/Acceptor.h"
+#include "core/thread.h"
+#include "core/SocketWrapper.h"
+#include "core/SysTime.h"
+#include "core/Acceptor.h"
 #include <stdint.h>
-#include "util/block_obj_allocator.h"
+#include "core/block_obj_allocator.h"
 #include <assert.h>
-#include "net/common_define.h"
+#include "core/common_define.h"
 uint32_t packet_recv = 0;
 uint32_t packet_send = 0;
 uint32_t send_request = 0;
@@ -71,7 +71,7 @@ void remove_client(struct connection *c,int32_t reason)
 			break;
 		}
 	}
-	HANDLE sock = c->socket;
+	SOCK sock = c->socket;
 	if(0 == connection_destroy(&c))
 	{
 		ReleaseSocketWrapper(sock);
@@ -90,13 +90,12 @@ void on_process_packet(struct connection *c,rpacket_t r)
 	++packet_recv;
 }
 
-void accept_callback(HANDLE s,void *ud)
+void accept_callback(SOCK s,void *ud)
 {
-	HANDLE *engine = (HANDLE*)ud;
+	ENGINE *engine = (ENGINE*)ud;
 	struct connection *c = connection_create(s,0,SINGLE_THREAD,on_process_packet,remove_client);
 	add_client(c);
 	setNonblock(s);
-	//·¢³öµÚÒ»¸ö¶ÁÇëÇó
 	connection_start_recv(c);
 	Bind2Engine(*engine,s,RecvFinish,SendFinish,NULL);
 }
@@ -118,12 +117,11 @@ uint32_t iocp_count = 0;
 int main(int argc,char **argv)
 {
 
-	HANDLE engine;
+	ENGINE engine;
 	uint32_t n;
 	init_system_time(5);
 	ip = argv[1];
 	port = atoi(argv[2]);
-	signal(SIGPIPE,SIG_IGN);
 	if(InitNetSystem() != 0)
 	{
 		printf("Init error\n");
@@ -164,5 +162,6 @@ int main(int argc,char **argv)
 		}*/
 
 	}
+	CleanNetSystem();
 	return 0;
 }

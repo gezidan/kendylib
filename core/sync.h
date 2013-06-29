@@ -25,9 +25,9 @@ typedef struct mutex *mutex_t;
 
 mutex_t mutex_create();
 void mutex_destroy(mutex_t *m);
-inline int32_t mutex_lock(mutex_t m);
-inline int32_t mutex_try_lock(mutex_t m);
-inline int32_t mutex_unlock(mutex_t m);
+int32_t mutex_lock(mutex_t m);
+int32_t mutex_try_lock(mutex_t m);
+int32_t mutex_unlock(mutex_t m);
 
 /*Condition*/
 struct condition;
@@ -35,10 +35,10 @@ typedef struct condition *condition_t;
 
 condition_t condition_create();
 void condition_destroy(condition_t *c);
-inline int32_t condition_wait(condition_t c,mutex_t m);
+int32_t condition_wait(condition_t c,mutex_t m);
 int32_t condition_timedwait(condition_t c,mutex_t m,int32_t ms);
-inline int32_t condition_signal(condition_t c);
-inline int32_t condition_broadcast(condition_t c);
+int32_t condition_signal(condition_t c);
+int32_t condition_broadcast(condition_t c);
 
 /*Barrior*/
 struct barrior;

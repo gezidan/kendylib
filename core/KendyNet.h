@@ -23,9 +23,9 @@
 #define MAX_SOCKET 4096
 
 typedef void* ENGINE;
-#define INVAILD_ENGINE NULL
+#define INVALID_ENGINE NULL
 typedef void* SOCK;
-#define INVAILD_SOCK NULL
+#define INVALID_SOCK NULL
 
 
 #if defined(_LINUX)
@@ -76,6 +76,8 @@ typedef struct
 
 //初始化网络系统
 int32_t      InitNetSystem();
+
+void   CleanNetSystem();
 //recv请求完成时callback
 typedef void (*OnRead)(int32_t,st_io*,uint32_t err_code);
 //send请求完成时callback

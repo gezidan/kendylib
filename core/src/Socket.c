@@ -62,11 +62,11 @@ void on_write_active(socket_t s)
 
 int32_t raw_recv(socket_t s,st_io *io_req,uint32_t *err_code)
 {
-	
+	*err_code = 0;
 	int32_t ret  = TEMP_FAILURE_RETRY(readv(s->fd,io_req->iovec,io_req->iovec_count));
-	*err_code = errno;
 	if(ret < 0)
 	{
+		*err_code = errno;
 		if(*err_code == EAGAIN)
 		{
 			s->readable = 0;
@@ -96,10 +96,11 @@ static inline void _recv(socket_t s)
 
 int32_t raw_send(socket_t s,st_io *io_req,uint32_t *err_code)
 {
+	*err_code = 0;
 	int32_t ret  = TEMP_FAILURE_RETRY(writev(s->fd,io_req->iovec,io_req->iovec_count));
-	*err_code = errno;
 	if(ret < 0)
 	{
+		*err_code = errno;
 		if(*err_code == EAGAIN)
 		{
 			s->writeable = 0;

@@ -7,10 +7,6 @@ wheel:kendy.a testwheel.c
 accept_connect:
 	gcc -g -o test_connect test_connector.c network.a -I../include -lpthread -lrt
 	gcc -g -o test_accept test_acceptor.c network.a -I../include -lpthread -lrt
-server:../lib/util.a ../lib/net.a testserver.c
-	gcc -O3 -g -o server testserver.c ../lib/net.a ../lib/util.a -I../ -lpthread -lrt -ltcmalloc
-client:../lib/util.a ../lib/net.a testclient.c
-	gcc -O3 -g -o client testclient.c ../lib/net.a ../lib/util.a -I../ -I../include -lpthread -lrt -ltcmalloc
 objpool:kendy.a
 	gcc -O3 -g -o objpool testobjpool.c kendy.a -I../include -lpthread -lrt -ltcmalloc
 spin:testspinlock.c
@@ -32,4 +28,14 @@ syn_st:test_atomic_st.c
 list:test_list.c
 	gcc -g -o list test_list.c ../lib/util.a -I../ -lpthread
 map:testmap.c
-	gcc -g -o map testmap.c ../lib/util.a -I../ -lpthread	
+	gcc -g -o map testmap.c ../lib/util.a -I../ -lpthread
+	
+server:../lib/kendylib.a testserver.c
+	gcc -g -o server testserver.c ../lib/kendylib.a  -I.. -lpthread -lws2_32 -D _WIN -march=i686
+client:../lib/kendylib.a testclient.c 
+	gcc -g -o client testclient.c ../lib/kendylib.a  -I.. -lpthread -lws2_32 -D _WIN -march=i686
+	
+server-li:../lib/kendylib.a testserver.c
+	gcc -g -o server testserver.c ../lib/kendylib.a  -I.. -lpthread -lrt -D _LINUX
+client-li:../lib/kendylib.a testclient.c 
+	gcc -g -o client testclient.c ../lib/kendylib.a  -I.. -lpthread -lrt -D _LINUX			

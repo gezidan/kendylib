@@ -46,14 +46,14 @@ typedef struct map *map_t;
 map_t    map_create(uint16_t key_size,uint16_t val_size,comp _comp,struct interface_map_container*);
 void     map_destroy(map_t*);
 
-inline extern map_iter map_insert(map_t,void*,void*);
-inline extern map_iter map_erase(map_t,map_iter);
-inline extern void     map_remove(map_t,void*);
-inline extern map_iter map_find(map_t,void *);
-inline extern map_iter map_begin(map_t);
-inline extern map_iter map_end(map_t);
-inline extern int32_t  map_size(map_t);
-inline extern int32_t  map_empty(map_t);
+extern map_iter map_insert(map_t,void*,void*);
+extern map_iter map_erase(map_t,map_iter);
+extern void     map_remove(map_t,void*);
+extern map_iter map_find(map_t,void *);
+extern map_iter map_begin(map_t);
+extern map_iter map_end(map_t);
+extern int32_t  map_size(map_t);
+extern int32_t  map_empty(map_t);
 
 #ifndef MAP_CREATE
 #define MAP_CREATE(KEY_TYPE,VAL_TYPE,COMP,CONTAINER)\

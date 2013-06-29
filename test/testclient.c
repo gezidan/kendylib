@@ -1,10 +1,10 @@
 #include <stdio.h>
-#include "net/SocketWrapper.h"
-#include "util/SysTime.h"
-#include "net/KendyNet.h"
-#include "net/Connector.h"
-#include "net/Connection.h"
-#include "net/common_define.h"
+#include "core/SocketWrapper.h"
+#include "core/SysTime.h"
+#include "core/KendyNet.h"
+#include "core/Connector.h"
+#include "core/Connection.h"
+#include "core/common_define.h"
 allocator_t wpacket_allocator = NULL;
 
 static int32_t connect_count = 0;
@@ -47,7 +47,7 @@ void remove_client(struct connection *c,int32_t reason)
 			break;
 		}
 	}
-	HANDLE sock = c->socket;
+	SOCK sock = c->socket;
 	if(0 == connection_destroy(&c))
 	{
 		ReleaseSocketWrapper(sock);
@@ -59,7 +59,7 @@ uint32_t iocp_count = 0;
 
 void on_process_packet(struct connection *c,rpacket_t r)
 {
-	uint32_t s = rpacket_read_uint32(r);
+	/*uint32_t s = rpacket_read_uint32(r);
 	uint32_t t;
 	if(s == (uint32_t)c->socket)
 	{
@@ -67,7 +67,7 @@ void on_process_packet(struct connection *c,rpacket_t r)
 		uint32_t sys_t = GetSystemMs();
 		ava_interval += (sys_t - t);
 		ava_interval /= 2;
-	}
+	}*/
 	++packet_recv;
 	rpacket_destroy(&r);
 	/*wpacket_t wpk = wpacket_create(SINGLE_THREAD,wpacket_allocator,64,0);
@@ -79,9 +79,9 @@ void on_process_packet(struct connection *c,rpacket_t r)
 	++send_request;*/
 }
 
-void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
+void on_connect_callback(SOCK s,const char *ip,int32_t port,void *ud)
 {
-	HANDLE *engine = (HANDLE*)ud;
+	ENGINE *engine = (ENGINE*)ud;
 	struct connection *c;
 	wpacket_t wpk;
 	++connect_count;
@@ -109,12 +109,11 @@ void on_connect_callback(HANDLE s,const char *ip,int32_t port,void *ud)
 
 int32_t main(int32_t argc,char **argv)
 {
-	HANDLE engine;
+	ENGINE engine;
 
 	const char *ip = argv[1];
 	uint32_t port = atoi(argv[2]);
 	int32_t client_count = atoi(argv[3]);
-	signal(SIGPIPE,SIG_IGN);
 	init_system_time(10);
 	if(InitNetSystem() != 0)
 	{
@@ -173,5 +172,6 @@ int32_t main(int32_t argc,char **argv)
 		}
 
 	}
+	CleanNetSystem();
 	return 0;
 }

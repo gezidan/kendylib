@@ -1,8 +1,5 @@
-#if defined(_LINUX)
 #include <stdio.h>
 #include "link_list.h"
-#include <sys/select.h>
-#include <sys/time.h>
 #include "KendyNet.h"
 #include "SocketWrapper.h"
 #include "Socket.h"
@@ -66,12 +63,17 @@ int32_t connector_connect(connector_t c,const char *ip,uint32_t port,on_connect 
 	
 	remote.sin_family = AF_INET;
 	remote.sin_port = htons(port);
+
+#ifdef _WIN
+	remote.sin_addr.s_addr = inet_addr(ip);
+#else
 	if(inet_pton(INET,ip,&remote.sin_addr) < 0)
 	{
 
 		printf("%s\n",strerror(errno));
 		return -1;
 	}
+#endif
 	if(ms>0)
 	{
 		if(setNonblock(sock)!=0)
@@ -120,7 +122,7 @@ void connector_run(connector_t c,uint32_t ms)
 	{
 		if(c->fd_seisize >= FD_SETSIZE)
 		{
-			pc->call_back(INVAILD_SOCK,pc->ip,pc->port,pc->ud);
+			pc->call_back(INVALID_SOCK,pc->ip,pc->port,pc->ud);
 			free(pc);
 		}
 		else
@@ -139,7 +141,7 @@ void connector_run(connector_t c,uint32_t ms)
 		size = link_list_size(c->_pending_connect);
 		if(size == 0)
 			return;
-		if((total = select(1024,0,&c->Set,0, &timeout)) >0 )
+		if((total = select(1024,NULL,&c->Set,NULL, &timeout)) >0 )
 		{
 			for(; i < size; ++i)
 			{
@@ -166,7 +168,7 @@ void connector_run(connector_t c,uint32_t ms)
 			pc = LINK_LIST_POP(struct pending_connect*,c->_pending_connect);
 			if(tick >= pc->timeout)
 			{
-				pc->call_back(INVAILD_SOCK,pc->ip,pc->port,pc->ud);
+				pc->call_back(INVALID_SOCK,pc->ip,pc->port,pc->ud);
 				free(pc);
 				--c->fd_seisize;
 			}
@@ -179,5 +181,3 @@ void connector_run(connector_t c,uint32_t ms)
 		tick = GetSystemMs();
 	}while(tick < _timeout);
 }
-#elif defined(_WIN)
-#endif

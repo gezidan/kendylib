@@ -29,7 +29,7 @@ int32_t epoll_register(engine_t e, socket_t s)
 }
 
 
-inline int32_t epoll_unregister(engine_t e,socket_t s)
+int32_t epoll_unregister(engine_t e,socket_t s)
 {
 	assert(e);assert(s);
 	struct epoll_event ev;int32_t ret;
