@@ -1,9 +1,9 @@
 #include "SocketWrapper.h"
-#if defined(_LINUX)
+#include "common.h"
 #include "Socket.h"
 #include "HandleMgr.h"
-#include "common.h"
 
+#if defined(_LINUX)
 typedef int32_t SOCKET;
 
 static void InitSocket(SOCK sock,SOCKET fd)
@@ -51,9 +51,7 @@ int32_t setNonblock(SOCK sock)
 	return -1;
 }
 #elif defined(_WIN)
-#include "iocp.h"
-#include "Socket.h"
-#include "HandleMgr.h"
+
 static void InitSocket(SOCK sock,SOCKET fd)
 {
 	socket_t s = GetSocketByHandle(sock);

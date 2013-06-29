@@ -4,12 +4,9 @@
 #include "Acceptor.h"
 #include "Socket.h"
 #include "link_list.h"
-#include "KendyNet.h"
+#include "common.h"
 
 #if defined(_LINUX)
-#include <stdio.h>
-#include <sys/select.h>
-#include <sys/time.h>
 struct st_listen
 {
     list_node next;

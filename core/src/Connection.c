@@ -321,6 +321,7 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 				c->recv_overlap.isUsed = 1;
 				c->recv_overlap.m_super.iovec_count = i;
 				c->recv_overlap.m_super.iovec = c->wrecvbuf;
+#if defined(_LINUX)
 
 				if(total_size > 65536)
 				{
@@ -329,6 +330,11 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 				}
 				else
 					bytestransfer = Recv(c->socket,&c->recv_overlap.m_super,&err_code);
+#elif defined(_WIN)
+					bytestransfer = Recv(c->socket,&c->recv_overlap.m_super,&err_code);
+					if(bytestransfer>0)
+						return;
+#endif
 			}
 		}
 	}
@@ -373,7 +379,13 @@ void SendFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 					else
 						return;
 				}
+#if defined(_LINUX)
 				bytestransfer = Send(c->socket,io,&err_code);
+#elif defined(_WIN)
+				bytestransfer = Send(c->socket,io,&err_code);
+				if(bytestransfer>0)
+					return;
+#endif
 			}
 		}
 	}
