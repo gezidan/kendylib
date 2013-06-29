@@ -22,6 +22,7 @@
 
 #include "KendyNet.h"
 #include <stdint.h>
+#include <string.h>
 #include "refbase.h"
 #include "sync.h"
 #include "link_list.h"
