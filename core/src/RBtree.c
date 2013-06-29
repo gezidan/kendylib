@@ -1,7 +1,4 @@
 #include "RBtree.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
 #define RED 1
 #define BLACK 2
 
@@ -26,20 +23,11 @@ void destroy_rbtree(rbtree_t *rb)
 	*rb = NULL;
 }
 
-uint32_t rbtree_size(rbtree_t rb)
-{
-	return rb->size;
-}
 
-int8_t   rbtree_isempty(rbtree_t rb)
+static inline void rotate_left(rbtree_t rb,struct rbnode *n)
 {
-	return rb->size == 0 ? 1:0;
-}
-
-static void rotate_left(rbtree_t rb,rbnode *n)
-{
-	rbnode *parent = n->parent;
-	rbnode *right  = n->right;
+	struct rbnode *parent = n->parent;
+	struct rbnode *right  = n->right;
 	if(right == rb->nil)
 		return;
 
@@ -63,10 +51,10 @@ static void rotate_left(rbtree_t rb,rbnode *n)
 }
 
 
-static   void rotate_right(rbtree_t rb,rbnode *n)
+static  inline void rotate_right(rbtree_t rb,struct rbnode *n)
 {
-	rbnode *parent = n->parent;
-	rbnode *left  = n->left;
+	struct rbnode *parent = n->parent;
+	struct rbnode *left  = n->left;
 	if(left == rb->nil)
 		return;
 	n->left = left->right;
@@ -88,7 +76,7 @@ static   void rotate_right(rbtree_t rb,rbnode *n)
 	left->right = n;
 }
 
-inline static void color_flip(rbnode *n)
+inline static void color_flip(struct rbnode *n)
 {
 	if(n->left && n->right)
 	{
@@ -97,15 +85,15 @@ inline static void color_flip(rbnode *n)
 	}
 }
 
-static void insert_fix_up(rbtree_t rb,rbnode *n)
+static void insert_fix_up(rbtree_t rb,struct rbnode *n)
 {
 	while(n->parent->color == RED)
 	{
-		rbnode *parent = n->parent;
-		rbnode *grand_parent = parent->parent;
+		struct rbnode *parent = n->parent;
+		struct rbnode *grand_parent = parent->parent;
 		if(parent == grand_parent->left)
 		{
-			rbnode *ancle = grand_parent->right;
+			struct rbnode *ancle = grand_parent->right;
 			if(ancle->color == RED)
 			{
 				color_flip(grand_parent);
@@ -126,7 +114,7 @@ static void insert_fix_up(rbtree_t rb,rbnode *n)
 		}
 		else
 		{
-			rbnode *ancle = grand_parent->left;
+			struct rbnode *ancle = grand_parent->left;
 			if(ancle->color == RED)
 			{
 				color_flip(grand_parent);
@@ -148,27 +136,13 @@ static void insert_fix_up(rbtree_t rb,rbnode *n)
 	rb->root->color = BLACK;
 }
 
-rbnode*  rbtree_find(rbtree_t rb,void *key)
-{
-    if(rb->root == rb->nil)
-		return NULL;
-	rbnode *cur = rb->root;
-	while(cur != rb->nil)
-	{
-		char ret = rb->compare_function(key,cur->key);
-		if(ret == 0) return cur;
-		else if(ret == -1)cur = cur->left;
-		else cur = cur->right;
-	}
-	return NULL;
-}
 
-int8_t rbtree_insert(rbtree_t rb,rbnode *n)
+int8_t rbtree_insert(rbtree_t rb,struct rbnode *n)
 {
 	assert(rb);
-    rbnode *cur = rb->root;
-    rbnode *parent = rb->nil;
-    rbnode **child_link = NULL;
+    struct rbnode *cur = rb->root;
+    struct rbnode *parent = rb->nil;
+    struct rbnode **child_link = NULL;
 	while(cur != rb->nil)
 	{
         parent = cur;
@@ -199,50 +173,9 @@ int8_t rbtree_insert(rbtree_t rb,rbnode *n)
 	return 0;
 }
 
-static inline rbnode *minimum(rbtree_t rb,rbnode *n)
-{
-	while(n->left != rb->nil)
-		n = n->left;
-	return n;
-}
-
-static inline rbnode *maxmum(rbtree_t rb,rbnode *n)
-{
-	while(n->right != rb->nil)
-		n = n->right;
-	return n;
-}
 
 
-static inline rbnode *successor(rbtree_t rb,rbnode *n)
-{
-	assert(rb);
-	if(n->right != rb->nil)
-		return minimum(rb,n->right);
-	rbnode *y = n->parent;
-	while(y != rb->nil && n == y->right)
-	{
-		n = y;
-		y = y->parent;
-	}
-	return y;
-}
-
-static inline rbnode *predecessor(rbtree_t rb,rbnode *n)
-{
-	assert(rb);
-	if(n->left != rb->nil)
-		return maxmum(rb,n->left);
-	rbnode *y = n->parent;
-	while(y != rb->nil && n == y->left)
-	{
-		n = y;
-		y = y->parent;
-	}
-	return y;
-}
-
-static inline rbnode *get_delete_node(rbtree_t rb,rbnode *n)
+static inline struct rbnode *get_delete_node(rbtree_t rb,struct rbnode *n)
 {
 	if(n->left == rb->nil && n->right == rb->nil)
 		return n;
@@ -252,14 +185,14 @@ static inline rbnode *get_delete_node(rbtree_t rb,rbnode *n)
 		return maxmum(rb,n->left);
 }
 
-static void delete_fix_up(rbtree_t rb,rbnode *n)
+static void delete_fix_up(rbtree_t rb,struct rbnode *n)
 {
 	while(n != rb->root && n->color != RED)
 	{
-		rbnode *p = n->parent;
+		struct rbnode *p = n->parent;
 		if(n == p->left)
 		{
-			rbnode *w = p->right;
+			struct rbnode *w = p->right;
 			if(w->color == RED)
 			{
 				w->color = BLACK;
@@ -290,7 +223,7 @@ static void delete_fix_up(rbtree_t rb,rbnode *n)
 		}
 		else
 		{
-			rbnode *w = p->left;
+			struct rbnode *w = p->left;
 			if(w->color == RED)
 			{
 				w->color = BLACK;
@@ -323,14 +256,14 @@ static void delete_fix_up(rbtree_t rb,rbnode *n)
 	n->color = BLACK;
 }
 
-static int8_t rb_delete(rbtree_t rb,rbnode *n)
+static inline int8_t rb_delete(rbtree_t rb,struct rbnode *n)
 {
-	rbnode *x = get_delete_node(rb,n);
+	struct rbnode *x = get_delete_node(rb,n);
 	if(!x)
 		return -1;
-	rbnode *parent = x->parent;
-	rbnode **link = (x == parent->left)? &(parent->left):&(parent->right);
-	rbnode *z;
+	struct rbnode *parent = x->parent;
+	struct rbnode **link = (x == parent->left)? &(parent->left):&(parent->right);
+	struct rbnode *z;
 	if(x->left != rb->nil)
         *link = x->left;
     else if(x->right != rb->nil)
@@ -343,9 +276,9 @@ static int8_t rb_delete(rbtree_t rb,rbnode *n)
 	uint8_t x_old_color = x->color;
 	if(n != x)
 	{
-		rbnode *n_left = n->left;
-		rbnode *n_right = n->right;
-		rbnode *n_parent = n->parent;
+		struct rbnode *n_left = n->left;
+		struct rbnode *n_right = n->right;
+		struct rbnode *n_parent = n->parent;
 		if(n_left != rb->nil)
 		{
 			n_left->parent = x;
@@ -375,16 +308,16 @@ static int8_t rb_delete(rbtree_t rb,rbnode *n)
 	return 0;
 }
 
-int8_t rbtree_erase(rbnode *n)
+int8_t rbtree_erase(struct rbnode *n)
 {
 	if(!n->tree)
 		return -1;
 	return rb_delete(n->tree,n);
 }
 
-rbnode* rbtree_remove(rbtree_t rb,void *key)
+struct rbnode* rbtree_remove(rbtree_t rb,void *key)
 {
-	rbnode *n = rbtree_find(rb,key);
+	struct rbnode *n = rbtree_find(rb,key);
 	if(n)
 	{
 		rbtree_erase(n);
@@ -393,43 +326,9 @@ rbnode* rbtree_remove(rbtree_t rb,void *key)
 	return NULL;
 }
 
-rbnode*  rbtree_first(rbtree_t rb)
-{
-	if(rb->size == 0)
-		return NULL;
-	return minimum(rb,rb->root);
-}
 
-rbnode*  rbtree_last(rbtree_t rb)
-{
-	if(rb->size == 0)
-		return NULL;
-	return maxmum(rb,rb->root);
-}
 
-rbnode*  rbnode_next(rbnode *n)
-{
-	if(!n)
-		return NULL;
-	rbtree_t rb = n->tree;
-	rbnode *succ = successor(rb,n);
-	if(succ == rb->nil)
-		return NULL;
-	return succ;
-}
-
-rbnode*  rbnode_pre(rbnode*n)
-{
-	if(!n)
-		return NULL;
-	rbtree_t rb = n->tree;
-	rbnode *presucc = predecessor(rb,n);
-	if(presucc == rb->nil)
-		return NULL;
-	return presucc;
-}
-
-int32_t check(rbtree_t rb,rbnode *n,int32_t level,int32_t black_level,int32_t *max_black_level,int32_t *max_level)
+int32_t check(rbtree_t rb,struct rbnode *n,int32_t level,int32_t black_level,int32_t *max_black_level,int32_t *max_level)
 {
 	if(n == rb->nil)
 		return 1;
