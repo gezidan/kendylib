@@ -18,29 +18,92 @@
 #define _SPINLOCK_H
 #include "atomic.h"
 #include <pthread.h>
-typedef struct spinlock *spinlock_t;
+
+typedef struct spinlock
+{
+	volatile   pthread_t  owner;
+	int32_t    lock_count;
+}*spinlock_t;
 
 spinlock_t spin_create();
-void spin_destroy(spinlock_t*);
-inline int32_t spin_lock(spinlock_t);
-inline int32_t spin_unlock(spinlock_t);
+void       spin_destroy(spinlock_t*);
 
-/*
-static inline int32_t
-atomic_cmp_set(int32_t *lock, int32_t old,
-    int32_t set)
+static inline int32_t spin_lock(spinlock_t l)
 {
-    int8_t  res;
-	//"    cmpxchgq  %3, %1;   "
-    __asm__ volatile (
-
-    "lock;"
-    "    cmpxchgl  %3, %1;   "
-    "    sete      %0;       "
-
-    : "=a" (res) : "m" (*lock), "a" (old), "r" (set) : "cc", "memory");
-
-    return res;
+#ifdef _WIN
+	pthread_t tid = pthread_self();
+	if(tid.p == l->owner.p)
+	{
+		++l->lock_count;
+		return 0;
+	}
+	int32_t c,max;
+	while(1)
+	{
+		if(l->owner.p == 0)
+		{
+			if(COMPARE_AND_SWAP(&(l->owner.p),0,tid.p) == 0)
+				break;
+		}
+		__asm__ volatile("" : : : "memory");
+		for(c = 0; c < (max = rand()%4096); ++c)
+			__asm__("pause");		
+	};
+	++l->lock_count;
+	return 0;
+#else
+	pthread_t tid = pthread_self();
+	if(tid == l->owner)
+	{
+		++l->lock_count;
+		return 0;
+	}
+	int32_t c,max;
+	while(1)
+	{
+		if(l->owner == 0)
+		{
+			if(COMPARE_AND_SWAP(&(l->owner),0,tid) == 0)
+				break;
+		}
+		__asm__ volatile("" : : : "memory");
+		for(c = 0; c < (max = rand()%4096); ++c)
+			__asm__("pause");		
+	};
+	++l->lock_count;
+	return 0;
+#endif	
 }
-*/
+
+static inline int32_t spin_unlock(spinlock_t l)
+{
+#ifdef _WIN
+	pthread_t tid = pthread_self();
+	if(tid.p == l->owner.p)
+	{
+		--l->lock_count;
+		if(l->lock_count == 0)
+		{
+			__asm__ volatile("" : : : "memory");
+			l->owner.p = 0;
+		}
+		return 0;
+	}
+	return -1;
+#else
+	pthread_t tid = pthread_self();
+	if(tid == l->owner)
+	{
+		--l->lock_count;
+		if(l->lock_count == 0)
+		{
+			__asm__ volatile("" : : : "memory");
+			l->owner = 0;
+		}
+		return 0;
+	}
+	return -1;
+#endif
+}
+
 #endif

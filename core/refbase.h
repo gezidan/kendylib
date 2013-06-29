@@ -10,8 +10,27 @@ struct refbase
 	void (*destroyer)(void*);
 };
 
-void ref_increase(struct refbase*);
-void ref_decrease(struct refbase*);
+static inline void ref_increase(struct refbase *r)
+{
+	if(r->mt)
+		ATOMIC_INCREASE(&r->refcount);
+	else
+		++r->refcount;
+}
+
+static inline void ref_decrease(struct refbase *r)
+{
+	if(r->mt)
+	{
+		if(ATOMIC_DECREASE(&r->refcount) <= 0 && r->destroyer)
+			r->destroyer(r);
+	}
+	else
+	{
+		if(--r->refcount <= 0 && r->destroyer)
+			r->destroyer(r);
+	}
+}
 
 
 #endif

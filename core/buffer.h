@@ -37,42 +37,47 @@ typedef struct buffer
 
 
 buffer_t buffer_create_and_acquire(uint8_t mt,buffer_t,uint32_t);
-buffer_t buffer_acquire(buffer_t,buffer_t);
-void     buffer_release(buffer_t*);
-int32_t  buffer_read(buffer_t,uint32_t,int8_t*,uint32_t);
 
-/*
-struct _mem_block
+static inline void buffer_release(buffer_t *b)
 {
-	list_node next;
-	void *mem_block;
-};
+	if(*b)
+	{
+		ref_decrease(&(*b)->_refbase);
+		*b = 0;
+	}
+}
 
-struct buffer_block
+static inline buffer_t buffer_acquire(buffer_t b1,buffer_t b2)
 {
-	list_node next;
-};
+	if(b1 == b2)
+		return b1;	
+	if(b2)
+		ref_increase(&b2->_refbase);
+	if(b1)
+		buffer_release(&b1);
 
-struct buffer_mgr
+	return b2;
+}
+
+static inline int buffer_read(buffer_t b,uint32_t pos,int8_t *out,uint32_t size)
 {
-	int32_t factor;
-	int32_t free_size;
-	list_node *head;
-	list_node *tail;
-	struct link_list *blocks;
-	int32_t create_block_size;
-	//mutex_t mtx;
-	spinlock_t mtx;
-};
-
-typedef struct buffer_allocator
-{
-	IMPLEMEMT(allocator);
-	struct buffer_mgr bf_mgr[11];//2^5~2^16
-}*buffer_allocator_t;
-
-
-buffer_allocator_t create_buffer_allocator(int8_t mt);
-*/
-
+	uint32_t copy_size;
+	while(size)
+	{
+		if(!b)
+			return -1;
+		copy_size = b->size - pos;
+		copy_size = copy_size > size ? size : copy_size;
+		memcpy(out,b->buf + pos,copy_size);
+		size -= copy_size;
+		pos += copy_size;
+		out += copy_size;
+		if(pos >= b->size)
+		{
+			pos = 0;
+			b = b->next;
+		}
+	}
+	return 0;
+}
 #endif

@@ -19,33 +19,100 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <sys/time.h>
 /*Mutex*/
-struct mutex;
-typedef struct mutex *mutex_t;
+typedef struct mutex
+{
+	pthread_mutex_t     m_mutex;
+	pthread_mutexattr_t m_attr;
+}*mutex_t;
 
 mutex_t mutex_create();
 void mutex_destroy(mutex_t *m);
-int32_t mutex_lock(mutex_t m);
-int32_t mutex_try_lock(mutex_t m);
-int32_t mutex_unlock(mutex_t m);
+
+static inline int32_t mutex_lock(mutex_t m)
+{
+	return pthread_mutex_lock(&m->m_mutex);
+}
+
+static inline int32_t mutex_try_lock(mutex_t m)
+{
+	return pthread_mutex_trylock(&m->m_mutex);
+}
+
+static inline int32_t mutex_unlock(mutex_t m)
+{
+	return pthread_mutex_unlock(&m->m_mutex);
+}
 
 /*Condition*/
-struct condition;
-typedef struct condition *condition_t;
+typedef struct condition
+{
+	pthread_cond_t cond;
+}*condition_t;
+
 
 condition_t condition_create();
 void condition_destroy(condition_t *c);
-int32_t condition_wait(condition_t c,mutex_t m);
-int32_t condition_timedwait(condition_t c,mutex_t m,int32_t ms);
-int32_t condition_signal(condition_t c);
-int32_t condition_broadcast(condition_t c);
+
+static inline int32_t condition_wait(condition_t c,mutex_t m)
+{
+	return pthread_cond_wait(&c->cond,&m->m_mutex);
+}
+
+
+
+static int32_t condition_timedwait(condition_t c,mutex_t m,int32_t ms)
+{
+	struct timespec ts;
+	//clock_gettime(1/*CLOCK_REALTIME*/, &ts);
+	//ts.tv_sec += 1;
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	uint64_t sec = ms/1000;
+	uint64_t msec = ms%1000;
+	ts.tv_sec = now.tv_sec + sec;
+	ts.tv_nsec = now.tv_usec * 1000 + msec*1000*1000;   
+
+	return pthread_cond_timedwait(&c->cond,&m->m_mutex,&ts);
+}
+
+static inline int32_t condition_signal(condition_t c)
+{
+	return pthread_cond_signal(&c->cond);
+}
+
+static inline int32_t condition_broadcast(condition_t c)
+{
+	return pthread_cond_broadcast(&c->cond);
+}
 
 /*Barrior*/
-struct barrior;
-typedef struct barrior *barrior_t;
+typedef struct barrior
+{
+	condition_t cond;
+	mutex_t 	mtx;
+	int32_t     wait_count;
+}*barrior_t;
 
 barrior_t barrior_create(int32_t);
 void barrior_destroy(barrior_t*);
-void barrior_wait(barrior_t);
+
+static inline void barrior_wait(barrior_t b)
+{
+	mutex_lock(b->mtx);
+	--b->wait_count;
+	if(0 == b->wait_count)
+	{
+		condition_broadcast(b->cond);
+	}else	
+	{
+		while(b->wait_count > 0)
+		{
+			condition_wait(b->cond,b->mtx);
+		}
+	}
+	mutex_unlock(b->mtx);
+}
 
 #endif
