@@ -13,12 +13,10 @@ static void _update()
 #else
 	int32_t index = (stm->current_index + 1)%2;
 	
-	stm->ms[index] = GetSystemMs();
-	time_t _now = time(NULL);
-	stm->sec[index] = _now;
-	
+	stm->ms[index] = GetSystemMs();	
 	struct tm _tm;
 	//gmtime_r(&_now, &_tm);
+	time_t _now = time(NULL);
 	localtime_r(&_now, &_tm);
 	snprintf(stm->str[index],64,"[%04d-%02d-%02d %02d:%02d:%02d]",_tm.tm_year+1900,_tm.tm_mon+1,_tm.tm_mday,_tm.tm_hour,_tm.tm_min,_tm.tm_sec);	
 	

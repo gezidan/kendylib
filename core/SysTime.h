@@ -22,10 +22,8 @@ static inline uint32_t GetSystemMs()
 struct system_time_mgr
 {	
 	volatile int32_t   current_index __attribute__((aligned(8)));	
-	time_t   sec[2];
 	uint32_t ms[2];
 	char     str[2][64];
-	
 	uint32_t sleep_time;	
 };
 
@@ -38,12 +36,6 @@ static inline void sleepms(uint32_t ms)
 }
 
 extern void init_system_time(uint32_t);
-
-static inline time_t   GetCurrentSec()
-{
-	int32_t index = stm->current_index;
-	return stm->sec[index];
-}
 
 static inline uint32_t GetCurrentMs()
 {
