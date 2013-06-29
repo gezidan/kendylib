@@ -98,15 +98,15 @@ SOCK Accept(SOCK,struct sockaddr *sa,socklen_t *salen);
 int32_t getRemoteAddrPort(SOCK sock,char *buf,uint16_t *port);
 int32_t getLocalAddrPort(SOCK sock,struct sockaddr_in *remoAddr,socklen_t *len,char *buf,uint16_t *port);
 
-/*
+#ifdef _LINUX
 ssize_t write_fd(int fd,void *ptr,size_t nbytes,int sendfd);
 
 int create_un_execl(const char *path,const char *child);
 
 ssize_t read_fd(int fd,void *ptr,size_t nbytes,int *recvfd);
-*/
+#endif
 
-struct hostent *Gethostbyaddr(const char *ip,int32_t family);
+//struct hostent *Gethostbyaddr(const char *ip,int32_t family);
 
 int32_t setNonblock(SOCK sock);
 
