@@ -13,7 +13,6 @@ uint32_t iocp_count = 0;
 
 void on_process_packet(struct connection *c,rpacket_t r)
 {
-	printf("on_process_packet\n");
 	uint32_t s = rpacket_read_uint32(r);
 	uint32_t t;
 	if(s == (uint32_t)c->socket)
@@ -114,14 +113,14 @@ int32_t main(int32_t argc,char **argv)
 	con =  connector_create();
 	for( ; i < client_count;++i)
 	{
-		ret = connector_connect(con,ip,port,on_connect_callback2,&engine,1000*20);
+		ret = connector_connect(con,ip,port,on_connect_callback,&engine,1000*20);
 		sleepms(1);
 	}
 	while(1)
 	{
 		connector_run(con,1);
 		EngineRun(engine,20);
-		/*now = GetSystemMs();
+		now = GetSystemMs();
 		if(now - tick > 1000)
 		{
 			printf("recv:%u,s_req:%u,ava_interval:%u\n",(packet_recv*1000)/(now-tick),send_request,ava_interval);
@@ -150,7 +149,7 @@ int32_t main(int32_t argc,char **argv)
 					}
 			}
 
-		}*/
+		}
 
 	}
 	CleanNetSystem();

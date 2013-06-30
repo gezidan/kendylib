@@ -84,15 +84,21 @@ int32_t iocp_loop(engine_t n,int32_t timeout)
 		{	
 			if(overLapped->m_Type & IO_REQUEST)
 			{
-				overLapped->m_Type = overLapped->m_Type << 1;
-				if(overLapped->m_Type  & IO_RECVFINISH)
+				if(overLapped->m_Type  == IO_RECVREQUEST)
 					bytesTransfer = raw_recv(socket,overLapped,&lastErrno);
-				else if(overLapped->m_Type  & IO_SENDFINISH)
+				else if(overLapped->m_Type  == IO_SENDREQUEST)
 					bytesTransfer = raw_send(socket,overLapped,&lastErrno);
 				else
 				{
 					//³ö´í
 					continue;
+				}
+				if(bytesTransfer == 0 || (bytesTransfer < 0 && lastErrno != WSA_IO_PENDING))
+				{
+					if(overLapped->m_Type  == IO_RECVREQUEST)
+						call_back = socket->OnRead;
+					else
+						call_back = socket->OnWrite;
 				}
 			}
 			else

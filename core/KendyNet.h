@@ -47,8 +47,8 @@ enum
 {
 	IO_RECVREQUEST = 1<<1,   //应用层接收请求
 	IO_SENDREQUEST = 1<<3,   //应用层发送请求
-	IO_RECVFINISH =  1<<2,//接收完成
-	IO_SENDFINISH =  1<<4,   //发送完成
+	IO_RECVFINISH  = 1<<2,   //接收完成
+	IO_SENDFINISH  = 1<<4,   //发送完成
 };
 
 
