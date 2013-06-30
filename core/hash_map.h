@@ -20,7 +20,7 @@
 #include "common_hash_function.h"
 #include "double_link.h"
 #include "iterator.h"
-typedef struct hash_map* hash_map_t;
+//typedef struct hash_map* hash_map_t;
 
 typedef uint64_t (*hash_func)(void*);
 typedef int32_t (*hash_key_eq)(void*,void*);
@@ -40,6 +40,21 @@ struct hash_item
 	int8_t key_and_val[0];
 };
 
+typedef struct hash_map
+{
+	hash_func   _hash_function;
+	hash_key_eq _key_cmp_function;
+	uint32_t slot_size;
+	uint32_t size;
+	uint32_t key_size;
+	uint32_t val_size;
+	uint32_t item_size;
+	uint32_t expand_size;
+	struct hash_item *_items;
+	struct double_link dlink;
+}*hash_map_t;
+
+
 hash_map_t     hash_map_create(uint32_t slot_size,uint32_t key_size,uint32_t val_size,hash_func,hash_key_eq);
 void           hash_map_destroy(hash_map_t*);
 hash_map_iter  hash_map_insert(hash_map_t,void *key,void *val);
@@ -47,9 +62,35 @@ void*          hash_map_remove(hash_map_t,void* key);
 
 hash_map_iter  hash_map_find(hash_map_t,void* key); 
 void*          hash_map_erase(hash_map_t,hash_map_iter);
-hash_map_iter  hash_map_begin(hash_map_t);
-hash_map_iter  hash_map_end(hash_map_t);
-int32_t        hash_map_size(hash_map_t);
+
+
+void hash_map_iter_init(hash_map_iter *,void *,void *);
+#define CREATE_HASH_IT(IT,ARG1,ARG2)\
+	hash_map_iter IT;\
+	hash_map_iter_init(&IT,ARG1,ARG2)
+
+static inline hash_map_iter  hash_map_begin(hash_map_t h)
+{
+	CREATE_HASH_IT(iter,NULL,NULL);	
+	struct hash_item *item = (struct hash_item *)double_link_first(&h->dlink);
+	if( item != NULL)
+	{
+		iter.data1 = h;
+		iter.data2 = item;
+	}
+	return iter;
+}
+
+static inline hash_map_iter  hash_map_end(hash_map_t h)
+{
+	CREATE_HASH_IT(iter,NULL,NULL);	
+	return iter;
+}
+
+static inline int32_t hash_map_size(hash_map_t h)
+{
+	return h->size;
+}
 
 #ifndef HASH_MAP_INSERT
 #define HASH_MAP_INSERT(KEY_TYPE,VAL_TYPE,HASH_MAP,KEY,VAL)\

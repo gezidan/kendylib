@@ -11,19 +11,7 @@ enum
 	ITEM_USED,
 };
 
-struct hash_map
-{
-	hash_func   _hash_function;
-	hash_key_eq _key_cmp_function;
-	uint32_t slot_size;
-	uint32_t size;
-	uint32_t key_size;
-	uint32_t val_size;
-	uint32_t item_size;
-	uint32_t expand_size;
-	struct hash_item *_items;
-	struct double_link dlink;
-};
+
 
 #define GET_KEY(HASH_MAP,ITEM) ((void*)(ITEM)->key_and_val)
 
@@ -33,10 +21,7 @@ struct hash_map
 
 #define HASH_MAP_INDEX(HASH_CODE,SLOT_SIZE) (HASH_CODE % SLOT_SIZE)
 
-int32_t hash_map_size(hash_map_t h)
-{
-	return h->size;
-}
+
 
 hash_map_t hash_map_create(uint32_t slot_size,uint32_t key_size,
 	uint32_t val_size,hash_func hash_function,hash_key_eq key_cmp_function)
@@ -86,11 +71,6 @@ void hash_map_iter_set_val(struct base_iterator *_iter, void *val)
 	memcpy(ptr,val,h->val_size);
 }
 
-void hash_map_iter_init(hash_map_iter *,void *,void *);
-#define CREATE_HASH_IT(IT,ARG1,ARG2)\
-	hash_map_iter IT;\
-	hash_map_iter_init(&IT,ARG1,ARG2)
-
 void hash_map_iter_next(struct base_iterator *_iter)
 {
 	hash_map_iter *iter = (hash_map_iter*)_iter;
@@ -126,7 +106,7 @@ void hash_map_iter_init(hash_map_iter *iter,void *data1,void *data2)
 	iter->data2 = data2;
 }
 
-static struct hash_item *_hash_map_insert(hash_map_t h,void* key,void* val,uint64_t hash_code)
+static inline struct hash_item *_hash_map_insert(hash_map_t h,void* key,void* val,uint64_t hash_code)
 {
 	uint32_t slot = HASH_MAP_INDEX(hash_code,h->slot_size);
 	uint32_t check_count = 0;
@@ -156,7 +136,7 @@ static struct hash_item *_hash_map_insert(hash_map_t h,void* key,void* val,uint6
 	return NULL;
 }
 
-static int32_t _hash_map_expand(hash_map_t h)
+static inline int32_t _hash_map_expand(hash_map_t h)
 {
 	uint32_t old_slot_size = h->slot_size;
 	struct hash_item *old_items = h->_items;
@@ -200,27 +180,7 @@ hash_map_iter hash_map_insert(hash_map_t h,void *key,void *val)
 	return iter;
 	
 }
-
-hash_map_iter  hash_map_begin(hash_map_t h)
-{
-	CREATE_HASH_IT(iter,NULL,NULL);	
-	struct hash_item *item = (struct hash_item *)double_link_first(&h->dlink);
-	if( item != NULL)
-	{
-		iter.data1 = h;
-		iter.data2 = item;
-	}
-	return iter;
-}
-
-hash_map_iter  hash_map_end(hash_map_t h)
-{
-	CREATE_HASH_IT(iter,NULL,NULL);	
-	return iter;
-}
-
-
-static struct hash_item *_hash_map_find(hash_map_t h,void *key)
+static inline struct hash_item *_hash_map_find(hash_map_t h,void *key)
 {
 	uint64_t hash_code = h->_hash_function(key);
 	uint32_t slot = HASH_MAP_INDEX(hash_code,h->slot_size);

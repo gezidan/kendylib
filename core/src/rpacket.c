@@ -6,8 +6,14 @@
 #include "common_define.h"
 #include "atomic.h"
 
-rpacket_t rpacket_create(uint8_t mt,allocator_t _alloc,buffer_t b,uint32_t pos,uint32_t pk_len,uint8_t is_raw)
+rpacket_t rpacket_create(uint8_t mt,
+						 allocator_t _alloc,
+						 buffer_t b,
+						 uint32_t pos,
+						 uint32_t pk_len,
+						 uint8_t is_raw)
 {
+
 	rpacket_t r = (rpacket_t)ALLOC(_alloc,sizeof(*r));	
 	r->allocator = _alloc;
 	r->mt = mt;
@@ -90,75 +96,6 @@ void      rpacket_destroy(rpacket_t *r)
 	FREE((*r)->allocator,*r);	
 	*r = 0;
 }
-
-uint32_t  rpacket_len(rpacket_t r)
-{
-	return r->len;
-}
-
-uint32_t  rpacket_data_remain(rpacket_t r)
-{
-	return r->data_remain;
-}
-
-static int rpacket_read(rpacket_t r,int8_t *out,uint32_t size)
-{
-	if(r->data_remain < size)
-		return -1;
-	while(size>0)
-	{
-		uint32_t copy_size = r->readbuf->size - r->rpos;
-		copy_size = copy_size >= size ? size:copy_size;
-		memcpy(out,r->readbuf->buf + r->rpos,copy_size);
-		size -= copy_size;
-		r->rpos += copy_size;
-		r->data_remain -= copy_size;
-		out += copy_size;
-		if(r->rpos >= r->readbuf->size && r->data_remain)
-		{
-			//当前buffer数据已经被读完,切换到下一个buffer
-			r->rpos = 0;
-			r->readbuf = buffer_acquire(r->readbuf,r->readbuf->next);
-		}
-	}
-	return 0;
-}
-
-uint8_t rpacket_read_uint8(rpacket_t r)
-{
-	uint8_t value = 0;
-	rpacket_read(r,(int8_t*)&value,sizeof(value));
-	return value;
-}
-
-uint16_t rpacket_read_uint16(rpacket_t r)
-{
-	uint16_t value = 0;
-	rpacket_read(r,(int8_t*)&value,sizeof(value));
-	return value;
-}
-
-uint32_t rpacket_read_uint32(rpacket_t r)
-{
-	uint32_t value = 0;
-	rpacket_read(r,(int8_t*)&value,sizeof(value));
-	return value;
-}
-
-uint64_t rpacket_read_uint64(rpacket_t r)
-{
-	uint64_t value = 0;
-	rpacket_read(r,(int8_t*)&value,sizeof(value));
-	return value;
-}
-
-double   rpacket_read_double(rpacket_t r)
-{
-	double value = 0;
-	rpacket_read(r,(int8_t*)&value,sizeof(value));
-	return value;
-}
-
 
 
 static const void* rpacket_raw_read_binary(rpacket_t r,uint32_t *len)

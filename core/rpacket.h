@@ -48,14 +48,73 @@ rpacket_t rpacket_create_by_rpacket(rpacket_t);
 void      rpacket_destroy(rpacket_t*);
 
 //数据读取接口
-uint32_t  rpacket_len(rpacket_t);
-uint32_t  rpacket_data_remain(rpacket_t);
-uint8_t rpacket_read_uint8(rpacket_t);
-uint16_t rpacket_read_uint16(rpacket_t);
-uint32_t rpacket_read_uint32(rpacket_t);
-uint64_t rpacket_read_uint64(rpacket_t);
+static inline uint32_t  rpacket_len(rpacket_t r){
+	return r->len;
+}
 
-double         rpacket_read_double(rpacket_t);
+static inline uint32_t rpacket_data_remain(rpacket_t r){
+	return r->data_remain;
+}
+
+static inline int rpacket_read(rpacket_t r,int8_t *out,uint32_t size)
+{
+	if(r->data_remain < size)
+		return -1;
+
+	while(size>0)
+	{
+		uint32_t copy_size = r->readbuf->size - r->rpos;
+		copy_size = copy_size >= size ? size:copy_size;
+		memcpy(out,r->readbuf->buf + r->rpos,copy_size);
+		size -= copy_size;
+		r->rpos += copy_size;
+		r->data_remain -= copy_size;
+		out += copy_size;
+		if(r->rpos >= r->readbuf->size && r->data_remain)
+		{
+			//当前buffer数据已经被读完,切换到下一个buffer
+			r->rpos = 0;
+			r->readbuf = buffer_acquire(r->readbuf,r->readbuf->next);
+		}
+	}
+	return 0;
+}
+
+static inline uint8_t rpacket_read_uint8(rpacket_t r)
+{
+	uint8_t value = 0;
+	rpacket_read(r,(int8_t*)&value,sizeof(value));
+	return value;
+}
+
+static inline uint16_t rpacket_read_uint16(rpacket_t r)
+{
+	uint16_t value = 0;
+	rpacket_read(r,(int8_t*)&value,sizeof(value));
+	return value;
+}
+
+static inline uint32_t rpacket_read_uint32(rpacket_t r)
+{
+	uint32_t value = 0;
+	rpacket_read(r,(int8_t*)&value,sizeof(value));
+	return value;
+}
+
+static inline uint64_t rpacket_read_uint64(rpacket_t r)
+{
+	uint64_t value = 0;
+	rpacket_read(r,(int8_t*)&value,sizeof(value));
+	return value;
+}
+
+static inline double rpacket_read_double(rpacket_t r)
+{
+	double value = 0;
+	rpacket_read(r,(int8_t*)&value,sizeof(value));
+	return value;
+}
+
 const char*    rpacket_read_string(rpacket_t);
 const void*    rpacket_read_binary(rpacket_t,uint32_t *len);
 

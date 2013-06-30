@@ -259,7 +259,8 @@ static void destroy_block_obj_al(struct allocator **a)
 	*a = NULL;	
 }
 
-extern uint8_t GetK(uint32_t size);
+#include "buffer.h"
+
 block_obj_allocator_t create_block_obj_allocator(uint8_t mt,uint32_t obj_size)
 {
 	if(obj_size < sizeof(void*))

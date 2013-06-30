@@ -56,21 +56,171 @@ wpacket_t wpacket_create(uint8_t mt,allocator_t _allo,uint32_t size,uint8_t is_r
 wpacket_t wpacket_create_by_rpacket(allocator_t _allo,struct rpacket*);//通过rpacket构造
 void wpacket_destroy(wpacket_t*);
 
-write_pos wpacket_get_writepos(wpacket_t);
-void wpacket_write_uint8(wpacket_t,uint8_t);
-void wpacket_write_uint16(wpacket_t,uint16_t);
-void wpacket_write_uint32(wpacket_t,uint32_t);
-void wpacket_write_uint64(wpacket_t,uint64_t);
-void wpacket_write_double(wpacket_t,double);
+static inline write_pos wpacket_get_writepos(wpacket_t w)
+{
+	write_pos wp = {w->writebuf,w->wpos};
+	return wp;
+}
 
-void wpacket_rewrite_uint8(write_pos*,uint8_t);
-void wpacket_rewrite_uint16(write_pos*,uint16_t);
-void wpacket_rewrite_uint32(write_pos*,uint32_t);
-void wpacket_rewrite_uint64(write_pos*,uint64_t);
-void wpacket_rewrite_double(write_pos*,double);
+static inline void wpacket_rewrite(write_pos *wp,int8_t *addr,uint32_t size)
+{
+	int8_t *ptr = addr;
+	uint32_t copy_size;
+	uint32_t pos = wp->wpos;
+	while(size)
+	{
+		copy_size = wp->buf->capacity - pos;
+		copy_size = copy_size > size ? size:copy_size;
+		memcpy(wp->buf->buf + pos,ptr,copy_size);
+		ptr += copy_size;
+		size -= copy_size;
+		pos += copy_size;
+		if(size && pos >= wp->buf->capacity)
+		{
+			assert(wp->buf->next);
+			wp->buf = wp->buf->next;
+			pos = 0;
+		}
 
-//不提供对非定长数据的rewrite
-void wpacket_write_string(wpacket_t,const char*);
-void wpacket_write_binary(wpacket_t,const void*,uint32_t);
+	}
+}
+
+static inline void wpacket_rewrite_uint8(write_pos *wp,uint8_t value)
+{
+	wpacket_rewrite(wp,(int8_t*)&value,sizeof(value));
+}
+
+static inline void wpacket_rewrite_uint16(write_pos *wp,uint16_t value)
+{
+	wpacket_rewrite(wp,(int8_t*)&value,sizeof(value));
+}
+
+static inline void wpacket_rewrite_uint32(write_pos *wp,uint32_t value)
+{
+	wpacket_rewrite(wp,(int8_t*)&value,sizeof(value));
+}
+
+static inline void wpacket_rewrite_uint64(write_pos *wp,uint64_t value)
+{
+	wpacket_rewrite(wp,(int8_t*)&value,sizeof(value));
+}
+
+static inline void wpacket_rewrite_double(write_pos *wp,double value)
+{
+	wpacket_rewrite(wp,(int8_t*)&value,sizeof(value));
+}
+
+static inline void wpacket_expand(wpacket_t w)
+{
+	uint32_t size;
+	w->factor <<= 1;
+	size = w->factor;
+	w->writebuf->next = buffer_create_and_acquire(w->mt,NULL,size);
+	w->writebuf = buffer_acquire(w->writebuf,w->writebuf->next); 
+	w->wpos = 0;
+}
+
+
+static inline void wpacket_copy(wpacket_t w,buffer_t buf)
+{
+	int8_t *ptr = buf->buf;
+	buffer_t tmp_buf = w->buf;
+	uint32_t copy_size;
+	while(tmp_buf)
+	{
+		copy_size = tmp_buf->size - w->wpos;
+		memcpy(ptr,tmp_buf->buf,copy_size);
+		ptr += copy_size;
+		w->wpos = 0;
+		tmp_buf = tmp_buf->next;
+	}
+}
+
+static inline void do_write_copy(wpacket_t w)
+{
+	/*wpacket是由rpacket构造的，这里执行写时拷贝，
+	* 执行完后wpacket和构造时传入的rpacket不再共享buffer
+	*/
+	w->factor = GetSize_of_pow2(*w->len);
+	buffer_t tmp = buffer_create_and_acquire(w->mt,NULL,w->factor);
+	wpacket_copy(w,tmp);
+	w->begin_pos = 0;
+	if(!w->raw)
+	{
+		w->len = (uint32_t*)tmp->buf;
+		w->wpos = sizeof(*w->len);
+	}
+	w->buf = buffer_acquire(w->buf,tmp);
+	w->writebuf = buffer_acquire(w->writebuf,w->buf);
+}
+
+static inline void wpacket_write(wpacket_t w,int8_t *addr,uint32_t size)
+{
+	int8_t *ptr = addr;
+	uint32_t copy_size;
+	if(!w->writebuf){
+		do_write_copy(w);
+	}
+	while(size)
+	{
+		copy_size = w->writebuf->capacity - w->wpos;
+		if(copy_size == 0)
+		{
+			wpacket_expand(w);//空间不足,扩展
+			copy_size = w->writebuf->capacity - w->wpos;
+		}
+		copy_size = copy_size > size ? size:copy_size;
+		memcpy(w->writebuf->buf + w->wpos,ptr,copy_size);
+		w->writebuf->size += copy_size;
+		if(w->len)
+			(*w->len) += copy_size;
+		w->wpos += copy_size;
+		ptr += copy_size;
+		size -= copy_size;
+		w->data_size += copy_size;
+	}
+}
+
+
+static inline void wpacket_write_uint8(wpacket_t w,uint8_t value)
+{
+	wpacket_write(w,(int8_t*)&value,sizeof(value));
+}
+
+static inline void wpacket_write_uint16(wpacket_t w,uint16_t value)
+{
+	wpacket_write(w,(int8_t*)&value,sizeof(value));
+}
+
+static inline void wpacket_write_uint32(wpacket_t w,uint32_t value)
+{
+	wpacket_write(w,(int8_t*)&value,sizeof(value));
+}
+
+static inline void wpacket_write_uint64(wpacket_t w,uint64_t value)
+{
+	wpacket_write(w,(int8_t*)&value,sizeof(value));
+}
+
+static inline void wpacket_write_double(wpacket_t w ,double value)
+{
+	wpacket_write(w,(int8_t*)&value,sizeof(value));
+}
+
+static inline void wpacket_write_binary(wpacket_t w,const void *value,uint32_t size)
+{
+	assert(value);
+	if(!w->raw)
+		wpacket_write_uint32(w,size);
+	wpacket_write(w,(int8_t*)value,size);
+}
+
+static inline void wpacket_write_string(wpacket_t w ,const char *value)
+{
+	if(w->raw)
+		wpacket_write_binary(w,value,strlen(value));
+	else
+		wpacket_write_binary(w,value,strlen(value)+1);
+}
 
 #endif
