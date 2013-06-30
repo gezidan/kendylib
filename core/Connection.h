@@ -49,7 +49,7 @@ struct connection
 	on_disconnect _on_disconnect;
 	uint8_t mt;
 	uint8_t raw;
-	uint16_t is_close;
+	uint16_t active_close;
 	uint64_t usr_data;
 	uint32_t last_recv;
 	uint32_t recv_timeout;
@@ -70,7 +70,7 @@ void connection_active_close(struct connection*);//active close connection
 int connection_destroy(struct connection**);
 
 //仅仅把包放入发送队列
-void connection_push_packet(struct connection*,wpacket_t,packet_send_finish);
+int32_t connection_push_packet(struct connection*,wpacket_t,packet_send_finish);
 
 //返回值:0,连接断开;否则正常
 int32_t connection_send(struct connection*,wpacket_t,packet_send_finish);

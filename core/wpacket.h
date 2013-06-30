@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include "allocator.h"
 #include "sync.h"
+#include <assert.h>
 
 struct wpacket;
 typedef void (*packet_send_finish)(void*,struct wpacket*);

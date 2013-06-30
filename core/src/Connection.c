@@ -167,6 +167,8 @@ static inline void update_send_list(struct connection *c,int32_t bytestransfer)
 
 int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish callback)
 {
+	if(c->active_close)
+		return -1;
 	st_io *O;
 	if(w)
 	{
@@ -186,8 +188,10 @@ int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish call
 	return 0;
 }
 
-void connection_push_packet(struct connection *c,wpacket_t w,packet_send_finish callback)
+int32_t connection_push_packet(struct connection *c,wpacket_t w,packet_send_finish callback)
 {
+	if(c->active_close)
+		return -1;
 	if(w)
 	{
 		w->_packet_send_finish = callback;
@@ -211,7 +215,7 @@ struct connection *connection_create(SOCK s,uint8_t is_raw,uint8_t mt,process_pa
 	c->send_overlap.c = c;
 	c->raw = is_raw;
 	c->mt = mt;
-	c->is_close = 0;
+	c->active_close = 0;
 	return c;
 }
 
@@ -237,8 +241,8 @@ int connection_destroy(struct connection** c)
 
 int32_t connection_start_recv(struct connection *c)
 {
-	if(c->unpack_buf)
-		return -10;
+	if(c->active_close == 1 || c->unpack_buf != NULL)
+		return -1;
 	c->unpack_buf = buffer_create_and_acquire(c->mt,NULL,BUFFER_SIZE);
 	c->next_recv_buf = buffer_acquire(NULL,c->unpack_buf);
 	c->next_recv_pos = c->unpack_pos = c->unpack_size = 0;
@@ -252,10 +256,18 @@ int32_t connection_start_recv(struct connection *c)
 
 void connection_active_close(struct connection *c)
 {
-	CloseSocket(c->socket);
-	c->recv_overlap.isUsed = c->send_overlap.isUsed = 0;
-	if(c->_on_disconnect)
-		c->_on_disconnect(c,-2);//-2,active colse
+	if(c->active_close == 0){
+		c->active_close = 1;
+		if(c->send_overlap.isUsed == 0 && c->recv_overlap.isUsed == 0)
+		{
+			if(c->_on_disconnect)
+				c->_on_disconnect(c,-2);//-2,active colse
+			else
+				connection_destroy(&c);
+		}
+		else
+			CloseSocket(c->socket);//关闭套接口，让recv和send返回0
+	}
 }
 
 void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
@@ -273,17 +285,14 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 		{
 			printf("recv close\n");
 			c->recv_overlap.isUsed = 0;
-			c->is_close = 1;
-			if(!c->send_overlap.isUsed)
-			{
+			if(!c->send_overlap.isUsed){
 				//-1,passive close
-				c->_on_disconnect(c,-1);
+				c->_on_disconnect(c,c->active_close==1?-2:-1);
 			}
-			break;
+			return;
 		}
-		else if(bytestransfer < 0 && err_code == EAGAIN)
-		{
-			break;
+		else if(bytestransfer < 0 && err_code == EAGAIN){
+			return;
 		}
 		else
 		{
@@ -350,16 +359,14 @@ void SendFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 		{
 			printf("send close\n");
 			c->send_overlap.isUsed = 0;
-			if(!c->recv_overlap.isUsed)
-			{
+			if(!c->recv_overlap.isUsed){
 				//-1,passive close
-				c->_on_disconnect(c,-1);
+				c->_on_disconnect(c,c->active_close==1?-2:-1);
 			}
-			break;
+			return;
 		}
-		else if(bytestransfer < 0 && err_code == EAGAIN)
-		{
-			break;
+		else if(bytestransfer < 0 && err_code == EAGAIN){
+			return;
 		}
 		else
 		{
@@ -371,13 +378,11 @@ void SendFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 				{
 					//没有数据需要发送了
 					c->send_overlap.isUsed = 0;
-					if(c->is_close)
-					{
-						bytestransfer = 0;
-						break;
+					if(c->active_close == 1 && c->recv_overlap.isUsed == 0){
+						//连接已经关闭
+						c->_on_disconnect(c,-2);
 					}
-					else
-						return;
+					return;
 				}
 #if defined(_LINUX)
 				bytestransfer = Send(c->socket,io,&err_code);
