@@ -13,6 +13,7 @@ uint32_t iocp_count = 0;
 
 void on_process_packet(struct connection *c,rpacket_t r)
 {
+	printf("on_process_packet\n");
 	uint32_t s = rpacket_read_uint32(r);
 	uint32_t t;
 	if(s == (uint32_t)c->socket)

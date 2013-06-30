@@ -41,6 +41,7 @@ void free_socket(socket_t *s)
 
 void on_read_active(socket_t s)
 {
+	printf("on_read_active\n");
 	s->readable = 1;
 	if(!s->isactived && !LINK_LIST_IS_EMPTY(s->pending_recv))
 	{

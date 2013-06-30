@@ -258,6 +258,7 @@ void connection_active_close(struct connection *c)
 {
 	if(c->active_close == 0){
 		c->active_close = 1;
+#ifdef _WIN		
 		if(c->send_overlap.isUsed == 0 && c->recv_overlap.isUsed == 0)
 		{
 			if(c->_on_disconnect)
@@ -267,6 +268,16 @@ void connection_active_close(struct connection *c)
 		}
 		else
 			CloseSocket(c->socket);//关闭套接口，让recv和send返回0
+#else
+		c->recv_overlap.isUsed = 0;
+		CloseSocket(c->socket);
+		if(c->send_overlap.isUsed == 0){
+			if(c->_on_disconnect)
+				c->_on_disconnect(c,-2);//-2,active colse
+			else
+				connection_destroy(&c);	
+		}	
+#endif			
 	}
 }
 
@@ -375,13 +386,13 @@ void SendFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 				update_send_list(c,bytestransfer);
 				io = prepare_send(c);
 				if(!io)
-				{
+				{				
 					//没有数据需要发送了
 					c->send_overlap.isUsed = 0;
 					if(c->active_close == 1 && c->recv_overlap.isUsed == 0){
 						//连接已经关闭
 						c->_on_disconnect(c,-2);
-					}
+					}					
 					return;
 				}
 #if defined(_LINUX)
