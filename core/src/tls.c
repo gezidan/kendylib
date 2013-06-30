@@ -7,16 +7,18 @@
 static mutex_t       tls_mtx;
 static pthread_key_t thread_key;
 struct link_list     all_tls_struct = {0,NULL,NULL};
+static uint32_t      max_tls_slot = 0;
 struct tls_struct
 {
 	LIST_NODE;
-	void* slot[MAX_TLS_SLOT];
+	void* slot[0];
 };
   
-void init_tls()
+void init_tls(uint32_t tls_slot)
 {
 	pthread_key_create(&thread_key,0);
 	tls_mtx = mutex_create();
+	max_tls_slot = tls_slot;
 }
 
 void clear_tls()
@@ -31,7 +33,7 @@ void clear_tls()
 
 void *get_tls_data(uint32_t key)
 {
-	if(key >= MAX_TLS_SLOT)
+	if(key >= max_tls_slot)
 		return NULL;
 	struct tls_struct *tls_st = (struct tls_struct *)pthread_getspecific(thread_key);
 	if(!tls_st)
@@ -42,12 +44,13 @@ void *get_tls_data(uint32_t key)
 void set_tls_data(uint32_t key,void *data)
 {
 
-	if(key >= MAX_TLS_SLOT)
+	if(key >= max_tls_slot)
 		return;
 	struct tls_struct *tls_st = (struct tls_struct *)pthread_getspecific(thread_key);
     if(!tls_st)
 	{
-		tls_st = (struct tls_struct *)malloc(sizeof(*tls_st));
+		uint32_t s = sizeof(void*)*max_tls_slot + sizeof(struct list_node);
+		tls_st = (struct tls_struct *)malloc(s);
 		mutex_lock(tls_mtx);
 		LINK_LIST_PUSH_BACK(&all_tls_struct,tls_st);
 		mutex_unlock(tls_mtx);
