@@ -1,15 +1,3 @@
-#include "core/KendyNet.h"
-#include "core/Connection.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include "core/thread.h"
-#include "core/SocketWrapper.h"
-#include "core/SysTime.h"
-#include "core/Acceptor.h"
-#include <stdint.h>
-#include "core/block_obj_allocator.h"
-#include <assert.h>
-#include "core/common_define.h"
 #include "testnet.h"
 
 

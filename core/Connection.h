@@ -3,10 +3,11 @@
 #include "KendyNet.h"
 #include "wpacket.h"
 #include "rpacket.h"
-#include "SocketWrapper.h"
 #include <stdint.h>
 #include "timing_wheel.h"
 #include "allocator.h"
+#include "common_define.h"
+
 struct connection;
 struct OVERLAPCONTEXT
 {

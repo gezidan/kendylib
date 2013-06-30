@@ -1,10 +1,3 @@
-#include <stdio.h>
-#include "core/SocketWrapper.h"
-#include "core/SysTime.h"
-#include "core/KendyNet.h"
-#include "core/Connector.h"
-#include "core/Connection.h"
-#include "core/common_define.h"
 #include "testnet.h"
 
 
