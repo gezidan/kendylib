@@ -103,7 +103,4 @@ int32_t Send(SOCK,st_io*,uint32_t *err_code);
 int32_t Post_Recv(SOCK,st_io*);
 int32_t Post_Send(SOCK,st_io*);
 
-//int32_t WSASend(HANDLE,st_io*,int32_t flag,uint32_t *err_code);
-//int32_t WSARecv(HANDLE,st_io*,int32_t flag,uint32_t *err_code);
-
 #endif

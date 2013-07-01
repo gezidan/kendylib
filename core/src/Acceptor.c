@@ -265,7 +265,6 @@ void acceptor_run(acceptor_t a,int32_t ms)
 		timeout.tv_usec = 1000*_ms;
 		if(select(0, &a->Set,NULL, NULL, &timeout) >0 )
 		{
-			printf("一个套接口可读\n");
 			list_node *_st = link_list_head(a->st_listens);
 			while(_st)
 			{

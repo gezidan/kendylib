@@ -182,7 +182,17 @@ int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish call
 		if(O)
 		{
 			c->send_overlap.isUsed = 1;
+#ifdef _LINUX
 			return Post_Send(c->socket,O);
+#else
+			uint32_t err_code = 0;
+			int32_t bytestransfer = Send(c->socket,O,&err_code);
+			if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN)){
+				//套接口断开，将请求post出去，在engine中统一处理断开事件
+				return Post_Send(c->socket,O);
+			}
+			return 0;
+#endif
 		}
 	}
 	return 0;
@@ -311,7 +321,6 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 			while(bytestransfer > 0)
 			{
 				c->last_recv = GetCurrentMs();
-				//total_size += bytestransfer;
 				update_next_recv_pos(c,bytestransfer);
 				c->unpack_size += bytestransfer;
 				total_size += bytestransfer;
@@ -343,7 +352,7 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 				c->recv_overlap.m_super.iovec = c->wrecvbuf;
 #if defined(_LINUX)
 
-				if(total_size > 65536)
+				if(total_size >= BUFFER_SIZE)
 				{
 					Post_Recv(c->socket,&c->recv_overlap.m_super);
 					return;
