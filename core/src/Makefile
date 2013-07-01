@@ -4,7 +4,7 @@ all:
 	mv util.a ../../lib
 	rm -f *.o
 debug:
-	gcc -O3 -g -c *.c -I../ -D _DEBUG -D _WIN -march=i686
+	gcc -g -c *.c -I../ -D _DEBUG -D _WIN -march=i686
 	ar -rc kendylib.a *.o
 	mv kendylib.a ../../lib
 	rm -f *.o

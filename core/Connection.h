@@ -22,7 +22,7 @@ typedef void (*on_disconnect)(struct connection*,int32_t reason);
 
 
 #define MAX_WBAF 512
-#define MAX_SEND_SIZE 65536
+#define MAX_SEND_SIZE 4096
 
 struct connection
 {
@@ -50,7 +50,7 @@ struct connection
 	on_disconnect _on_disconnect;
 	uint8_t mt;
 	uint8_t raw;
-	uint16_t active_close;
+	uint8_t status;
 	uint64_t usr_data;
 	uint32_t last_recv;
 	uint32_t recv_timeout;
@@ -69,9 +69,6 @@ struct connection
 struct connection *connection_create(SOCK s,uint8_t is_raw,uint8_t mt,process_packet,on_disconnect);
 void connection_active_close(struct connection*);//active close connection
 int connection_destroy(struct connection**);
-
-//仅仅把包放入发送队列
-int32_t connection_push_packet(struct connection*,wpacket_t,packet_send_finish);
 
 //返回值:0,连接断开;否则正常
 int32_t connection_send(struct connection*,wpacket_t,packet_send_finish);

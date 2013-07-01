@@ -93,7 +93,7 @@ int32_t iocp_loop(engine_t n,int32_t timeout)
 					//³ö´í
 					continue;
 				}
-				if(bytesTransfer == 0 || (bytesTransfer < 0 && lastErrno != WSA_IO_PENDING))
+				if((bytesTransfer < 0 && lastErrno != WSA_IO_PENDING))
 				{
 					if(overLapped->m_Type  == IO_RECVREQUEST)
 						call_back = socket->OnRead;
