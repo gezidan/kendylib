@@ -299,11 +299,9 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 			return;
 		else if(bytestransfer < 0 && err_code != EAGAIN){
 			printf("recv close\n");
-			if(c->close_reason == 0)
-				c->close_reason = err_code;
 			c->recv_overlap.isUsed = 0;
-			if(c->is_closed == 0)
-				c->is_closed = 1;
+			if(c->close_reason == 0) c->close_reason = err_code;
+			if(c->is_closed == 0) c->is_closed = 1;
 			if(!c->send_overlap.isUsed){
 				if(c->_on_disconnect)
 					c->_on_disconnect(c,c->close_reason);
@@ -313,8 +311,8 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 			return;
 		}else if(bytestransfer > 0){
 			int32_t total_size = 0;
-			while(bytestransfer > 0)
-			{
+			//while(bytestransfer > 0)
+			do{
 				c->last_recv = GetCurrentMs();
 				update_next_recv_pos(c,bytestransfer);
 				c->unpack_size += bytestransfer;
@@ -324,7 +322,7 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 				pos = c->next_recv_pos;
 				recv_size = BUFFER_SIZE;
 				i = 0;
-				while(recv_size)
+				do//while(recv_size)
 				{
 					free_buffer_size = buf->capacity - pos;
 					free_buffer_size = recv_size > free_buffer_size ? free_buffer_size:recv_size;
@@ -340,7 +338,7 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 						buf = buf->next;
 					}
 					++i;
-				}
+				}while(recv_size);
 
 				c->recv_overlap.isUsed = 1;
 				c->recv_overlap.m_super.iovec_count = i;
@@ -358,7 +356,7 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 				if(bytestransfer >= 0)
 					return;
 #endif
-			}
+			}while(bytestransfer > 0);
 		}
 	}
 }
@@ -374,10 +372,8 @@ void SendFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 		else if(bytestransfer < 0 && err_code != EAGAIN){
 			printf("send close\n");
 			c->send_overlap.isUsed = 0;
-			if(c->close_reason == 0)
-				c->close_reason = err_code;
-			if(c->is_closed == 0)
-				c->is_closed = 1;
+			if(c->close_reason == 0) c->close_reason = err_code;
+			if(c->is_closed == 0) c->is_closed = 1;
 			if(!c->recv_overlap.isUsed){
 				if(c->_on_disconnect)
 					c->_on_disconnect(c,c->close_reason);
@@ -387,8 +383,7 @@ void SendFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 			return;
 		}else if(bytestransfer > 0)
 		{
-			while(bytestransfer > 0)
-			{
+			do{
 				update_send_list(c,bytestransfer);
 				io = prepare_send(c);
 				if(!io)
@@ -409,7 +404,7 @@ void SendFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 				if(bytestransfer >= 0)
 					return;
 #endif
-			}
+			}while(bytestransfer > 0);
 		}
 	}
 }
