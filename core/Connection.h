@@ -7,6 +7,7 @@
 #include "timing_wheel.h"
 #include "allocator.h"
 #include "common_define.h"
+#include "common.h"
 
 struct connection;
 struct OVERLAPCONTEXT
@@ -18,7 +19,7 @@ struct OVERLAPCONTEXT
 
 
 typedef void (*process_packet)(struct connection*,rpacket_t);
-typedef void (*on_disconnect)(struct connection*,int32_t reason);
+typedef void (*on_disconnect)(struct connection*,uint32_t reason);
 
 
 #define MAX_WBAF 512
@@ -50,7 +51,8 @@ struct connection
 	on_disconnect _on_disconnect;
 	uint8_t mt;
 	uint8_t raw;
-	uint8_t status;
+	uint8_t  is_closed;
+	uint32_t close_reason;
 	uint64_t usr_data;
 	uint32_t last_recv;
 	uint32_t recv_timeout;

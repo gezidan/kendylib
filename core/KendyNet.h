@@ -90,16 +90,20 @@ void     CloseEngine(ENGINE);
 int32_t  EngineRun(ENGINE,int32_t timeout);
 int32_t  Bind2Engine(ENGINE,SOCK,OnRead,OnWrite,OnClear_pending);
 
-/*
-*  立即执行IO请求,如果成功返回结果,
-*  否则返回-1,err_code == EAGAIN,当套接字被激活时由网络引擎完成请求，并回调注册的函数
+/* return:
+*  0,  io pending
+*  >0, bytes transfer
+*  0<, socket disconnect or error
 */
 int32_t Recv(SOCK,st_io*,uint32_t *err_code);
 int32_t Send(SOCK,st_io*,uint32_t *err_code);
 
 /*
-* 投递请求，在将来的某个时刻由网络引擎完成请求，并回调注册的函数
+* return:
+* 0, success
+* 0<,socket disconnect
 */
+
 int32_t Post_Recv(SOCK,st_io*);
 int32_t Post_Send(SOCK,st_io*);
 

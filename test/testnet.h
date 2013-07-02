@@ -65,12 +65,9 @@ void send2_all_client(rpacket_t r)
 	}
 }
 
-void remove_client(struct connection *c,int32_t reason)
+void remove_client(struct connection *c,uint32_t reason)
 {
-	if(reason == -1)
-		printf("passive close\n");
-	else
-		printf("active close\n");
+	printf("client disconnect,reason:%u\n",reason);
 	uint32_t i = 0;
 	for(; i < MAX_CLIENT; ++i)
 	{

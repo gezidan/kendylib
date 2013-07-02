@@ -45,6 +45,7 @@ int32_t iocp_loop(engine_t n,int32_t timeout)
 	st_io *overLapped = 0;
 	uint32_t lastErrno = 0;
 	BOOL bReturn;
+	uint8_t socket_closed;
 	CallBack call_back;
 	uint32_t ms;
 	uint32_t tick = GetSystemMs();
@@ -54,67 +55,76 @@ int32_t iocp_loop(engine_t n,int32_t timeout)
 		ms = _timeout - tick;
 		call_back = NULL;
 		lastErrno = 0;
+		socket_closed = 0;
 		bReturn = GetQueuedCompletionStatus(
 			n->complete_port,(PDWORD)&bytesTransfer,
 			(LPDWORD)&socket,
 			(OVERLAPPED**)&overLapped,ms);
-
-		if(FALSE == bReturn && !overLapped)// || socket == NULL || overLapped == NULL)
+		
+		if(!bReturn)
 		{
+			lastErrno = WSAGetLastError();
+			if(overLapped == NULL)
+				break;//timeout
+			
+			if(bytesTransfer == 0){
+				socket_closed = 1;
+			}
+		}else if(overLapped == NULL)
 			break;
-		}
-		if(0 == bytesTransfer)
-		{
-			//连接中断或错误
-			lastErrno = WSAGetLastError();			
-			if(bReturn == TRUE && lastErrno == 0)
-			{
-			}
-			else
-			{
-				if(overLapped->m_Type & IO_RECV)
-					call_back = socket->OnRead;	
-				else
-					call_back = socket->OnWrite;
-				if(FALSE == bReturn)
-					bytesTransfer = -1;
-			}
-		}
 		else
-		{	
-			if(overLapped->m_Type & IO_REQUEST)
-			{
-				if(overLapped->m_Type  == IO_RECVREQUEST)
-					bytesTransfer = raw_recv(socket,overLapped,&lastErrno);
-				else if(overLapped->m_Type  == IO_SENDREQUEST)
-					bytesTransfer = raw_send(socket,overLapped,&lastErrno);
-				else
-				{
-					//出错
-					continue;
-				}
-				if((bytesTransfer < 0 && lastErrno != WSA_IO_PENDING))
+		{
+			if(bytesTransfer == 0){
+				socket_closed = 1;
+			}
+			else{
+				if(overLapped->m_Type & IO_REQUEST)
 				{
 					if(overLapped->m_Type  == IO_RECVREQUEST)
-						call_back = socket->OnRead;
-					else
-						call_back = socket->OnWrite;
+						bytesTransfer = raw_recv(socket,overLapped,&lastErrno);
+					else if(overLapped->m_Type  == IO_SENDREQUEST)
+						bytesTransfer = raw_send(socket,overLapped,&lastErrno);
+					else{
+						//出错
+						continue;
+					}
+					if((bytesTransfer < 0 && lastErrno != WSA_IO_PENDING))
+					{
+						if(overLapped->m_Type  &= IO_RECV)
+							call_back = socket->OnRead;
+						else if(overLapped->m_Type  &= IO_SEND)
+							call_back = socket->OnWrite;
+						else
+							printf("op error\n");
+					}
 				}
-			}
-			else
-			{
-				if(overLapped->m_Type & IO_RECVFINISH)
-					call_back = socket->OnRead;
-				else if(overLapped->m_Type & IO_SENDFINISH)
-					call_back = socket->OnWrite;
 				else
 				{
-					//出错
-					continue;
+					if(overLapped->m_Type & IO_RECVFINISH)
+						call_back = socket->OnRead;
+					else if(overLapped->m_Type & IO_SENDFINISH)
+						call_back = socket->OnWrite;
+					else{
+						//出错
+						continue;
+					}
 				}
 			}
 		}
 
+		if(socket_closed == 1)
+		{
+			//socket colsed
+			if(overLapped->m_Type & IO_RECV)
+				call_back = socket->OnRead;	
+			else if(overLapped->m_Type & IO_SEND)
+				call_back = socket->OnWrite;
+			else
+			{
+				printf("error op\n");
+			}
+			bytesTransfer = -1;
+		}
 		if(call_back)
 			call_back(bytesTransfer,overLapped,lastErrno);
 		tick = GetSystemMs();

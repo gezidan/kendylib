@@ -5,9 +5,6 @@
 
 #define BUFFER_SIZE 65536
 
-#define ACTIVE_CLOSE  1
-#define PASSIVE_CLOSE 2
-
 //接收相关函数
 static inline void update_next_recv_pos(struct connection *c,int32_t bytestransfer)
 {
@@ -170,7 +167,7 @@ static inline void update_send_list(struct connection *c,int32_t bytestransfer)
 
 int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish callback)
 {
-	if(c->status != 0)
+	if(c->is_closed != 0)
 	{
 		printf("is close\n");
 		return -1;
@@ -197,7 +194,7 @@ int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish call
 				//套接口断开，将请求post出去，在engine中统一处理断开事件
 				return Post_Send(c->socket,O);
 			}
-			return 0;
+			return bytestransfer;
 #endif
 		}
 	}
@@ -221,7 +218,8 @@ struct connection *connection_create(SOCK s,uint8_t is_raw,uint8_t mt,process_pa
 	c->send_overlap.c = c;
 	c->raw = is_raw;
 	c->mt = mt;
-	c->status = 0;
+	c->is_closed = 0;
+	c->close_reason = 0;
 	return c;
 }
 
@@ -247,7 +245,7 @@ int connection_destroy(struct connection** c)
 
 int32_t connection_start_recv(struct connection *c)
 {
-	if(c->status != 0 || c->unpack_buf != NULL)
+	if(c->is_closed != 0 || c->unpack_buf != NULL)
 		return -1;
 	c->unpack_buf = buffer_create_and_acquire(c->mt,NULL,BUFFER_SIZE);
 	c->next_recv_buf = buffer_acquire(NULL,c->unpack_buf);
@@ -262,9 +260,10 @@ int32_t connection_start_recv(struct connection *c)
 
 void connection_active_close(struct connection *c)
 {
-	if(c->status == 0){
-		c->status = ACTIVE_CLOSE;
+	if(c->is_closed == 0){
+		c->is_closed = 1;
 		CloseSocket(c->socket);
+		printf("active close\n");
 #ifdef _WIN		
 		if(c->send_overlap.isUsed == 0 && c->recv_overlap.isUsed == 0)
 		{
@@ -296,25 +295,23 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 	int32_t i = 0;
 	for(;;)
 	{
-		if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN))
-		{
+		if(bytestransfer == 0)
+			return;
+		else if(bytestransfer < 0 && err_code != EAGAIN){
 			printf("recv close\n");
+			if(c->close_reason == 0)
+				c->close_reason = err_code;
 			c->recv_overlap.isUsed = 0;
-			if(c->status == 0)
-				c->status = PASSIVE_CLOSE;
+			if(c->is_closed == 0)
+				c->is_closed = 1;
 			if(!c->send_overlap.isUsed){
 				if(c->_on_disconnect)
-					c->_on_disconnect(c,c->status==PASSIVE_CLOSE?-1:-2);
+					c->_on_disconnect(c,c->close_reason);
 				else
 					connection_destroy(&c);				
 			}
 			return;
-		}
-		else if(bytestransfer < 0 && err_code == EAGAIN){
-			return;
-		}
-		else
-		{
+		}else if(bytestransfer > 0){
 			int32_t total_size = 0;
 			while(bytestransfer > 0)
 			{
@@ -349,7 +346,6 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 				c->recv_overlap.m_super.iovec_count = i;
 				c->recv_overlap.m_super.iovec = c->wrecvbuf;
 #if defined(_LINUX)
-
 				if(total_size >= BUFFER_SIZE)
 				{
 					Post_Recv(c->socket,&c->recv_overlap.m_super);
@@ -359,7 +355,7 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 					bytestransfer = Recv(c->socket,&c->recv_overlap.m_super,&err_code);
 #elif defined(_WIN)
 				bytestransfer = Recv(c->socket,&c->recv_overlap.m_super,&err_code);
-				if(bytestransfer >= 0 || (bytestransfer < 0 &&  err_code == EAGAIN))
+				if(bytestransfer >= 0)
 					return;
 #endif
 			}
@@ -373,24 +369,23 @@ void SendFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 	struct connection *c = OVERLAP->c;
 	for(;;)
 	{
-		if(bytestransfer == 0 || (bytestransfer < 0 && err_code != EAGAIN))
-		{
+		if(bytestransfer == 0)
+			return;
+		else if(bytestransfer < 0 && err_code != EAGAIN){
 			printf("send close\n");
 			c->send_overlap.isUsed = 0;
-			if(c->status == 0)
-				c->status = PASSIVE_CLOSE;
+			if(c->close_reason == 0)
+				c->close_reason = err_code;
+			if(c->is_closed == 0)
+				c->is_closed = 1;
 			if(!c->recv_overlap.isUsed){
 				if(c->_on_disconnect)
-					c->_on_disconnect(c,c->status==PASSIVE_CLOSE?-1:-2);
+					c->_on_disconnect(c,c->close_reason);
 				else
 					connection_destroy(&c);	
 			}
 			return;
-		}
-		else if(bytestransfer < 0 && err_code == EAGAIN){
-			return;
-		}
-		else
+		}else if(bytestransfer > 0)
 		{
 			while(bytestransfer > 0)
 			{
@@ -400,20 +395,18 @@ void SendFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 				{				
 					//没有数据需要发送了
 					c->send_overlap.isUsed = 0;
-					if(c->status != 0 && c->recv_overlap.isUsed == 0){
+					if(c->is_closed != 0 && c->recv_overlap.isUsed == 0){
 						//连接已经关闭
 						if(c->_on_disconnect)
-							c->_on_disconnect(c,c->status==PASSIVE_CLOSE?-1:-2);
+							c->_on_disconnect(c,c->close_reason);
 						else
 							connection_destroy(&c);	
 					}					
 					return;
 				}
-#if defined(_LINUX)
 				bytestransfer = Send(c->socket,io,&err_code);
-#elif defined(_WIN)
-				bytestransfer = Send(c->socket,io,&err_code);
-				if(bytestransfer >= 0 || (bytestransfer < 0 &&  err_code == EAGAIN))
+#ifdef _WIN
+				if(bytestransfer >= 0)
 					return;
 #endif
 			}

@@ -90,7 +90,10 @@ int32_t Recv(SOCK sock,st_io *io,uint32_t *err_code)
 		*err_code = 0;
 		return -1;
 	}
-	return raw_recv(s,io,err_code);
+	int32_t ret = raw_recv(s,io,err_code);
+	if(ret == 0) return -1;
+	if(ret < 0 && *err_code == EAGAIN)return 0;
+	return ret;
 }
 
 int32_t Post_Recv(SOCK sock,st_io *io)
@@ -117,7 +120,10 @@ int32_t Send(SOCK sock,st_io *io,uint32_t *err_code)
 		*err_code = 0;
 		return -1;
 	}
-	return raw_send(s,io,err_code);
+	int32_t ret = raw_send(s,io,err_code);
+	if(ret == 0) return -1;
+	if(ret < 0 && *err_code == EAGAIN)return 0;
+	return ret;
 }
 
 int32_t Post_Send(SOCK sock,st_io *io)
@@ -147,8 +153,13 @@ int32_t Recv(SOCK sock,st_io *io,uint32_t *err_code)
 		return -1;
 	}
 	int32_t ret = raw_recv(s,io,err_code);
-	if(ret < 0 && *err_code == WSA_IO_PENDING)
-		*err_code = EAGAIN;
+	if(ret < 0) {
+		if(*err_code == WSA_IO_PENDING){
+			*err_code = EAGAIN;
+			return 0;
+		}
+		return -1;
+	}
 	return ret;
 }
 
@@ -162,8 +173,13 @@ int32_t Send(SOCK sock,st_io *io,uint32_t *err_code)
 		return -1;
 	}
 	int32_t ret = raw_send(s,io,err_code);
-	if(ret < 0 && *err_code == WSA_IO_PENDING)
-		*err_code = EAGAIN;
+	if(ret < 0) {
+		if(*err_code == WSA_IO_PENDING){
+			*err_code = EAGAIN;
+			return 0;
+		}
+		return -1;
+	}
 	return ret;
 }
 
