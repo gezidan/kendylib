@@ -84,10 +84,8 @@ int32_t iocp_loop(engine_t n,int32_t timeout)
 						bytesTransfer = raw_recv(socket,overLapped,&lastErrno);
 					else if(overLapped->m_Type  == IO_SENDREQUEST)
 						bytesTransfer = raw_send(socket,overLapped,&lastErrno);
-					else{
-						//³ö´í
-						continue;
-					}
+					else
+						assert(0);
 					if((bytesTransfer < 0 && lastErrno != WSA_IO_PENDING))
 					{
 						if(overLapped->m_Type  &= IO_RECV)
@@ -95,7 +93,7 @@ int32_t iocp_loop(engine_t n,int32_t timeout)
 						else if(overLapped->m_Type  &= IO_SEND)
 							call_back = socket->OnWrite;
 						else
-							printf("op error\n");
+							assert(0);
 					}
 				}
 				else
@@ -104,10 +102,8 @@ int32_t iocp_loop(engine_t n,int32_t timeout)
 						call_back = socket->OnRead;
 					else if(overLapped->m_Type & IO_SENDFINISH)
 						call_back = socket->OnWrite;
-					else{
-						//³ö´í
-						continue;
-					}
+					else
+						assert(0);
 				}
 			}
 		}
@@ -120,9 +116,7 @@ int32_t iocp_loop(engine_t n,int32_t timeout)
 			else if(overLapped->m_Type & IO_SEND)
 				call_back = socket->OnWrite;
 			else
-			{
-				printf("error op\n");
-			}
+				assert(0);
 			bytesTransfer = -1;
 		}
 		if(call_back)
@@ -132,7 +126,7 @@ int32_t iocp_loop(engine_t n,int32_t timeout)
 	return 0;
 }
 
-void     iocp_post_request(engine_t e,void *ptr,st_io *io)
+void iocp_post_request(engine_t e,void *ptr,st_io *io)
 {
 	PostQueuedCompletionStatus(e->complete_port,1,(ULONG_PTR)ptr,(OVERLAPPED*)io);
 }

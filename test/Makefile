@@ -36,6 +36,6 @@ client:../lib/kendylib.a testclient.c
 	gcc -g -o client testclient.c ../lib/kendylib.a  -I.. -lpthread -lws2_32 -D _WIN -march=i686
 	
 server-li:../lib/kendylib.a testserver.c
-	gcc -g -o server testserver.c ../lib/kendylib.a  -I.. -lpthread -lrt -D _LINUX
+	gcc -O3 -g -o server testserver.c ../lib/kendylib.a  -I.. -lpthread -lrt -D _LINUX -ltcmalloc
 client-li:../lib/kendylib.a testclient.c 
-	gcc -g -o client testclient.c ../lib/kendylib.a  -I.. -lpthread -lrt -D _LINUX			
+	gcc -O3 -g -o client testclient.c ../lib/kendylib.a  -I.. -lpthread -lrt -D _LINUX -ltcmalloc		

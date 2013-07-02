@@ -9,8 +9,7 @@
 static inline void update_next_recv_pos(struct connection *c,int32_t bytestransfer)
 {
 	uint32_t size;		
-	while(bytestransfer)
-	{
+	do{
 		size = c->next_recv_buf->capacity - c->next_recv_pos;
 		size = size > (uint32_t)bytestransfer ? (uint32_t)bytestransfer:size;
 		c->next_recv_buf->size += size;
@@ -23,7 +22,7 @@ static inline void update_next_recv_pos(struct connection *c,int32_t bytestransf
 			c->next_recv_buf = buffer_acquire(c->next_recv_buf,c->next_recv_buf->next);
 			c->next_recv_pos = 0;
 		}
-	}
+	}while(bytestransfer);
 }
 
 static inline void unpack(struct connection *c)
@@ -31,21 +30,19 @@ static inline void unpack(struct connection *c)
 	uint32_t pk_len = 0;
 	uint32_t pk_total_size;
 	rpacket_t r;
-	for(;;)
-	{
+	do{
 
 		if(!c->raw)
 		{		
 			if(c->unpack_size <= sizeof(uint32_t))
-				break;//return 0;
+				return;
 			buffer_read(c->unpack_buf,c->unpack_pos,(int8_t*)&pk_len,sizeof(pk_len));
 			pk_total_size = pk_len+sizeof(pk_len);
 			if(pk_total_size > c->unpack_size)
-				break;//return 0;
+				return;
 			r = rpacket_create(c->mt,c->rpacket_allocator,c->unpack_buf,c->unpack_pos,pk_len,c->raw);
 			//调整unpack_buf和unpack_pos
-			while(pk_total_size)
-			{
+			do{
 				uint32_t size = c->unpack_buf->size - c->unpack_pos;
 				size = pk_total_size > size ? size:pk_total_size;
 				c->unpack_pos  += size;
@@ -61,7 +58,7 @@ static inline void unpack(struct connection *c)
 					c->unpack_pos = 0;
 					c->unpack_buf = buffer_acquire(c->unpack_buf,c->unpack_buf->next);
 				}
-			}
+			}while(pk_total_size);
 		}
 		else
 		{
@@ -83,8 +80,7 @@ static inline void unpack(struct connection *c)
 			}
 		}
 		c->_process_packet(c,r);
-	}
-	//return r;
+	}while(1);
 }
 
 //发送相关函数
@@ -293,8 +289,7 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 	buffer_t buf;
 	uint32_t pos;
 	int32_t i = 0;
-	for(;;)
-	{
+	do{
 		if(bytestransfer == 0)
 			return;
 		else if(bytestransfer < 0 && err_code != EAGAIN){
@@ -311,7 +306,6 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 			return;
 		}else if(bytestransfer > 0){
 			int32_t total_size = 0;
-			//while(bytestransfer > 0)
 			do{
 				c->last_recv = GetCurrentMs();
 				update_next_recv_pos(c,bytestransfer);
@@ -320,9 +314,9 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 				unpack(c);
 				buf = c->next_recv_buf;
 				pos = c->next_recv_pos;
-				recv_size = BUFFER_SIZE;
+				recv_size = BUFFER_SIZE/4;
 				i = 0;
-				do//while(recv_size)
+				do
 				{
 					free_buffer_size = buf->capacity - pos;
 					free_buffer_size = recv_size > free_buffer_size ? free_buffer_size:recv_size;
@@ -358,15 +352,14 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 #endif
 			}while(bytestransfer > 0);
 		}
-	}
+	}while(1);
 }
 
 void SendFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 {
 	struct OVERLAPCONTEXT *OVERLAP = (struct OVERLAPCONTEXT *)io;
 	struct connection *c = OVERLAP->c;
-	for(;;)
-	{
+	do{
 		if(bytestransfer == 0)
 			return;
 		else if(bytestransfer < 0 && err_code != EAGAIN){
@@ -406,5 +399,5 @@ void SendFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 #endif
 			}while(bytestransfer > 0);
 		}
-	}
+	}while(1);
 }
