@@ -59,8 +59,7 @@ void send2_all_client(rpacket_t r)
 			w = wpacket_create_by_rpacket(wpacket_allocator,r);
 			assert(w);
 			++send_request;
-			if(connection_send(clients[i],w,NULL) < 0)
-				wpacket_destroy(&w);
+			connection_send(clients[i],w,NULL);
 		}
 	}
 }

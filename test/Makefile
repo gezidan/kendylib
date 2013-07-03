@@ -38,4 +38,7 @@ client:../lib/kendylib.a testclient.c
 server-li:../lib/kendylib.a testserver.c
 	gcc -O3 -g -o server testserver.c ../lib/kendylib.a  -I.. -lpthread -lrt -D _LINUX -ltcmalloc
 client-li:../lib/kendylib.a testclient.c 
-	gcc -O3 -g -o client testclient.c ../lib/kendylib.a  -I.. -lpthread -lrt -D _LINUX -ltcmalloc		
+	gcc -O3 -g -o client testclient.c ../lib/kendylib.a  -I.. -lpthread -lrt -D _LINUX -ltcmalloc
+mysql:testmysql.c
+	gcc -g -o testmysql testmysql.c -I../mysql-connector/include -L../mysql-connector/lib -lmysql
+				

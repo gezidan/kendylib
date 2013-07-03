@@ -57,6 +57,16 @@ wpacket_t wpacket_create(uint8_t mt,allocator_t _allo,uint32_t size,uint8_t is_r
 wpacket_t wpacket_create_by_rpacket(allocator_t _allo,struct rpacket*);//通过rpacket构造
 void wpacket_destroy(wpacket_t*);
 
+//创建一个非原始包(单线程)
+#define NEW_WPACKET(__SIZE,__ALLOCATOR) wpacket_create(0,__ALLOCATOR,__SIZE,0)
+//创建一个非原始包(多线程)
+#define NEW_WPACKET_MT(__SIZE,__ALLOCATOR) wpacket_create(1,__ALLOCATOR,__SIZE,0)
+
+//创建一个原始包(单线程)
+#define NEW_WPACKET_RAW(__SIZE,__ALLOCATOR) wpacket_create(0,__ALLOCATOR,__SIZE,1)
+//创建一个非原始包(多线程)
+#define NEW_WPACKET_RAW_MT(__SIZE,__ALLOCATOR) wpacket_create(1,__ALLOCATOR,__SIZE,1)
+
 static inline write_pos wpacket_get_writepos(wpacket_t w)
 {
 	write_pos wp = {w->writebuf,w->wpos};

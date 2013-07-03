@@ -10,7 +10,6 @@ void on_process_packet(struct connection *c,rpacket_t r)
 	//++send_request;
 
 	total_bytes_recv += rpacket_len(r);
-	rpacket_destroy(&r);
 	++packet_recv;
 }
 
@@ -43,7 +42,6 @@ int main(int argc,char **argv)
 
 	ENGINE engine;
 	uint32_t n;
-	init_system_time(5);
 	ip = argv[1];
 	port = atoi(argv[2]);
 	if(InitNetSystem() != 0)

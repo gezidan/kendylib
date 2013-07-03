@@ -16,7 +16,7 @@ void on_process_packet(struct connection *c,rpacket_t r)
 		ava_interval /= 2;
 	}
 	++packet_recv;
-	rpacket_destroy(&r);
+	//rpacket_destroy(&r);
 }
 
 void on_connect_callback(SOCK s,const char *ip,int32_t port,void *ud)
@@ -37,7 +37,7 @@ void on_connect_callback(SOCK s,const char *ip,int32_t port,void *ud)
 		printf("connet to [%s:%d] success\n",ip,port);
 		add_client(c);
 		Bind2Engine(*engine,s,RecvFinish,SendFinish,NULL);
-		wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
+		wpk = NEW_WPACKET(64,NULL);//wpacket_create(SINGLE_THREAD,NULL,64,0);
 		wpacket_write_uint32(wpk,(uint32_t)s);
 		uint32_t sys_t = GetSystemMs();
 		wpacket_write_uint32(wpk,sys_t);
@@ -70,7 +70,7 @@ void on_connect_callback2(SOCK s,const char *ip,int32_t port,void *ud)
 		printf("connet to [%s:%d] success\n",ip,port);
 		add_client(c);
 		Bind2Engine(*engine,s,RecvFinish,SendFinish,NULL);
-		wpk = wpacket_create(SINGLE_THREAD,NULL,64,0);
+		wpk = NEW_WPACKET(64,NULL);//wpacket_create(SINGLE_THREAD,NULL,64,0);
 		wpacket_write_uint32(wpk,(uint32_t)s);
 		uint32_t sys_t = GetSystemMs();
 		wpacket_write_uint32(wpk,sys_t);
@@ -87,7 +87,6 @@ int32_t main(int32_t argc,char **argv)
 	const char *ip = argv[1];
 	uint32_t port = atoi(argv[2]);
 	int32_t client_count = atoi(argv[3]);
-	init_system_time(10);
 	if(InitNetSystem() != 0)
 	{
 		printf("Init error\n");
@@ -132,7 +131,7 @@ int32_t main(int32_t argc,char **argv)
 						int j = 0;
 						for( ; j < 1; ++j)
 						{
-						wpk = wpacket_create(SINGLE_THREAD,wpacket_allocator,64,0);
+						wpk = NEW_WPACKET(64,wpacket_allocator);//wpacket_create(SINGLE_THREAD,wpacket_allocator,64,0);
 						wpacket_write_uint32(wpk,(uint32_t)clients[i]->socket);
 						uint32_t sys_t = GetSystemMs();
 						wpacket_write_uint32(wpk,sys_t);

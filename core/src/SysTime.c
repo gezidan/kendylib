@@ -4,7 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
-
+/*
 struct system_time_mgr *stm = NULL;
 
 static void _update()
@@ -46,7 +46,7 @@ void init_system_time(uint32_t sleep_time)
 		CREATE_THREAD_RUN(0,_thread_routine,NULL);
 	}
 }
-
+*/
 
 
 

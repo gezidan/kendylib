@@ -47,6 +47,16 @@ rpacket_t rpacket_create_by_wpacket(allocator_t _allo,struct wpacket*);//通过wpa
 rpacket_t rpacket_create_by_rpacket(rpacket_t);
 void      rpacket_destroy(rpacket_t*);
 
+//创建一个非原始包(单线程)
+#define NEW_RPACKET(__BUF,__POS,__LEN,__ALLOCATOR) rpacket_create(0,__ALLOCATOR,__BUF,__POS,__LEN,0)
+//创建一个非原始包(多线程)
+#define NEW_RPACKET_MT(__BUF,__POS,__LEN,__ALLOCATOR) rpacket_create(1,__ALLOCATOR,__BUF,__POS,__LEN,0)
+
+//创建一个原始包(单线程)
+#define NEW_RPACKET_RAW(__BUF,__POS,__LEN,__ALLOCATOR) rpacket_create(0,__ALLOCATOR,__BUF,__POS,__LEN,1)
+//创建一个非原始包(多线程)
+#define NEW_RPACKET_RAW_MT(__BUF,__POS,__LEN,__ALLOCATOR) rpacket_create(1,__ALLOCATOR,__BUF,__POS,__LEN,1)
+
 //数据读取接口
 static inline uint32_t  rpacket_len(rpacket_t r){
 	return r->len;

@@ -80,6 +80,7 @@ static inline void unpack(struct connection *c)
 			}
 		}
 		c->_process_packet(c,r);
+		rpacket_destroy(&r);
 	}while(1);
 }
 
@@ -166,12 +167,13 @@ int32_t connection_send(struct connection *c,wpacket_t w,packet_send_finish call
 	if(c->is_closed != 0)
 	{
 		printf("is close\n");
+		wpacket_destroy(&w);
 		return -1;
 	}
 	st_io *O;
 	if(w)
 	{
-		w->send_tick = GetCurrentMs();
+		w->send_tick = GetSystemMs();
 		w->_packet_send_finish = callback;
 		LINK_LIST_PUSH_BACK(c->send_list,w);
 	}
@@ -307,7 +309,7 @@ void RecvFinish(int32_t bytestransfer,st_io *io,uint32_t err_code)
 		}else if(bytestransfer > 0){
 			int32_t total_size = 0;
 			do{
-				c->last_recv = GetCurrentMs();
+				c->last_recv = GetSystemMs();
 				update_next_recv_pos(c,bytestransfer);
 				c->unpack_size += bytestransfer;
 				total_size += bytestransfer;
