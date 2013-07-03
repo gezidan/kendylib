@@ -1,5 +1,144 @@
+#ifdef _LINUX
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
 #include "log.h"
-#if defined(_LINUX)
+#include "link_list.h"
+#include "sync.h"
+#include "atomic_st.h"
+#include "thread.h"
+#include "common.h"
+
+#define max_buf_count 1024
+#define max_size 65536
+static const uint32_t max_log_filse_size = 1024*1024*100;
+
+static const char *level_str[LEV_SIZE] =
+{
+	"[error]",
+	"[critical]",
+	"[warning]", 
+	"[message]",
+	"[info]",
+	"[debug]",
+};
+
+//10+22+1,最少也要容纳等级和时间的空间
+#define MIN_STR_LEN 33 
+
+//日期格式"YYYY-MM-DD HH:MM:SS"
+typedef struct log_str
+{
+	struct list_node lnode;
+	uint32_t len;
+	char str[MIN_STR_LEN];
+}*log_str_t;
+
+struct log
+{
+	struct list_node lnode;
+	int32_t file_descriptor;
+	mutex_t mtx;
+	struct link_list *log_queue;
+	struct link_list *pending_write;//等待写入到磁盘中的日志
+	uint64_t file_size;
+	struct iovec wbuf[max_buf_count];
+};
+
+
+struct sys_time_str
+{
+	struct atomic_st base;
+	char time_str[22]; 
+};
+
+
+GET_ATOMIC_ST(GetTimeStr,struct sys_time_str);	
+SET_ATOMIC_ST(SetTimeStr,struct sys_time_str);
+
+void update_time_str(struct atomic_type *time_str)
+{
+	struct tm _tm;
+	time_t _now = time(NULL);
+	localtime_r(&_now, &_tm);
+	struct sys_time_str tmp;
+	snprintf(tmp.time_str,22,"[%04d-%02d-%02d %02d:%02d:%02d]",_tm.tm_year+1900,_tm.tm_mon+1,_tm.tm_mday,_tm.tm_hour,_tm.tm_min,_tm.tm_sec);
+	SetTimeStr(time_str,&tmp);
+}
+
+typedef struct log_system
+{
+	mutex_t mtx;
+	struct     link_list *log_files; //创建的所有struct log
+	thread_t   worker_thread;        //磁盘写线程
+	thread_t   time_str_thread;      //更新日期字符串的线程
+	int32_t    bytes;
+	struct atomic_type *time_str;
+
+}*log_system_t;
+
+log_system_t g_log_system;
+
+
+static inline log_str_t new_log_str(uint8_t level,const char *str)
+{
+	uint32_t len = strlen(str) + sizeof(struct log_str);
+	log_str_t s = (log_str_t)calloc(1,len);
+	s->len = len;
+	struct sys_time_str tmp;
+	GetTimeStr(g_log_system->time_str,&tmp);
+	snprintf(s->str,len,"%s%s%s",level_str[level],tmp.time_str,str);
+	return s;
+}
+
+void log_write(log_t l,uint8_t level, const char *str)
+{
+	log_str_t s = new_log_str(level,str);
+	mutex_lock(l->mtx);
+	LINK_LIST_PUSH_BACK(l->log_queue,s);
+	mutex_unlock(l->mtx);
+}
+
+static void  destroy_log(log_t *l);
+static void *worker_routine(void*);
+static void *time_update_routine(void*);
+
+
+void init_log_system()
+{
+	assert(g_log_system == NULL);
+	g_log_system = calloc(1,sizeof(*g_log_system));
+	g_log_system->mtx = mutex_create();
+	g_log_system->log_files = create_link_list();
+	g_log_system->worker_thread = CREATE_THREAD_RUN(1,worker_routine,0);
+	g_log_system->time_str_thread = CREATE_THREAD_RUN(1,time_update_routine,0);
+	g_log_system->bytes = 0;
+
+}
+
+void close_log_system()
+{
+	assert(g_log_system != NULL);
+	thread_join(g_log_system->worker_thread);
+	thread_join(g_log_system->time_str_thread);
+	while(!link_list_is_empty(g_log_system->log_files))
+	{
+		log_t l = LINK_LIST_POP(log_t,g_log_system->log_files);
+		destroy_log(&l);
+	}
+	mutex_destroy(&g_log_system->mtx);
+	destroy_link_list(&g_log_system->log_files);
+	destroy_thread(&g_log_system->worker_thread);
+	destroy_thread(&g_log_system->time_str_thread);
+	free(g_log_system);
+	g_log_system = NULL;
+}
+
+#endif
+
+/*#if defined(_LINUX)
 #include "link_list.h"
 #include "sync.h"
 #include <stdlib.h>
@@ -188,10 +327,6 @@ static void write_to_file(log_t l,int32_t is_close)
 
 	if(!is_close)
 	{
-		/*
-		* if(l->file_size > max_log_filse_size)
-		* 
-		*/
 	}
 }
 
@@ -286,3 +421,4 @@ static void *worker_routine(void *arg)
 }
 #elif defined(_WIN)
 #endif
+*/

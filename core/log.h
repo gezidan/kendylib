@@ -26,10 +26,21 @@
 
 typedef struct log *log_t;
 
-int32_t	init_log_system();
-void    close_log_system();
+void init_log_system();
+void close_log_system();
 
 log_t   create_log(const char *);
-int32_t log_write(log_t,const char*,int32_t level);
+
+enum{
+	LOG_CRIT = 0,
+	LOG_ERR,
+	LOG_WARNING,
+	LOG_NOTICE,
+	LOG_INFO,
+	LOG_DEBUG,
+	LEV_SIZE,
+};
+
+void log_write(log_t,uint8_t level, const char *str);
 
 #endif

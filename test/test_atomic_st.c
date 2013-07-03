@@ -1,12 +1,12 @@
-#include "util/thread.h"
-#include "util/SysTime.h"
-#include "util/atomic.h"
+#include "core/thread.h"
+#include "core/SysTime.h"
+#include "core/atomic.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "util/sync.h"
-#include "util/atomic_st.h"
+#include "core/sync.h"
+#include "core/atomic_st.h"
 
 struct point
 {
@@ -30,7 +30,7 @@ void *SetRotine(void *arg)
 		struct point p;
 		++pos;
 		p.x = p.y = p.z = pos+1;
-		SetPoint(g_points[idx],p);
+		SetPoint(g_points[idx],&p);
 		idx = (idx + 1)%100;
 	}
 }
@@ -40,7 +40,8 @@ void *GetRoutine(void *arg)
     int idx = 0;
 	while(1)
 	{
-		struct point ret = GetPoint(g_points[idx]);
+		struct point ret;
+		GetPoint(g_points[idx],&ret);
 		if(ret.x != ret.y || ret.x != ret.z || ret.y != ret.z)
 		{
 			printf("%d,%d,%d\n",ret.x,ret.y,ret.z);
@@ -58,7 +59,7 @@ int main()
 	for(; i < 1000; ++i)
 	{
 		g_points[i] = create_atomic_type(sizeof(p));
-		SetPoint(g_points[i],p);
+		SetPoint(g_points[i],&p);
 	}
 	thread_t t1 = CREATE_THREAD_RUN(1,SetRotine,NULL);
 	thread_t t2 = CREATE_THREAD_RUN(1,GetRoutine,(void*)1);	

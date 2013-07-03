@@ -24,7 +24,7 @@ hash:testhash.c
 testmq:kendy.a testmq.c
 	gcc -g -O3 -o testmq testmq.c kendy.a -I../include -lpthread -lrt -ltcmalloc
 syn_st:test_atomic_st.c
-	gcc -g -O3 -o syn_st test_atomic_st.c ../lib/util.a -I../ -lpthread
+	gcc -g  -o syn_st test_atomic_st.c ../lib/kendylib.a  -I.. -lpthread -lws2_32 -D _WIN -march=i686
 list:test_list.c
 	gcc -g -o list test_list.c ../lib/util.a -I../ -lpthread
 map:testmap.c

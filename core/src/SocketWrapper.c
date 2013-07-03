@@ -18,38 +18,6 @@ static void InitSocket(SOCK sock,SOCKET fd)
 	s->dnode.pre = s->dnode.next = NULL;
 }
 
-int32_t setNonblock(SOCK sock)
-{
-
-	socket_t s = GetSocketByHandle(sock);
-	if(s)
-	{
-		int32_t fd_flags;
-		int32_t nodelay = 1;
-
-		if (setsockopt(s->fd, IPPROTO_TCP, TCP_NODELAY, (void *)&nodelay, sizeof(nodelay)))
-			return -1;
-
-		fd_flags = fcntl(s->fd, F_GETFL, 0);
-
-#if defined(O_NONBLOCK)
-		fd_flags |= O_NONBLOCK;
-#elif defined(O_NDELAY)
-		fd_flags |= O_NDELAY;
-#elif defined(FNDELAY)
-		fd_flags |= O_FNDELAY;
-#else
-		/* XXXX: this breaks things, but an alternative isn't obvious...*/
-		return -1;
-#endif
-
-		if (fcntl(s->fd, F_SETFL, fd_flags) == -1) 
-			return -1;
-
-		return 0;
-	}
-	return -1;
-}
 #elif defined(_WIN)
 
 static void InitSocket(SOCK sock,SOCKET fd)
@@ -59,18 +27,6 @@ static void InitSocket(SOCK sock,SOCKET fd)
 	s->engine = NULL;
 }
 
-int32_t setNonblock(SOCK sock)
-{
-
-	socket_t s = GetSocketByHandle(sock);
-	if(s)
-	{
-		uint32_t ul = 1;
-		ioctlsocket(s->fd,FIONBIO,(u_long *)&ul);
-		return 0;
-	}
-	return -1;
-}
 #endif
 
 
@@ -320,6 +276,32 @@ int32_t getRemoteAddrPort(SOCK sock,char *buf,uint16_t *port)
 			return -1;
 #endif
 		*port = ntohs(remoAddr.sin_port);
+		return 0;
+	}
+	return -1;
+}
+
+int32_t setNonblock(SOCK sock)
+{
+
+	socket_t s = GetSocketByHandle(sock);
+	if(s)
+	{
+		int ret;
+#ifdef _WIN
+		int ioctlvar;
+
+		ioctlvar = 1;
+		ret = ioctlsocket(s->fd, FIONBIO, (unsigned long*)&ioctlvar);
+#else
+		ret = fcntl(s->fd, F_SETFL, O_NONBLOCK | O_RDWR);
+#endif
+		if (ret != 0) {
+#ifdef _WIN
+			errno = WSAGetLastError();
+#endif
+			return -1;
+		}
 		return 0;
 	}
 	return -1;
