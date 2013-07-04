@@ -1,4 +1,4 @@
-#include "interface_design.h"
+#include "db.h"
 #ifdef USE_MYSQL
 static void print_error (DB_HANDLE conn, char *message)
 {
@@ -43,7 +43,7 @@ DB_HANDLE db_connect(const char *ip,unsigned int port,const char *usr,const char
 	return conn;
 }
 
-void db_handle_close(DB_HANDLE conn*)
+void db_handle_close(DB_HANDLE* conn)
 {
 	if(conn && *conn)
 	{
@@ -53,9 +53,9 @@ void db_handle_close(DB_HANDLE conn*)
 }
 
 
-static struct result_set* create_result_set(unsigned int field_num)
+static result_set create_result_set(unsigned int field_num)
 {
-
+	return NULL;
 }
 
 static basetype_t make_defaule_value(MYSQL_FIELD *field)
@@ -71,15 +71,15 @@ static result_set process_result_set (DB_HANDLE conn,MYSQL_RES *res_set)
 	unsigned int  i;
 	mysql_field_seek (res_set, 0);
 	field_num = mysql_num_fields (res_set);
-	field = malloc(sizeof(MYSQL_FIELD*)*field_num);
-	if(field == NULL)
-		return NULL;
-	struct result_set* result = create_result_set(field_num);
-	if(result == NULL)
+	//field = malloc(sizeof(MYSQL_FIELD*)*field_num);
+	//if(field == NULL)
+	//	return NULL;
+	result_set result = create_result_set(field_num);
+	/*if(result == NULL)
 	{
 		free(field);
 		return NULL;
-	}
+	}*/
 	while ((row = mysql_fetch_row (res_set)) != NULL)
 	{
 		mysql_field_seek (res_set, 0);
@@ -87,14 +87,14 @@ static result_set process_result_set (DB_HANDLE conn,MYSQL_RES *res_set)
 		{			
 			if (row[i] == NULL) 
 				printf (" %s ","NULL");
-			else if (IS_NUM (field[i]->type)) 
-				printf (" %s ",row[i]);
+			//else if (IS_NUM (field[i]->type)) 
+			//	printf (" %s ",row[i]);
 			else              
 				printf (" %s ",row[i]);
 		}
 		fputc ('\n', stdout);
 	}
-	free(field);
+	//free(field);
 	return result;
 }
 
@@ -127,14 +127,14 @@ struct field_metadatas *db_get_table_metadata(DB_HANDLE conn,const char *table)
 		unsigned int  i;
 		mysql_field_seek(res_set, 0);
 		metadatas->size = mysql_num_fields(res_set);
-		metadatas->_field_metadata = malloc(sizeof(struct field_metadata)*field_size);
-		field = malloc(sizeof(MYSQL_FIELD*)*field_size);
+		metadatas->_field_metadata = malloc(sizeof(struct field_metadata)*metadatas->size);
+		field = malloc(sizeof(MYSQL_FIELD*)*metadatas->size);
 		for (i = 0; i < metadatas->size; i++)
 		{
 			field[i] = mysql_fetch_field (res_set);
-			metadatas->_field_metadata[i].name = field[i]->name;
+			strncpy(metadatas->_field_metadata[i].name,field[i]->name,NAME_CHAR_LEN);
 			metadatas->_field_metadata[i].type = field[i]->type;
-			metadatas->_field_metadata[i].max_length = field[i]->max_length;
+			metadatas->_field_metadata[i].max_length = field[i]->length;
 			metadatas->_field_metadata[i].default_value = make_defaule_value(field[i]);
 		}
 		free(field);

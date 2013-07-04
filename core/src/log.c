@@ -51,7 +51,6 @@ struct log
 	struct link_list *pending_write;//等待写入到磁盘中的日志
 	uint64_t file_size;
 	char write_buffer[max_size];
-	//struct iovec wbuf[max_buf_count];
 };
 
 
@@ -69,22 +68,7 @@ void update_time_str(struct atomic_type *time_str)
 {
 	if(time_str){
 		struct sys_time_str tmp;
-		GetCurrentTimeStr(tmp.time_str);
-
-/*
-		time_t _now = time(NULL);
-		struct sys_time_str tmp;
-#ifdef _WIN
-		struct tm *_tm;
-		_tm = localtime(&_now);
-		snprintf(tmp.time_str,22,"[%04d-%02d-%02d %02d:%02d:%02d]",_tm->tm_year+1900,_tm->tm_mon+1,_tm->tm_mday,_tm->tm_hour,_tm->tm_min,_tm->tm_sec);
-#else		
-		struct tm _tm;
-		localtime_r(&_now, &_tm);
-		snprintf(tmp.time_str,22,"[%04d-%02d-%02d %02d:%02d:%02d]",_tm.tm_year+1900,_tm.tm_mon+1,_tm.tm_mday,_tm.tm_hour,_tm.tm_min,_tm.tm_sec);
-#endif		
-	*/	
-		
+		GetCurrentTimeStr(tmp.time_str);		
 		SetTimeStr(time_str,&tmp);
 	}else
 		printf("un init\n");
@@ -250,7 +234,7 @@ log_t create_log(const char *path)
 {
 	log_t l = calloc(1,sizeof(*l));
 	l->file_descriptor = open(path,
-		O_WRONLY|O_CREAT|O_TEXT|O_APPEND,IWUSR | IRUSR
+		O_WRONLY|O_CREAT|O_APPEND,IWUSR | IRUSR
 	);
 	if(l->file_descriptor < 0)
 	{
