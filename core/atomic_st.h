@@ -31,7 +31,7 @@ struct atomic_type
 	int32_t index;
 	volatile struct atomic_st *ptr;
 	int32_t data_size;
-	struct atomic_st* array[4];	
+	struct atomic_st* array[2];	
 };
 
 struct atomic_type *create_atomic_type(uint32_t size);

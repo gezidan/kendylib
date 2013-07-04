@@ -16,7 +16,6 @@
 #include <sys/stat.h>
 #endif
 
-#define max_buf_count 1024
 #define max_size 65536
 static const uint32_t max_log_filse_size = 1024*1024*100;
 
@@ -130,11 +129,11 @@ void init_log_system()
 	g_log_system->mtx = mutex_create();
 	g_log_system->log_files = create_link_list();
 	g_log_system->time_str = create_atomic_type(sizeof(struct sys_time_str));
+	update_time_str(g_log_system->time_str);
 	g_log_system->worker_thread = CREATE_THREAD_RUN(1,worker_routine,0);
 	g_log_system->time_str_thread = CREATE_THREAD_RUN(1,time_update_routine,0);
 	g_log_system->bytes = 0;
 	g_log_system->terminate = 0;
-
 }
 
 void close_log_system()
@@ -157,7 +156,6 @@ void close_log_system()
 	g_log_system = NULL;
 }
 
-//准备gather write的缓冲区，每次总缓冲数量不超过max_buf_count，总字节数不超过max_size
 static inline int32_t prepare_buffer(log_t l,int32_t beg_pos)
 {
 	uint32_t buffer_size = max_size - beg_pos;
@@ -230,10 +228,10 @@ static void write_to_file(log_t l)
 #define IRUSR S_IRUSR
 #endif
 
-log_t create_log(const char *path)
+log_t create_log(const char *filename)
 {
 	log_t l = calloc(1,sizeof(*l));
-	l->file_descriptor = open(path,
+	l->file_descriptor = open(filename,
 		O_WRONLY|O_CREAT|O_APPEND,IWUSR | IRUSR
 	);
 	if(l->file_descriptor < 0)

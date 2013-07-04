@@ -5,8 +5,8 @@
 
 int main()
 {   
-   init_log_system();
-   log_t l = create_log("log.txt");
+   init_log_system(NULL);
+   log_t l = create_log(NULL,"log.txt");
    if(l)
 	log_write(l,LOG_INFO,"hello world");
    getchar();

@@ -29,7 +29,7 @@ typedef struct log *log_t;
 void init_log_system();
 void close_log_system();
 
-log_t   create_log(const char *);
+log_t   create_log(const char *filename);
 
 enum{
 	LOG_CRIT = 0,
