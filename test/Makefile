@@ -15,8 +15,6 @@ ut:testuthread.c
 	gcc -g -O3 -o ut testuthread.c ../lib/util.a -I../ -lpthread
 ut-debug:testuthread.c
 	gcc -g -o ut testuthread.c ../lib/util.a -I../ -lpthread	 
-log:kendy.a testlog.c
-	gcc -g -O3 -o log testlog.c kendy.a -I../include -lpthread -lrt -ltcmalloc
 systime:kendy.a testsystime.c
 	gcc -g -O3 -o systime testsystime.c kendy.a -I../include -lpthread -lrt -ltcmalloc
 hash:testhash.c
@@ -41,4 +39,6 @@ client-li:../lib/kendylib.a testclient.c
 	gcc -O3 -g -o client testclient.c ../lib/kendylib.a  -I.. -lpthread -lrt -D _LINUX -ltcmalloc
 mysql:testmysql.c
 	gcc -g -o testmysql testmysql.c -I../mysql-connector/include -L../mysql-connector/lib -lmysql
+log:../lib/kendylib.a testlog.c
+	gcc -g -o log testlog.c ../lib/kendylib.a  -I.. -lpthread -lws2_32 -D _WIN -march=i686
 				
