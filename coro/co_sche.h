@@ -17,10 +17,11 @@
 #ifndef _COSCHE_H
 #define _COSCHE_H
 
-#include "minheap.h"
-#include "uthread.h"
-#include "minheap.h"
-#include "link_list.h"
+#include "util/minheap.h"
+#include "util/uthread.h"
+#include "util/link_list.h"
+#include "net/rpacket.h"
+#include "util/double_link.h"
 
 enum
 {
@@ -29,20 +30,26 @@ enum
 	CORO_ACTIVE,
 	CORO_DIE,
 	CORO_START,
+	CORO_BLOCK,
 };
 
 struct sche;
+struct coro;
 typedef struct coro
 {
 	struct list_node next;
+	struct double_link_node dblink;
 	struct heapele _heapele;
 	struct sche *_sche;
+	struct coro *_goback;
 	uthread_t    ut;
 	void *stack;
+	rpacket_t rpc_response;
 	uint8_t status;
 	uint32_t timeout;
 	void *arg;
 	void* (*fun)(void *);
+	
 }*coro_t;
 
 typedef struct sche
@@ -51,24 +58,34 @@ typedef struct sche
   	int32_t max_coro;
   	int32_t stack_size;
   	minheap_t _minheap;
-  	struct link_list *active_list;
+	/* 2级活动列表被wake_up(包括超时和被事件唤醒)的coro被投入到active_list_1,
+	*  其余情况被投入到active_list_2,挑选下一个coro执行时,首先会挑选active_list_1
+	*  中的
+	*/
+  	struct link_list *active_list_1;
+	struct link_list *active_list_2;
+	struct double_link coros;
   	int32_t next_check_timeout;
   	volatile int8_t  stop;
   	int32_t coro_size;
- 	uint32_t ti;	 		
+  	void (*idel)(void*);
+  	void *idel_arg;		
 }*sche_t;
 
 
-sche_t sche_create(int32_t max_coro,int32_t stack_size);
+sche_t sche_create(int32_t max_coro,int32_t stack_size,void (*)(void*),void*);
 void sche_destroy(sche_t *);
 
-void sche_schedule(sche_t );
-struct coro *sche_spawn(sche_t,void*(*fun)(void*),void*arg);
-coro_t coro_create(struct sche *,uint32_t stack_size,void*(*fun)(void*));
-void coro_destroy(coro_t *);
+void sche_schedule(sche_t);
+int32_t sche_spawn(sche_t,void*(*fun)(void*),void*arg);
+void sche_sche_co(coro_t from,coro_t to);
+//coro_t coro_create(struct sche *,uint32_t stack_size,void*(*fun)(void*));
+//void coro_destroy(coro_t *);
 
-extern inline coro_t get_current_coro();
-extern inline void coro_sleep(coro_t,int32_t);
-extern inline void coro_yield(coro_t);
+coro_t get_current_coro();
+void coro_sleep(coro_t,int32_t);
+void coro_yield(coro_t);
+void coro_block(coro_t);
+void coro_wakeup(coro_t);
 
 #endif

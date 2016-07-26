@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "minheap.h"
-#include "SysTime.h"
+#include "util/minheap.h"
+#include "util/SysTime.h"
 struct _timeout
 {
 	struct heapele _heapele;
@@ -36,7 +36,7 @@ int main()
 			t->timeout = tick + 100;
 			minheap_insert(m,(struct heapele*)t);
 		}
-		usleep(50);
+		sleepms(50);
 	}
 	return 0;
 }
